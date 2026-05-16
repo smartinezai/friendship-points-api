@@ -1,6 +1,7 @@
+import "dotenv/config";
 import app from "./app";
 
-const port = 3000;
+const port = Number(process.env.PORT) || 3000; // if for some reason the port is missing from .env, default to 3000
 
 async function start() {
     try{
@@ -13,6 +14,6 @@ async function start() {
         console.error(error);
         process.exit(1);
     }
-};
+}
 
 start();
