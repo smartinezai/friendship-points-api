@@ -1,3 +1,19 @@
+# dependencies
 node_modules
+
+# environment variables / secrets
 .env
+
+# build output
 dist
+
+# logs
+*.log
+npm-debug.log*
+
+# OS/editor files
+.DS_Store
+.vscode
+
+# prisma generated client
+/src/generated/prisma
