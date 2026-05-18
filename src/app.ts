@@ -1,17 +1,12 @@
 import Fastify from "fastify";
-import { prisma } from "./db/prisma.js";
+import {friendRoutes} from "./routes/friends.routes.js";
 const app = Fastify();
 
 app.get("/health", async () => {
     return {status:"ok"};
 });
 
-app.get("/debug/friends", async () => {
-   const friends = await prisma.friend.findMany();
-   
-   return {friends};
-});
-
+app.register(friendRoutes); //register the friend routes with the Fastify instance
 
 
 export default app;
