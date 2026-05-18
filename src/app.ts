@@ -12,15 +12,6 @@ app.get("/debug/friends", async () => {
    return {friends};
 });
 
-app.post("/debug/friends/cole", async () => {
-  const friend = await prisma.friend.create({
-    data: {
-      displayName: "Cole William Bailey",
-      notes: "Best friend, piece of shit.",
-    },
-  });
 
-  return { friend };
-});
 
 export default app;
