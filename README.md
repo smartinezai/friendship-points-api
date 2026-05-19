@@ -470,6 +470,5 @@ The duplicate should only be created if the user explicitly confirms it, for exa
 
 This is a private project.
 
-The scoring system is subjective and should not be treated as an objective measurement of a real relationship.
 
 The LLM will be used as an assistant for generating structured suggestions, but the backend will remain responsible for validation, storage, and final business logic.
