@@ -17,4 +17,18 @@ model Friend {
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  rules       Rule[]
+}
+
+model Rule {
+  id              String   @id @default(uuid())
+  friendId        String
+  friend          Friend   @relation(fields: [friendId], references: [id])
+  title           String
+  description     String
+  impactDirection String
+  weight          String
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
