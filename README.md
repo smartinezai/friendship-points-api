@@ -2,7 +2,7 @@
 
 A TypeScript backend API for tracking friendship-related events, rules, and point changes.
 
-The long-term goal of this project is to build an API where I can add friendship-related events, define subjective rules about what positively or negatively affects a friendship, and use an LLM through LangChain to help estimate a friendship point gain or loss.
+The long-term goal of this project is to build an API where I can add friendship-related events, define subjective rules about what positively or negatively affects a friendship, and eventually use an LLM through LangChain to help estimate a friendship point gain or loss.
 
 This project is primarily a learning project for practicing:
 
@@ -12,12 +12,13 @@ This project is primarily a learning project for practicing:
 - Prisma
 - API design
 - backend project structure
+- relational data modeling
 - LangChain integration
 - LLM-assisted structured outputs
 
 ## Current Status
 
-Day 2 is complete and Day 3 is in progress.
+Day 5 is in progress.
 
 The project currently contains:
 
@@ -25,9 +26,11 @@ The project currently contains:
 - A health check endpoint
 - PostgreSQL connection through Prisma
 - A `Friend` database model
-- A working `GET /friends` endpoint
-- Friend lookup by ID and name in progress
-- Friend creation endpoint in progress
+- A `Rule` database model
+- An `Event` database model
+- Friend API endpoints
+- Rule API endpoints
+- Event API endpoints
 
 ## Tech Stack
 
@@ -47,18 +50,20 @@ Planned:
 - LangChain.js
 - LLM provider integration
 - Vitest
+- Docker
 
 ## Project Goal
 
 The final API should allow me to:
 
-- Create a friend profile
-- Define friendship rules
+- Create friend profiles
+- Define friendship rules for a specific friend
 - Add friendship-related events
-- Ask an LLM to assess the event
-- Store the score change in PostgreSQL
-- Query the current friendship point balance
-- Predict the possible impact of hypothetical actions
+- Store subjective friendship events in PostgreSQL
+- Add point assessments later
+- Query the current friendship point balance later
+- Ask an LLM to assess events later
+- Predict the possible impact of hypothetical actions later
 
 Example rule:
 
@@ -72,7 +77,7 @@ Example event:
 I called Cole without prior warning.
 ```
 
-Example LLM-assisted assessment:
+Example future LLM-assisted assessment:
 
 ```json
 {
@@ -102,29 +107,13 @@ This endpoint checks that the API server is running and reachable.
 
 ---
 
+## Friends
+
 ### Get All Friends
 
 ```http
 GET /friends
 ```
-
-Example response:
-
-```json
-{
-  "friends": [
-    {
-      "id": "5da77ede-2290-4ede-9839-d83a29a310e6",
-      "displayName": "Cole William Bailey",
-      "notes": "Best friend for friendship points project",
-      "createdAt": "2026-05-17T16:10:28.127Z",
-      "updatedAt": "2026-05-17T16:10:28.127Z"
-    }
-  ]
-}
-```
-
----
 
 ### Get Friend By ID
 
@@ -132,59 +121,11 @@ Example response:
 GET /friends/:id
 ```
 
-Example:
-
-```http
-GET /friends/5da77ede-2290-4ede-9839-d83a29a310e6
-```
-
-Example response:
-
-```json
-{
-  "friend": {
-    "id": "5da77ede-2290-4ede-9839-d83a29a310e6",
-    "displayName": "Cole William Bailey",
-    "notes": "Best friend for friendship points project",
-    "createdAt": "2026-05-17T16:10:28.127Z",
-    "updatedAt": "2026-05-17T16:10:28.127Z"
-  }
-}
-```
-
-If the friend does not exist:
-
-```json
-{
-  "error": "Friend not found"
-}
-```
-
----
-
 ### Search Friends By Name
 
 ```http
 GET /friends/search?name=Cole
 ```
-
-Example response:
-
-```json
-{
-  "friends": [
-    {
-      "id": "5da77ede-2290-4ede-9839-d83a29a310e6",
-      "displayName": "Cole William Bailey",
-      "notes": "Best friend for friendship points project",
-      "createdAt": "2026-05-17T16:10:28.127Z",
-      "updatedAt": "2026-05-17T16:10:28.127Z"
-    }
-  ]
-}
-```
-
----
 
 ### Create Friend
 
@@ -201,25 +142,93 @@ Request body:
 }
 ```
 
-Example response:
+---
+
+## Rules
+
+### Get Rules For Friend
+
+```http
+GET /friends/:friendId/rules
+```
+
+### Create Rule For Friend
+
+```http
+POST /friends/:friendId/rules
+```
+
+Request body:
 
 ```json
 {
-  "friend": {
-    "id": "uuid",
-    "displayName": "Test Friend",
-    "notes": "Created through API",
-    "createdAt": "timestamp",
-    "updatedAt": "timestamp"
-  }
+  "title": "Unexpected calls are bad",
+  "description": "Cole dislikes being called without prior warning.",
+  "impactDirection": "negative",
+  "weight": "high"
 }
+```
+
+### Update Rule Weight
+
+```http
+PATCH /rules/:ruleId/weight
+```
+
+Request body:
+
+```json
+{
+  "weight": "medium"
+}
+```
+
+Allowed weights currently include:
+
+```txt
+minimal
+low
+medium
+high
+critical
+```
+
+---
+
+## Events
+
+### Get Events For Friend
+
+```http
+GET /friends/:friendId/events
+```
+
+### Create Event For Friend
+
+```http
+POST /friends/:friendId/events
+```
+
+Request body:
+
+```json
+{
+  "eventText": "I called Cole without prior warning.",
+  "happenedAt": "2026-05-19T15:00:00.000Z"
+}
+```
+
+`happenedAt` is optional.
+
+### Get Event By ID
+
+```http
+GET /events/:eventId
 ```
 
 ## Database Models
 
 ### Friend
-
-The current database contains one model:
 
 ```prisma
 model Friend {
@@ -228,6 +237,39 @@ model Friend {
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  rules       Rule[]
+  events      Event[]
+}
+```
+
+### Rule
+
+```prisma
+model Rule {
+  id              String   @id @default(uuid())
+  friendId        String
+  friend          Friend   @relation(fields: [friendId], references: [id])
+  title           String
+  description     String
+  impactDirection String
+  weight          String
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+```
+
+### Event
+
+```prisma
+model Event {
+  id         String    @id @default(uuid())
+  friendId   String
+  friend     Friend    @relation(fields: [friendId], references: [id])
+  eventText  String
+  happenedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }
 ```
 
@@ -241,6 +283,8 @@ src/
     prisma.ts
   routes/
     friends.routes.ts
+    rules.routes.ts
+    events.routes.ts
   services/
   schemas/
   types/
@@ -265,10 +309,12 @@ Creates and exports the Prisma client used to query PostgreSQL.
 
 Contains API route definitions.
 
-Current route file:
+Current route files:
 
 ```txt
 friends.routes.ts
+rules.routes.ts
+events.routes.ts
 ```
 
 ### `src/services/`
@@ -320,7 +366,7 @@ brew services start postgresql@16
 createdb friendship_points_api
 ```
 
-### 5. Run Prisma migration
+### 5. Run Prisma migrations
 
 ```bash
 npx prisma migrate dev
@@ -357,6 +403,14 @@ Expected response:
   "status": "ok"
 }
 ```
+
+### 9. Open Prisma Studio
+
+```bash
+npx prisma studio
+```
+
+This opens an interactive browser view of the database.
 
 ## Available Scripts
 
@@ -422,13 +476,17 @@ OPENAI_API_KEY=
 
 - Add friendship rules
 - Create `Rule` database model
-- Add endpoints for creating and listing rules
+- Add `GET /friends/:friendId/rules`
+- Add `POST /friends/:friendId/rules`
+- Add `PATCH /rules/:ruleId/weight`
 
 ### Day 5
 
 - Add friendship events
 - Create `Event` database model
-- Add endpoints for creating and listing events
+- Add `GET /friends/:friendId/events`
+- Add `POST /friends/:friendId/events`
+- Add `GET /events/:eventId`
 
 ### Day 6
 
@@ -441,6 +499,7 @@ OPENAI_API_KEY=
 - Improve error responses
 - Add validation schemas
 - Add duplicate friend-name handling for `POST /friends`
+- Move repeated friend lookup logic into a reusable service/helper
 
 Duplicate friend-name behavior:
 
@@ -466,9 +525,19 @@ The duplicate should only be created if the user explicitly confirms it, for exa
 - Add tests
 - Improve documentation
 
+### Future Ideas
+
+- Add Docker support to containerise the API and PostgreSQL database
+- Add a `Dockerfile`
+- Add `docker-compose.yml`
+- Model the user as a person entry too, so events can happen between any two people instead of always being implicitly between the user and one friend
+- Consider renaming `Friend` to `Person` later if the data model becomes more general
+- Add a convenience endpoint to retrieve rules by friend name
+
 ## Notes
 
-This is a private project.
+This is a private learning project.
 
+The scoring system is subjective and should not be treated as an objective measurement of a real relationship.
 
 The LLM will be used as an assistant for generating structured suggestions, but the backend will remain responsible for validation, storage, and final business logic.
