@@ -1344,8 +1344,6 @@ Learning focus:
 
 ## Notes
 
-This is a private learning project.
-
-The scoring system is subjective and should not be treated as an objective measurement of a real relationship.
+This is a private learning project meant to be social commentary on government surveillance.
 
 The LLM will be used as an assistant for generating structured suggestions, but the backend will remain responsible for validation, storage, and final business logic.
