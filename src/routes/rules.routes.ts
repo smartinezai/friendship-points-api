@@ -1,15 +1,13 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../db/prisma.js";
-
+import { getFriendById } from "../services/friends.service.js";
 
 export async function ruleRoutes(app: FastifyInstance) {
 
     app.get<{ Params: { friendId: string } }>("/friends/:friendId/rules", async (request, reply) => {
         const { friendId } = request.params; //destructure friendId from request params, and type it as a string
 
-        const friend = await prisma.friend.findUnique({ //first check if the friend exists
-            where: { id: friendId },
-        });
+        const friend = await getFriendById(friendId); //first check if the friend exists
 
         if (!friend) {
             reply.status(404);
@@ -34,9 +32,7 @@ export async function ruleRoutes(app: FastifyInstance) {
         };
     }>("/friends/:friendId/rules", async (request, reply) => {
         const { friendId } = request.params; //destructure friendId from request params, and type it as a string
-        const friend = await prisma.friend.findUnique({ //first check if the friend exists
-            where: { id: friendId },
-        });
+        const friend = await getFriendById(friendId); //first check if the friend exists
 
         if (!friend) {
             reply.status(404);

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from "../db/prisma.js";
+import { getFriendById } from "../services/friends.service.js";
 
 export async function assessmentRoutes(app: FastifyInstance) {
     app.post<{
@@ -43,9 +44,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
         Params: { friendId: string }
     }>("/friends/:friendId/balance", async (request, reply) => {
         const { friendId } = request.params;
-        const friend = await prisma.friend.findUnique({
-            where: { id: friendId }
-        });
+        const friend = await getFriendById(friendId);
 
         if (!friend) {
             return reply.status(404).send({ error: "Friend not found" });

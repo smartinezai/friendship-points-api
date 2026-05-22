@@ -1,15 +1,13 @@
 import type { FastifyInstance } from "fastify";
 import {prisma} from "../db/prisma.js";
-
+import { getFriendById } from "../services/friends.service.js";
 
 export async function friendRoutes(app: FastifyInstance) {
     
     app.get<{ Params: { id: string } }>("/friends/:id", async (request, reply) => {
         const { id } = request.params; //destructure id from request params, and type it as a string
 
-        const friend = await prisma.friend.findUnique({
-            where: { id },
-        });
+        const friend = await getFriendById(id);
 
         if (!friend) {
             reply.status(404);
