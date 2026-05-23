@@ -34,17 +34,6 @@ model Rule {
   updatedAt       DateTime @updatedAt
 }
 
-model Assessment {
-  id         String   @id @default(uuid())
-  eventId    String
-  event      Event    @relation(fields: [eventId], references: [id])
-  scoreDelta Int
-  reason     String?
-  source     String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-}
-
 model Event {
   id          String       @id @default(uuid())
   friendId    String
@@ -54,4 +43,19 @@ model Event {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   assessments Assessment[]
+}
+
+model Assessment {
+  id              String   @id @default(uuid())
+  eventId         String
+  event           Event    @relation(fields: [eventId], references: [id])
+  scoreDelta      Int
+  reason          String?
+  source          String
+  impactDirection String?
+  biasNotes       String?
+  confidence      Float?
+  matchedRuleIds  String[] @default([])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

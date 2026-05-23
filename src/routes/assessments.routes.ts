@@ -120,6 +120,10 @@ export async function assessmentRoutes(app: FastifyInstance) {
                     scoreDelta: llmResult.scoreDelta,
                     reason: llmResult.reasoningSummary,
                     source: "mock-llm",
+                    impactDirection: llmResult.impactDirection,
+                    biasNotes: llmResult.biasNotes ?? null,
+                    confidence: llmResult.confidence,
+                    matchedRuleIds: llmResult.matchedRuleIds,
                 },
             });
             return reply.status(201).send({ assessment, llmResult });
