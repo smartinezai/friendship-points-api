@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from "../db/prisma.js";
 import { getFriendById } from "../services/friends.service.js";
+import { mockLlmAssessment } from '../ai/mockAssessment.service.js';
+
 
 export async function assessmentRoutes(app: FastifyInstance) {
     app.post<{
@@ -63,6 +65,67 @@ export async function assessmentRoutes(app: FastifyInstance) {
         return reply.status(200).send({
             friendId,
             balance: result._sum.scoreDelta ?? 0
-     });
+        });
     });
-} 
+
+    app.post<{
+        Params: { eventId: string }
+    }>("/events/:eventId/mock-assessment", async (request, reply) => {
+        const { eventId } = request.params; //get eventId from request params
+        const event = await prisma.event.findUnique({ //check if the event exists
+            where: { id: eventId }, //find one event by id and inclue the friend connet3ed to that event and the active rules of that friend
+            include: {
+                friend: {
+                    include: {
+                        rules: {
+                            where: {
+                                active: true, //only include active rules in the assessment input, since inactive rules should not be considered when evaluating the impact of an event on a friendship. By filtering for active rules, we ensure that the LLM assessment is based on the most relevant and up-to-date information about the friend's preferences and boundaries.
+                            }
+                        }
+                    }
+                }
+            },
+        });
+        if (!event) {
+            return reply.status(404).send({ error: "Event not found" });
+        }
+
+        const friend = event.friend;
+        const rules = event.friend.rules;
+        const llmInput = {
+            friend: {
+                id: friend.id,
+                displayName: friend.displayName,
+                notes: friend.notes,
+            },
+            event: {
+                id: event.id,
+                eventText: event.eventText,
+                happenedAt: event.happenedAt ? event.happenedAt.toISOString() : null,
+            },
+            rules: rules.map(rule => ({
+                id: rule.id,
+                title: rule.title,
+                description: rule.description,
+                impactDirection: rule.impactDirection,
+                weight: rule.weight,
+            })),
+        };
+
+        try {
+            const llmResult = await mockLlmAssessment(llmInput);
+            const assessment = await prisma.assessment.create({
+                data: {
+                    eventId,
+                    scoreDelta: llmResult.scoreDelta,
+                    reason: llmResult.reasoningSummary,
+                    source: "mock-llm",
+                },
+            });
+            return reply.status(201).send({ assessment, llmResult });
+        } catch (error) {
+            console.error("Error during LLM assessment:", error);
+            return reply.status(500).send({ error: "An error occurred during the LLM assessment." });
+        }
+    });
+}
