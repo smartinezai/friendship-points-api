@@ -1,10 +1,12 @@
 # Friendship Points API
 
-A TypeScript backend API for tracking friendship-related events, rules, events, point changes, and eventually LLM-assisted friendship assessments.
+A TypeScript backend API for tracking friendship-related events, rules, point changes, and LLM-assisted friendship assessments.
 
-The long-term goal of this project is to build a production-style backend where friendship-related events can be stored, evaluated, searched, and assessed with help from LangChain, PostgreSQL, retrieval pipelines, and later observability, DevOps, and security tooling.
+The long-term goal of this project is to build a production-style backend where friendship-related events can be stored, evaluated, searched, and assessed with help from LangChain, PostgreSQL, retrieval pipelines, and later observability, DevOps, security, and evaluation tooling.
 
 This is primarily a learning project for practicing backend engineering, TypeScript, PostgreSQL, applied AI engineering, and production-grade AI system design.
+
+---
 
 ## Learning Goals
 
@@ -17,8 +19,13 @@ This project is designed to practice:
 - API design
 - relational data modeling
 - backend project structure
+- service-layer refactoring
+- Zod validation
 - LangChain.js
 - structured LLM outputs
+- Mistral and OpenAI-style LLM provider integrations
+- prompt design
+- bias-aware LLM assessment
 - RAG and reranking
 - vector databases
 - Supabase
@@ -26,13 +33,16 @@ This project is designed to practice:
 - DevOps workflows
 - secure development practices
 - observability and debugging
+- logging and monitoring
 - LLM tracing and analytics
 - document ingestion and preprocessing for retrieval
 - automated evaluation and testing for LLM features
 
+---
+
 ## Current Status
 
-Day 5 is in progress.
+Day 9 is in progress/completed through the Mistral integration.
 
 The project currently contains:
 
@@ -42,9 +52,19 @@ The project currently contains:
 - A `Friend` database model
 - A `Rule` database model
 - An `Event` database model
+- An `Assessment` database model
 - Friend API endpoints
 - Rule API endpoints
 - Event API endpoints
+- Manual assessment endpoint
+- Balance calculation endpoint
+- Mock LLM assessment endpoint
+- Mistral LLM assessment endpoint
+- OpenAI/LangChain assessment endpoint, currently blocked by API quota
+- Zod schema validation for structured LLM output
+- Service helpers for repeated assessment logic
+
+---
 
 ## Tech Stack
 
@@ -57,12 +77,13 @@ The project currently contains:
 - Prisma
 - dotenv
 - tsx
-
-### Planned
-
 - Zod
 - LangChain.js
-- LLM provider integration
+- Mistral via LangChain
+- OpenAI via LangChain, route exists but API quota is currently unavailable
+
+### Planned / Future Practice
+
 - Vitest
 - Docker
 - Supabase
@@ -70,6 +91,10 @@ The project currently contains:
 - GitHub Actions
 - Observability tooling
 - LLM tracing tooling
+- RAG and reranking tooling
+- Evaluation frameworks such as DeepEval or LangSmith evaluations
+
+---
 
 ## Project Goal
 
@@ -83,9 +108,11 @@ The final API should allow me to:
 - Query friendship point balances
 - Use LangChain to assess event impact
 - Use rules and retrieved context to support LLM assessments
+- Classify events as positive, negative, mixed, or neutral
+- Account for narrator bias and missing context
 - Predict the possible impact of hypothetical actions
 - Trace, test, and evaluate LLM behavior
-- Eventually support RAG, reranking, and vector search
+- Eventually support RAG, reranking, vector search, document ingestion, and production-style monitoring
 
 Example rule:
 
@@ -99,26 +126,30 @@ Example event:
 I called Cole without prior warning.
 ```
 
-Example future LLM-assisted assessment:
+Example LLM-assisted assessment:
 
 ```json
 {
-  "score_delta": -6,
+  "scoreDelta": -6.5,
+  "impactDirection": "negative",
   "confidence": 0.82,
-  "reasoning_summary": "This likely violates the rule about unexpected phone calls.",
-  "matched_rules": ["Unexpected calls are bad"]
+  "reasoningSummary": "This likely violates the rule about unexpected phone calls.",
+  "matchedRuleIds": ["rule-id-1"],
+  "biasNotes": "The event is described from one perspective, so missing context may affect the assessment."
 }
 ```
 
-## Current API Endpoints
+---
 
-### Health Check
+# Current API Endpoints
 
-```http
-GET /health
-```
+## Health Check
 
-Response:
+### `GET /health`
+
+Checks whether the API server is running.
+
+Example response:
 
 ```json
 {
@@ -126,35 +157,25 @@ Response:
 }
 ```
 
-This endpoint checks that the API server is running and reachable.
-
 ---
 
 ## Friends
 
-### Get All Friends
+### `GET /friends`
 
-```http
-GET /friends
-```
+Returns all friends.
 
-### Get Friend By ID
+### `GET /friends/:id`
 
-```http
-GET /friends/:id
-```
+Returns one friend by ID.
 
-### Search Friends By Name
+### `GET /friends/search?name=Cole`
 
-```http
-GET /friends/search?name=Cole
-```
+Searches friends by name.
 
-### Create Friend
+### `POST /friends`
 
-```http
-POST /friends
-```
+Creates a new friend.
 
 Request body:
 
@@ -165,21 +186,46 @@ Request body:
 }
 ```
 
+Duplicate handling:
+
+If a friend with the exact same `displayName` already exists, the API returns `409 Conflict` and the existing friend information.
+
+Example duplicate response:
+
+```json
+{
+  "error": "Friend with this display name already exists",
+  "existingFriend": {
+    "id": "friend-id",
+    "displayName": "Cole William Bailey",
+    "notes": "Existing notes",
+    "createdAt": "timestamp",
+    "updatedAt": "timestamp"
+  }
+}
+```
+
+To intentionally create a duplicate:
+
+```json
+{
+  "displayName": "Cole William Bailey",
+  "notes": "Another person with the same name",
+  "allowDuplicate": true
+}
+```
+
 ---
 
 ## Rules
 
-### Get Rules For Friend
+### `GET /friends/:friendId/rules`
 
-```http
-GET /friends/:friendId/rules
-```
+Returns all rules for a friend.
 
-### Create Rule For Friend
+### `POST /friends/:friendId/rules`
 
-```http
-POST /friends/:friendId/rules
-```
+Creates a rule for a friend.
 
 Request body:
 
@@ -192,11 +238,9 @@ Request body:
 }
 ```
 
-### Update Rule Weight
+### `PATCH /rules/:ruleId/weight`
 
-```http
-PATCH /rules/:ruleId/weight
-```
+Updates a rule's weight.
 
 Request body:
 
@@ -220,17 +264,13 @@ critical
 
 ## Events
 
-### Get Events For Friend
+### `GET /friends/:friendId/events`
 
-```http
-GET /friends/:friendId/events
-```
+Returns all events for a friend.
 
-### Create Event For Friend
+### `POST /friends/:friendId/events`
 
-```http
-POST /friends/:friendId/events
-```
+Creates an event for a friend.
 
 Request body:
 
@@ -243,15 +283,121 @@ Request body:
 
 `happenedAt` is optional.
 
-### Get Event By ID
+### `GET /events/:eventId`
 
-```http
-GET /events/:eventId
+Returns one event by ID.
+
+---
+
+## Assessments
+
+### `POST /events/:eventId/manual-assessment`
+
+Creates a manual human-written assessment for an event.
+
+Request body:
+
+```json
+{
+  "scoreDelta": -3.5,
+  "reason": "Testing decimal score."
+}
 ```
 
-## Database Models
+Rules:
 
-### Friend
+- `scoreDelta` must be a number between `-10` and `10`.
+- `reason` is optional.
+- `source` is stored as `manual`.
+
+---
+
+### `GET /friends/:friendId/balance`
+
+Returns the friendship point balance for a friend by summing all `scoreDelta` values for assessments connected to that friend's events.
+
+Example response:
+
+```json
+{
+  "friendId": "friend-id",
+  "balance": 9.5
+}
+```
+
+---
+
+### `POST /events/:eventId/mock-assessment`
+
+Creates a mock LLM-style assessment without calling a real external model.
+
+Purpose:
+
+- Test backend logic without spending API quota.
+- Test structured result handling.
+- Test assessment persistence.
+- Keep the route shape compatible with real LLM providers.
+
+Stored source:
+
+```txt
+mock
+```
+
+---
+
+### `POST /events/:eventId/mistral-assessment`
+
+Creates a real LLM assessment using Mistral via LangChain.
+
+Purpose:
+
+- Use a real model provider.
+- Return structured output.
+- Validate the result with Zod.
+- Store the structured assessment in PostgreSQL.
+
+Stored source:
+
+```txt
+mistral
+```
+
+The Mistral assessment stores:
+
+```txt
+scoreDelta
+reasoningSummary
+impactDirection
+confidence
+matchedRuleIds
+biasNotes
+source
+```
+
+---
+
+### `POST /events/:eventId/llm-assessment`
+
+Creates a real LLM assessment using the OpenAI/LangChain service.
+
+Status:
+
+```txt
+Route exists, but OpenAI API calls are currently blocked by quota.
+```
+
+Stored source:
+
+```txt
+openai
+```
+
+---
+
+# Database Models
+
+## Friend
 
 ```prisma
 model Friend {
@@ -265,7 +411,7 @@ model Friend {
 }
 ```
 
-### Rule
+## Rule
 
 ```prisma
 model Rule {
@@ -282,21 +428,43 @@ model Rule {
 }
 ```
 
-### Event
+## Event
 
 ```prisma
 model Event {
-  id         String    @id @default(uuid())
-  friendId   String
-  friend     Friend    @relation(fields: [friendId], references: [id])
-  eventText  String
-  happenedAt DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id          String       @id @default(uuid())
+  friendId    String
+  friend      Friend       @relation(fields: [friendId], references: [id])
+  eventText   String
+  happenedAt  DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  assessments Assessment[]
 }
 ```
 
-## Project Structure
+## Assessment
+
+```prisma
+model Assessment {
+  id              String   @id @default(uuid())
+  eventId         String
+  event           Event    @relation(fields: [eventId], references: [id])
+  scoreDelta      Float
+  reason          String?
+  source          String
+  impactDirection String?
+  biasNotes       String?
+  confidence      Float?
+  matchedRuleIds  String[] @default([])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+```
+
+---
+
+# Project Structure
 
 ```txt
 src/
@@ -308,11 +476,22 @@ src/
     friends.routes.ts
     rules.routes.ts
     events.routes.ts
+    assessments.routes.ts
   services/
+    friends.service.ts
+    assessments.service.ts
+  ai/
+    assessment.types.ts
+    assessment.schema.ts
+    mockAssessment.service.ts
+    langchainAssessment.service.ts
+    mistralAssessment.service.ts
   schemas/
   types/
   utils/
 ```
+
+## Important Files
 
 ### `src/app.ts`
 
@@ -330,50 +509,50 @@ Creates and exports the Prisma client used to query PostgreSQL.
 
 Contains API route definitions.
 
-Current route files:
-
-```txt
-friends.routes.ts
-rules.routes.ts
-events.routes.ts
-```
-
 ### `src/services/`
 
-Planned location for reusable business logic.
+Contains reusable application/database logic.
 
-### `src/schemas/`
+Current service helpers include:
 
-Planned location for request validation schemas.
+```txt
+getFriendById
+getEventWithFriendAndActiveRules
+buildLlmAssessmentInput
+saveLlmAssessment
+assessEventWithProvider
+```
 
-### `src/types/`
+### `src/ai/`
 
-Planned location for custom TypeScript types.
+Contains LLM-related types, schemas, prompts/services, and provider-specific assessment logic.
 
-### `src/utils/`
+---
 
-Planned location for helper functions.
+# Getting Started
 
-## Getting Started
-
-### 1. Install dependencies
+## 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 2. Create environment file
+## 2. Create environment file
 
 Create a `.env` file:
 
 ```txt
 PORT=3000
 DATABASE_URL="postgresql://YOUR_USERNAME@localhost:5432/friendship_points_api"
+MISTRAL_API_KEY=
+OPENAI_API_KEY=
 ```
 
 Use `.env.example` as a reference.
 
-### 3. Start PostgreSQL
+Do not commit `.env`.
+
+## 3. Start PostgreSQL
 
 Example using Homebrew on macOS:
 
@@ -381,25 +560,25 @@ Example using Homebrew on macOS:
 brew services start postgresql@16
 ```
 
-### 4. Create the database
+## 4. Create the database
 
 ```bash
 createdb friendship_points_api
 ```
 
-### 5. Run Prisma migrations
+## 5. Run Prisma migrations
 
 ```bash
 npx prisma migrate dev
 ```
 
-### 6. Generate Prisma client
+## 6. Generate Prisma client
 
 ```bash
 npx prisma generate
 ```
 
-### 7. Run the development server
+## 7. Run the development server
 
 ```bash
 npm run dev
@@ -411,7 +590,7 @@ The server should start on:
 http://localhost:3000
 ```
 
-### 8. Test the health endpoint
+## 8. Test the health endpoint
 
 ```bash
 curl http://localhost:3000/health
@@ -425,15 +604,21 @@ Expected response:
 }
 ```
 
-### 9. Open Prisma Studio
+## 9. Open Prisma Studio
 
 ```bash
 npx prisma studio
 ```
 
-This opens an interactive browser view of the database.
+This opens an interactive browser view of the database, usually at:
 
-## Available Scripts
+```txt
+http://localhost:5555
+```
+
+---
+
+# Available Scripts
 
 ```bash
 npm run dev
@@ -453,19 +638,22 @@ npm start
 
 Runs the compiled JavaScript code from the `dist` folder.
 
-## Environment Variables
+---
+
+# Environment Variables
 
 Create a `.env` file in the project root.
 
 ```txt
 PORT=3000
 DATABASE_URL="postgresql://YOUR_USERNAME@localhost:5432/friendship_points_api"
+MISTRAL_API_KEY=
+OPENAI_API_KEY=
 ```
 
 Planned future variables:
 
 ```txt
-OPENAI_API_KEY=
 LANGCHAIN_API_KEY=
 LANGSMITH_API_KEY=
 SUPABASE_URL=
@@ -474,11 +662,34 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 ---
 
-# Detailed Roadmap
+# Development Workflow
+
+Going forward, this project should use small commits.
+
+Preferred pattern:
+
+```txt
+one logical change = one commit
+```
+
+Examples:
+
+```bash
+git commit -m "Add Mistral assessment service"
+git commit -m "Add Mistral assessment route"
+git commit -m "Improve LLM rule matching prompt"
+git commit -m "Extract assessment provider orchestration helper"
+```
+
+---
+
+# Detailed 21-Day Roadmap
 
 ## Phase 1: Core TypeScript API and PostgreSQL Foundations
 
-### Day 1: TypeScript + Fastify Setup
+## Day 1: TypeScript + Fastify Setup
+
+Status: Done.
 
 Goals:
 
@@ -490,7 +701,7 @@ Goals:
 - Add a `/health` endpoint
 - Add GitHub repository setup
 
-Endpoints:
+Endpoint:
 
 ```http
 GET /health
@@ -506,7 +717,9 @@ Learning focus:
 
 ---
 
-### Day 2: PostgreSQL + Prisma Setup
+## Day 2: PostgreSQL + Prisma Setup
+
+Status: Done.
 
 Goals:
 
@@ -536,7 +749,9 @@ Learning focus:
 
 ---
 
-### Day 3: Friends API
+## Day 3: Friends API
+
+Status: Done.
 
 Goals:
 
@@ -571,7 +786,9 @@ Learning focus:
 
 ---
 
-### Day 4: Friendship Rules
+## Day 4: Friendship Rules
+
+Status: Done.
 
 Goals:
 
@@ -606,7 +823,9 @@ Learning focus:
 
 ---
 
-### Day 5: Friendship Events
+## Day 5: Friendship Events
+
+Status: Done.
 
 Goals:
 
@@ -640,35 +859,26 @@ Learning focus:
 
 ---
 
-### Day 6: Manual Scoring and Balance
+## Day 6: Manual Scoring and Balance
+
+Status: Done.
 
 Goals:
 
 - Add manual scoring before LLM scoring
-- Create an assessment or score model
+- Create `Assessment` model
 - Store score changes for events
 - Calculate friendship balance
 - Keep the system useful without AI first
+- Change `scoreDelta` from `Int` to `Float` to support decimal scores
 
-Possible database model:
+Database model:
 
 ```txt
 Assessment
 ```
 
-Possible fields:
-
-```txt
-id
-eventId
-scoreDelta
-reason
-source
-createdAt
-updatedAt
-```
-
-Possible endpoints:
+Endpoints:
 
 ```http
 POST /events/:eventId/manual-assessment
@@ -678,6 +888,7 @@ GET /friends/:friendId/balance
 Learning focus:
 
 - numeric fields
+- decimal scores
 - aggregations
 - `SUM`
 - keeping deterministic logic separate from AI logic
@@ -685,39 +896,29 @@ Learning focus:
 
 ---
 
-### Day 7: Refactor, Validation, and Duplicate Handling
+## Day 7: Refactor, Validation, and Duplicate Handling
+
+Status: Done.
 
 Goals:
 
 - Move repeated database logic into services
-- Add validation schemas
-- Improve error responses
 - Add duplicate friend-name handling
 - Clean up route files
+- Improve validation/error responses
 - Make the project easier to extend before adding AI
 
-Planned service files:
+Implemented service files:
 
 ```txt
 src/services/friends.service.ts
-src/services/rules.service.ts
-src/services/events.service.ts
-```
-
-Repeated logic to move:
-
-```txt
-friend existence checks
-friend lookup by ID
-friend creation
-friend search by name
 ```
 
 Duplicate friend-name behavior:
 
-If `POST /friends` receives a `displayName` that exactly matches an existing friend, the API should return `409 Conflict` with the existing friend information.
+If `POST /friends` receives a `displayName` that exactly matches an existing friend, the API returns `409 Conflict` with the existing friend information.
 
-The duplicate should only be created if the user explicitly confirms it, for example:
+The duplicate is only created if the user explicitly confirms it:
 
 ```json
 {
@@ -740,27 +941,53 @@ Learning focus:
 
 ## Phase 2: LangChain and LLM-Assisted Scoring
 
-### Day 8: LLM Assessment Design
+## Day 8: LLM Assessment Design
+
+Status: Done.
 
 Goals:
 
 - Design the LLM assessment flow before coding it
 - Decide what data comes from PostgreSQL
-- Decide what data goes into the LangChain prompt
+- Decide what data goes into the LLM prompt
 - Define expected structured output
+- Add bias-aware assessment design
+- Allow the LLM to classify events as positive, negative, mixed, or neutral
 - Keep LLM logic separate from database writes
 
-Planned flow:
+Planned / implemented flow:
 
 ```txt
 event
 → fetch friend
 → fetch active rules
-→ build prompt
-→ call LLM
+→ build prompt input
+→ call assessment provider
 → validate structured output
 → store assessment
 ```
+
+Structured output shape:
+
+```ts
+type LlmAssessmentResult = {
+  impactDirection: "positive" | "negative" | "mixed" | "neutral";
+  scoreDelta: number;
+  confidence: number;
+  reasoningSummary: string;
+  matchedRuleIds: string[];
+  biasNotes?: string;
+};
+```
+
+Bias handling requirements:
+
+- The event description is written from the user's perspective.
+- The LLM should consider narrator bias.
+- The LLM should consider emotionally loaded wording.
+- The LLM should consider missing context.
+- The LLM should distinguish observed facts from interpretation.
+- The LLM should not assume intent unless clearly supported.
 
 Learning focus:
 
@@ -768,88 +995,178 @@ Learning focus:
 - deterministic backend vs LLM logic
 - prompt input design
 - output contracts
+- bias-aware assessment
 
 ---
 
-### Day 9: Mock LLM Service
+## Day 8.5: Mock LLM and Structured Assessment Storage
+
+Status: Done.
 
 Goals:
 
-- Create a mock assessment service
-- Avoid real API calls while testing backend logic
-- Define an interface for assessment services
-- Make it easy to swap mock LLM for LangChain later
+- Add Zod schema for LLM output validation
+- Create mock LLM assessment service
+- Validate mock output with `assessmentSchema.parse(...)`
+- Add mock assessment endpoint
+- Update `Assessment` model to store structured LLM fields
+- Store `impactDirection`, `confidence`, `matchedRuleIds`, and `biasNotes`
 
-Possible files:
+Implemented files:
 
 ```txt
-src/ai/mockAssessment.service.ts
 src/ai/assessment.types.ts
 src/ai/assessment.schema.ts
+src/ai/mockAssessment.service.ts
+```
+
+Endpoint:
+
+```http
+POST /events/:eventId/mock-assessment
 ```
 
 Learning focus:
 
-- dependency separation
-- testing without real LLM calls
-- interface-driven design
-- mocking external services
+- Zod runtime validation
+- TypeScript type inference from Zod
+- mock provider design
+- structured output storage
+- safe provider abstraction
 
 ---
 
-### Day 10: LangChain Integration
+## Day 9: Real LLM Providers and Provider Refactor
+
+Status: In progress / Mistral working.
 
 Goals:
 
-- Add LangChain.js
-- Add an LLM provider
-- Create a LangChain assessment chain
-- Use prompt templates
-- Request structured output
+- Add LangChain.js provider services
+- Add OpenAI assessment service
+- Add Mistral assessment service
+- Add real LLM assessment endpoints
+- Store structured LLM assessment results
+- Improve prompt instructions for semantically relevant rule matching
+- Refactor duplicated route logic into service helpers
+- Use consistent assessment source names
 
-Possible files:
+Implemented files:
 
 ```txt
 src/ai/langchainAssessment.service.ts
-src/ai/prompts/friendshipAssessment.prompt.ts
+src/ai/mistralAssessment.service.ts
+src/services/assessments.service.ts
 ```
+
+Implemented endpoints:
+
+```http
+POST /events/:eventId/mock-assessment
+POST /events/:eventId/mistral-assessment
+POST /events/:eventId/llm-assessment
+```
+
+Provider status:
+
+```txt
+mock    = works without external API call
+mistral = working real LLM provider
+openai  = route exists, currently blocked by API quota
+```
+
+Assessment service helpers:
+
+```txt
+getEventWithFriendAndActiveRules
+buildLlmAssessmentInput
+saveLlmAssessment
+assessEventWithProvider
+```
+
+Important prompt improvement:
+
+- Only include a rule ID in `matchedRuleIds` if the rule is directly semantically relevant to the event.
+- Do not match a rule just because it exists.
+- If no rule clearly applies, return `matchedRuleIds: []`.
+- A rule about one topic should not be used to assess an unrelated event.
+- If the event is positive or negative even without a matching rule, the model may still assign a `scoreDelta`, but `matchedRuleIds` should remain empty.
 
 Learning focus:
 
-- LangChain basics
-- prompt templates
-- structured output
-- model configuration
-- safe LLM boundaries
+- LangChain model calls
+- provider abstraction
+- structured output with real LLMs
+- prompt iteration
+- source/provider tracking
+- reducing route duplication
+- real-world API quota/error handling
 
 ---
 
-### Day 11: LLM Assessment Endpoint
+## Day 10: Prompt Extraction and Provider Cleanup
+
+Status: Planned.
 
 Goals:
 
-- Add endpoint for assessing an existing event
-- Fetch event and related friend rules
-- Call LangChain assessment service
-- Validate LLM output
-- Store assessment in PostgreSQL
+- Extract shared prompt-building logic into a separate helper
+- Avoid duplicating prompts between Mistral and OpenAI services
+- Create `src/ai/prompts/friendshipAssessment.prompt.ts`
+- Make prompt updates easier and safer
+- Add provider-specific overrides only where needed
+- Add small commits for prompt extraction and provider cleanup
 
-Possible endpoint:
+Possible files:
 
-```http
-POST /events/:eventId/assess
+```txt
+src/ai/prompts/friendshipAssessment.prompt.ts
+src/ai/providers.ts
 ```
 
 Learning focus:
 
-- LLM orchestration
-- validating model output
-- storing model metadata
-- separating suggestion from truth
+- prompt modularization
+- provider-agnostic prompt design
+- maintainable AI service structure
 
 ---
 
-### Day 12: Prediction Endpoint
+## Day 11: Route and Request Validation
+
+Status: Planned.
+
+Goals:
+
+- Add Zod schemas for request bodies
+- Validate manual assessment request body
+- Validate friend creation request body
+- Validate rule creation request body
+- Validate event creation request body
+- Improve error messages consistently
+- Avoid unsafe request body assumptions
+
+Possible files:
+
+```txt
+src/schemas/friends.schema.ts
+src/schemas/rules.schema.ts
+src/schemas/events.schema.ts
+src/schemas/assessments.schema.ts
+```
+
+Learning focus:
+
+- runtime validation
+- clean error responses
+- request schema design
+- API safety
+
+---
+
+## Day 12: Prediction Endpoint
+
+Status: Planned.
 
 Goals:
 
@@ -857,6 +1174,7 @@ Goals:
 - Use rules and context without saving an event
 - Return predicted score impact
 - Keep prediction separate from persisted event history
+- Reuse LLM input/assessment structure where possible
 
 Possible endpoint:
 
@@ -877,18 +1195,23 @@ Learning focus:
 - temporary inference
 - prediction vs saved facts
 - API design for AI features
+- reusing provider services
 
 ---
 
-### Day 13: Testing
+## Day 13: Testing Foundation
+
+Status: Planned.
 
 Goals:
 
 - Add Vitest
-- Test friends, rules, events, and balance logic
+- Test friends, rules, events, assessments, and balance logic
+- Test duplicate friend-name handling
 - Test validation behavior
 - Test mock LLM behavior
 - Avoid testing real LLM calls at first
+- Add tests around provider orchestration helpers
 
 Learning focus:
 
@@ -899,12 +1222,14 @@ Learning focus:
 
 ---
 
-### Day 14: Polish and Documentation
+## Day 14: Polish and Documentation
+
+Status: Planned.
 
 Goals:
 
 - Update README
-- Add `.env.example`
+- Add/update `.env.example`
 - Document endpoints
 - Document architecture
 - Clean up route files
@@ -920,43 +1245,55 @@ Learning focus:
 
 ## Phase 3: Retrieval, RAG, Vector Search, and Document Pipelines
 
-### Future Task: RAG and Reranking
+## Day 15: Document Ingestion and Preprocessing
+
+Status: Planned.
 
 Goals:
 
-- Retrieve relevant rules, events, and notes for a new event
-- Use semantic search instead of only direct rule fetching
-- Add reranking to prioritize the most relevant retrieved context
-- Pass reranked context into LangChain scoring
+- Add a first document ingestion flow
+- Support basic text input first, then expand to files
+- Plan support for TXT, Markdown, CSV, DOCX, and PDF later
+- Extract text
+- Clean and normalize text
+- Split content into chunks
+- Add metadata for source, friend, date, and document type
 
-Possible flow:
+Possible future endpoints:
+
+```http
+POST /friends/:friendId/documents
+GET /friends/:friendId/documents
+```
+
+Possible future models:
 
 ```txt
-new event text
-→ embedding search
-→ retrieve candidate rules/events/notes
-→ rerank candidates
-→ pass best context to LangChain
-→ generate assessment
+Document
+DocumentChunk
 ```
 
 Learning focus:
 
-- retrieval-augmented generation
-- semantic search
-- reranking
-- context selection
-- RAG evaluation
+- document ingestion
+- preprocessing
+- chunking strategies
+- metadata design
+- handling messy input
 
 ---
 
-### Future Task: Vector Database
+## Day 16: Embeddings and Vector Storage
+
+Status: Planned.
 
 Goals:
 
-- Store embeddings for rules, events, and longer notes
-- Retrieve semantically similar context
-- Compare vector database options
+- Create embeddings for rules, events, notes, and document chunks
+- Store embeddings in a vector database
+- Start with pgvector or Supabase Vector because the project already uses PostgreSQL
+- Compare options such as Qdrant, Chroma, Weaviate, and Pinecone
+- Add metadata filtering by friend/person and content type
 
 Possible tools:
 
@@ -969,91 +1306,75 @@ Weaviate
 Pinecone
 ```
 
-Recommended starting point:
+Possible future models:
 
 ```txt
-pgvector / Supabase Vector
+Embedding
+VectorChunk
 ```
-
-Reason:
-
-- The project already uses PostgreSQL
-- Supabase is also planned
-- pgvector fits naturally with relational data
 
 Learning focus:
 
 - embeddings
 - vector similarity
 - metadata filtering
-- hybrid retrieval
 - vector database tradeoffs
+- PostgreSQL + vector search
 
 ---
 
-### Future Task: Document Analysis and Preprocessing for Retrieval
+## Day 17: RAG Retrieval and Reranking
+
+Status: Planned.
 
 Goals:
 
-- Upload or ingest documents
-- Extract text from messy files
-- Clean and normalize text
-- Split documents into chunks
-- Add metadata
-- Store chunks
-- Create embeddings
-- Index for retrieval
-- Evaluate retrieval quality
-
-Possible file types:
-
-```txt
-PDF
-DOCX
-TXT
-CSV
-Markdown
-chat exports
-personal notes
-```
+- Retrieve relevant rules, events, notes, and document chunks for a new event
+- Use semantic retrieval instead of sending all available rules
+- Add reranking to prioritize the most relevant context
+- Pass reranked context into the LLM assessment flow
+- Avoid forcing irrelevant rule matches
 
 Possible flow:
 
 ```txt
-uploaded document
-→ text extraction
-→ cleaning
-→ chunking
-→ metadata enrichment
-→ embeddings
-→ vector storage
-→ retrieval
-→ reranking
-→ LangChain assessment
+new event text
+→ embedding search
+→ retrieve candidate rules/events/notes/chunks
+→ rerank candidates
+→ pass best context to LLM
+→ generate assessment
 ```
+
+Important rule-matching goal:
+
+- Only match rules that are semantically relevant.
+- Do not force `matchedRuleIds` if no rule applies.
+- Allow `matchedRuleIds: []`.
 
 Learning focus:
 
-- document ingestion
-- preprocessing
-- chunking strategies
-- metadata design
-- retrieval quality
+- retrieval-augmented generation
+- semantic search
+- reranking
+- context selection
+- RAG evaluation
+- rule matching quality
 
 ---
 
-## Phase 4: Supabase and Deployment-Oriented Database Practice
+## Day 18: Supabase Migration Practice
 
-### Future Task: Supabase
+Status: Planned.
 
 Goals:
 
 - Move from local PostgreSQL to Supabase-hosted Postgres
 - Update `DATABASE_URL`
 - Run Prisma migrations against Supabase
-- Use Supabase dashboard to inspect tables
+- Use the Supabase dashboard to inspect tables
+- Explore Supabase Vector / pgvector
 - Optionally explore Supabase Auth later
-- Optionally use Supabase Vector / pgvector
 
 Learning focus:
 
@@ -1062,10 +1383,155 @@ Learning focus:
 - database migrations in hosted environments
 - Supabase dashboard
 - Supabase Vector
+- local vs hosted development setup
 
 ---
 
-### Future Task: Data Model Refactor to Support Multiple People
+## Phase 4: DevOps, Security, and Production Readiness
+
+## Day 19: Docker and Local DevOps
+
+Status: Planned.
+
+Goals:
+
+- Containerise the API
+- Containerise PostgreSQL
+- Add a `Dockerfile`
+- Add `docker-compose.yml`
+- Run the full app locally with Docker
+- Practice environment variables in containers
+- Add a `.env.example` suitable for Docker usage
+
+Possible services:
+
+```txt
+api
+postgres
+```
+
+Learning focus:
+
+- Docker basics
+- Dockerfile
+- docker-compose
+- local development environments
+- reproducible project setup
+
+---
+
+## Day 20: CI, Security, Logging, and Monitoring
+
+Status: Planned.
+
+Goals:
+
+- Add GitHub Actions CI
+- Run build checks on push
+- Run tests in CI
+- Add dependency vulnerability scanning
+- Add stronger input validation
+- Add safe error logging and safe client responses
+- Avoid exposing stack traces or database details to clients
+- Add request/error logging
+- Add API latency monitoring
+- Add endpoint usage metrics
+- Add health checks
+
+Possible tools:
+
+```txt
+GitHub Actions
+Sentry
+Grafana
+OpenTelemetry
+structured logger
+```
+
+Learning focus:
+
+- CI pipelines
+- secure development practices
+- safe error handling
+- structured logs
+- monitoring basics
+- production readiness
+
+---
+
+## Day 21: LLM Evaluation, Tracing, and Portfolio Polish
+
+Status: Planned.
+
+Goals:
+
+- Add golden test cases for LLM assessments
+- Evaluate scoring consistency
+- Check whether relevant rules are matched
+- Add regression tests for prompt changes
+- Add mocked LLM tests in CI
+- Add LLM tracing/analytics plan
+- Track prompt version, model name, token usage, latency, cost, and structured output validity
+- Update README and architecture documentation
+- Prepare the project as a portfolio-ready applied AI backend
+
+Possible tools:
+
+```txt
+DeepEval
+LangSmith evaluations
+LangSmith tracing
+Langfuse
+Helicone
+OpenTelemetry
+Vitest
+custom evaluation scripts
+```
+
+Example evaluation case:
+
+```txt
+Input event:
+I called Cole without warning.
+
+Expected matched rule:
+Unexpected calls are bad.
+
+Expected score direction:
+negative.
+
+Expected output:
+valid JSON with scoreDelta, confidence, reasoningSummary, and matchedRuleIds.
+```
+
+Example irrelevant-rule test case:
+
+```txt
+Input event:
+Cole said something hurtful.
+
+Available rule:
+Cole dislikes unexpected phone calls.
+
+Expected:
+matchedRuleIds: []
+```
+
+Learning focus:
+
+- automated AI evaluation
+- prompt regression testing
+- deterministic tests around nondeterministic systems
+- structured output validation
+- rule matching quality
+- LLM observability
+- project presentation
+
+---
+
+# Future Backlog Beyond Day 21
+
+## Data Model Refactor: Model People Instead of Only Friends
 
 Current model:
 
@@ -1081,8 +1547,9 @@ event = person A ↔ person B
 
 Goals:
 
-- Model the user as a person entry too
-- Consider renaming `Friend` to `Person`
+- Model the user as a `Person` in the database
+- Every event should happen between two people
+- Consider renaming/generalizing `Friend` to `Person`
 - Allow events between any two people
 - Avoid hardcoding the user as the implicit source of all events
 
@@ -1101,85 +1568,18 @@ Learning focus:
 - many-to-many relationships
 - refactoring schemas
 - migration planning
+- generalizing domain models
 
 ---
 
-## Phase 5: DevOps, Docker, and Production Readiness
-
-### Future Task: Docker
+## Secure Development Practices
 
 Goals:
 
-- Containerise the API
-- Containerise PostgreSQL
-- Add `Dockerfile`
-- Add `docker-compose.yml`
-- Run the full app locally with Docker
-
-Possible services:
-
-```txt
-api
-postgres
-```
-
-Learning focus:
-
-- Docker basics
-- Dockerfile
-- docker-compose
-- environment variables in containers
-- local development environments
-
----
-
-### Future Task: DevOps
-
-Goals:
-
-- Add GitHub Actions CI
-- Run build checks on push
-- Run tests in CI
-- Add deployment workflow later
-- Manage production environment variables
-- Handle Prisma migrations during deployment
-- Add health checks
-- Separate development and production configs
-
-Possible tools/platforms:
-
-```txt
-GitHub Actions
-Render
-Railway
-Fly.io
-VPS
-Docker
-```
-
-Learning focus:
-
-- CI pipelines
-- deployment
-- environment management
-- production readiness
-- migration safety
-
----
-
-## Phase 6: Security
-
-### Future Task: Secure Development Practices
-
-Goals:
-
-- Add stronger input validation
 - Add authentication and authorization
 - Protect private friendship data
 - Improve secret management
-- Add dependency vulnerability scanning
 - Add rate limiting
-- Avoid raw internal error exposure
 - Add audit logging
 - Add safe LLM usage patterns
 - Add prompt-injection awareness
@@ -1197,53 +1597,9 @@ Protect private endpoints
 Check retrieved context for prompt injection risks
 ```
 
-Learning focus:
-
-- secure API development
-- secret handling
-- auth basics
-- rate limiting
-- secure LLM application design
-
 ---
 
-## Phase 7: Observability, Debugging, and LLM Analytics
-
-### Future Task: Observability Tooling
-
-Goals:
-
-- Add structured logging
-- Log API requests and errors
-- Track endpoint latency
-- Track endpoint usage
-- Capture exceptions
-- Add metrics
-- Add tracing
-- Visualize behavior in dashboards
-
-Possible tools:
-
-```txt
-Grafana
-Sentry
-PostHog
-OpenTelemetry
-custom logging dashboards
-```
-
-Learning focus:
-
-- debugging production systems
-- logs
-- metrics
-- traces
-- error monitoring
-- performance diagnosis
-
----
-
-### Future Task: LLM Tracing and Analytics
+## Advanced Observability and LLM Analytics
 
 Goals:
 
@@ -1255,6 +1611,7 @@ Goals:
 - Compare prompt versions
 - Analyze retrieved context quality
 - Debug RAG/reranking behavior
+- Create dashboards and alerts
 
 Possible tools:
 
@@ -1263,6 +1620,9 @@ LangSmith
 Langfuse
 Helicone
 OpenTelemetry
+Grafana
+Sentry
+PostHog
 custom logging dashboards
 ```
 
@@ -1279,71 +1639,15 @@ token usage
 latency
 cost
 structured output validity
-final score_delta
+final scoreDelta
 ```
-
-Learning focus:
-
-- LLM observability
-- prompt debugging
-- cost tracking
-- latency tracking
-- RAG debugging
-- production AI monitoring
 
 ---
 
-## Phase 8: Automated Evaluation for LLM Features
+# Notes
 
-### Future Task: LLM Evaluation and Testing
 
-Goals:
+This is a private learning project meant to be social commentary on government surveillance and the social credit score system implemented by the CCP.
 
-- Create golden test cases for event assessments
-- Test structured output validity
-- Evaluate scoring consistency
-- Check whether relevant rules are matched
-- Regression test prompt changes
-- Add CI checks for mocked LLM flows
-- Explore LLM evaluation tools
-
-Possible tools:
-
-```txt
-DeepEval
-LangSmith evaluations
-Vitest
-custom evaluation scripts
-```
-
-Example test case:
-
-```txt
-Input event:
-I called Cole without warning.
-
-Expected matched rule:
-Unexpected calls are bad.
-
-Expected score direction:
-negative.
-
-Expected output:
-valid JSON with score_delta, confidence, reasoning_summary, and matched_rules.
-```
-
-Learning focus:
-
-- automated AI evaluation
-- prompt regression testing
-- deterministic tests around nondeterministic systems
-- structured output validation
-- scoring quality checks
-
----
-
-## Notes
-
-This is a private learning project meant to be social commentary on government surveillance.
 
 The LLM will be used as an assistant for generating structured suggestions, but the backend will remain responsible for validation, storage, and final business logic.
