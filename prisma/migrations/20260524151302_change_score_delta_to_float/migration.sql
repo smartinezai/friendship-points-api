@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Assessment" ALTER COLUMN "scoreDelta" SET DATA TYPE DOUBLE PRECISION;

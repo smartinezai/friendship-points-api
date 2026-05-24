@@ -1,4 +1,4 @@
-import { z} from "zod"; //use zod to define a schema for validating the request body when creating a manual assessment. This schema ensures that the scoreDelta is a number between -10 and 10, and that the reason (if provided) is a string with a reasonable length. By defining this schema, we can easily validate incoming requests and provide clear error messages if the data does not meet our requirements.
+import { z } from "zod"; //use zod to define a schema for validating the request body when creating a manual assessment. This schema ensures that the scoreDelta is a number between -10 and 10, and that the reason (if provided) is a string with a reasonable length. By defining this schema, we can easily validate incoming requests and provide clear error messages if the data does not meet our requirements.
 
 //use zod to check that the LLM output matches the expected structure defined in the LlmAssessmentResult type. This helps ensure that the data we receive from the LLM is in the correct format and contains all the necessary fields before we attempt to use it in our application.
 export const assessmentSchema = z.object({

@@ -2,7 +2,8 @@ import type { FastifyInstance } from 'fastify';
 import { prisma } from "../db/prisma.js";
 import { getFriendById } from "../services/friends.service.js";
 import { mockLlmAssessment } from '../ai/mockAssessment.service.js';
-
+import { langchainAssessEvent } from '../ai/langchainAssessment.service.js';
+import { mistralAssessEvent } from "../ai/mistralAssessment.service.js";
 
 export async function assessmentRoutes(app: FastifyInstance) {
     app.post<{
@@ -130,6 +131,163 @@ export async function assessmentRoutes(app: FastifyInstance) {
         } catch (error) {
             console.error("Error during LLM assessment:", error);
             return reply.status(500).send({ error: "An error occurred during the LLM assessment." });
+        }
+    });
+
+    app.post < {
+        Params: { eventId: string }
+    }>("/events/:eventId/mistral-assessment", async (request, reply) => {
+        const { eventId } = request.params;
+
+        const event = await prisma.event.findUnique({
+            where: { id: eventId },
+            include: {
+                friend: {
+                    include: {
+                        rules: {
+                            where: {
+                                active: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!event) {
+            return reply.status(404).send({ error: "Event not found" });
+        }
+
+        const friend = event.friend;
+        const rules = event.friend.rules;
+
+        const llmInput = {
+            friend: {
+                id: friend.id,
+                displayName: friend.displayName,
+                notes: friend.notes,
+            },
+            event: {
+                id: event.id,
+                eventText: event.eventText,
+                happenedAt: event.happenedAt ? event.happenedAt.toISOString() : null,
+            },
+            rules: rules.map((rule) => ({
+                id: rule.id,
+                title: rule.title,
+                description: rule.description,
+                impactDirection: rule.impactDirection,
+                weight: rule.weight,
+            })),
+        };
+
+        try {
+            const llmResult = await mistralAssessEvent(llmInput);
+
+            const assessment = await prisma.assessment.create({
+                data: {
+                    eventId,
+                    scoreDelta: llmResult.scoreDelta,
+                    reason: llmResult.reasoningSummary,
+                    source: "mistral",
+                    impactDirection: llmResult.impactDirection,
+                    biasNotes: llmResult.biasNotes ?? null,
+                    confidence: llmResult.confidence,
+                    matchedRuleIds: llmResult.matchedRuleIds,
+                },
+            });
+
+            return reply.status(201).send({ assessment, llmResult });
+        } catch (error) {
+            console.error("Error during LLM assessment:", error);
+
+            if (error instanceof Error) {
+                console.error("Error message:", error.message);
+                console.error("Error stack:", error.stack);
+            }
+            return reply.status(500).send({
+                error: "An error occurred during the LLM assessment.",
+            });
+        }
+    });
+
+
+    
+    
+    app.post<{
+        Params: { eventId: string }
+    }>("/events/:eventId/llm-assessment", async (request, reply) => {
+        const { eventId } = request.params;
+
+        const event = await prisma.event.findUnique({
+            where: { id: eventId },
+            include: {
+                friend: {
+                    include: {
+                        rules: {
+                            where: {
+                                active: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!event) {
+            return reply.status(404).send({ error: "Event not found" });
+        }
+
+        const friend = event.friend;
+        const rules = event.friend.rules;
+
+        const llmInput = {
+            friend: {
+                id: friend.id,
+                displayName: friend.displayName,
+                notes: friend.notes,
+            },
+            event: {
+                id: event.id,
+                eventText: event.eventText,
+                happenedAt: event.happenedAt ? event.happenedAt.toISOString() : null,
+            },
+            rules: rules.map((rule) => ({
+                id: rule.id,
+                title: rule.title,
+                description: rule.description,
+                impactDirection: rule.impactDirection,
+                weight: rule.weight,
+            })),
+        };
+
+        try {
+            const llmResult = await langchainAssessEvent(llmInput);
+
+            const assessment = await prisma.assessment.create({
+                data: {
+                    eventId,
+                    scoreDelta: llmResult.scoreDelta,
+                    reason: llmResult.reasoningSummary,
+                    source: "llm",
+                    impactDirection: llmResult.impactDirection,
+                    biasNotes: llmResult.biasNotes ?? null,
+                    confidence: llmResult.confidence,
+                    matchedRuleIds: llmResult.matchedRuleIds,
+                },
+            });
+
+            return reply.status(201).send({ assessment, llmResult });
+        } catch (error) {
+            console.error("Error during LLM assessment:", error);
+
+            if (error instanceof Error) {
+                console.error("Error message:", error.message);
+                console.error("Error stack:", error.stack);
+            }
+            return reply.status(500).send({
+                error: "An error occurred during the LLM assessment.",
+            });
         }
     });
 }

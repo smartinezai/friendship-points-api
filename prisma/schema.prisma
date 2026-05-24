@@ -49,7 +49,7 @@ model Assessment {
   id              String   @id @default(uuid())
   eventId         String
   event           Event    @relation(fields: [eventId], references: [id])
-  scoreDelta      Int
+  scoreDelta      Float
   reason          String?
   source          String
   impactDirection String?
