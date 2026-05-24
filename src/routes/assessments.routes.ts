@@ -4,8 +4,8 @@ import { getFriendById } from "../services/friends.service.js";
 import { mockLlmAssessment } from '../ai/mockAssessment.service.js';
 import { langchainAssessEvent } from '../ai/langchainAssessment.service.js';
 import { mistralAssessEvent } from "../ai/mistralAssessment.service.js";
-import { get } from 'node:http';
-import { getEventWithFriendAndActiveRules, buildLlmAssessmentInput } from '../services/assessments.service.js';
+
+import { getEventWithFriendAndActiveRules, buildLlmAssessmentInput, saveLlmAssessment } from '../services/assessments.service.js';
 
 export async function assessmentRoutes(app: FastifyInstance) {
     app.post<{
@@ -84,18 +84,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
 
         try {
             const llmResult = await mockLlmAssessment(llmInput);
-            const assessment = await prisma.assessment.create({
-                data: {
-                    eventId,
-                    scoreDelta: llmResult.scoreDelta,
-                    reason: llmResult.reasoningSummary,
-                    source: "mock-llm",
-                    impactDirection: llmResult.impactDirection,
-                    biasNotes: llmResult.biasNotes ?? null,
-                    confidence: llmResult.confidence,
-                    matchedRuleIds: llmResult.matchedRuleIds,
-                },
-            });
+            const assessment = await saveLlmAssessment(eventId, llmResult, "mock-llm");
             return reply.status(201).send({ assessment, llmResult });
         } catch (error) {
             console.error("Error during LLM assessment:", error);
@@ -119,18 +108,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
         try {
             const llmResult = await mistralAssessEvent(llmInput);
 
-            const assessment = await prisma.assessment.create({
-                data: {
-                    eventId,
-                    scoreDelta: llmResult.scoreDelta,
-                    reason: llmResult.reasoningSummary,
-                    source: "mistral",
-                    impactDirection: llmResult.impactDirection,
-                    biasNotes: llmResult.biasNotes ?? null,
-                    confidence: llmResult.confidence,
-                    matchedRuleIds: llmResult.matchedRuleIds,
-                },
-            });
+            const assessment = await saveLlmAssessment(eventId, llmResult, "mistral");
 
             return reply.status(201).send({ assessment, llmResult });
         } catch (error) {
@@ -166,19 +144,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
         try {
             const llmResult = await langchainAssessEvent(llmInput);
 
-            const assessment = await prisma.assessment.create({
-                data: {
-                    eventId,
-                    scoreDelta: llmResult.scoreDelta,
-                    reason: llmResult.reasoningSummary,
-                    source: "llm",
-                    impactDirection: llmResult.impactDirection,
-                    biasNotes: llmResult.biasNotes ?? null,
-                    confidence: llmResult.confidence,
-                    matchedRuleIds: llmResult.matchedRuleIds,
-                },
-            });
-
+            const assessment = await saveLlmAssessment(eventId, llmResult, "llm");
             return reply.status(201).send({ assessment, llmResult });
         } catch (error) {
             console.error("Error during LLM assessment:", error);
