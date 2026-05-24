@@ -377,7 +377,7 @@ source
 
 ---
 
-### `POST /events/:eventId/llm-assessment`
+### `POST /events/:eventId/openai-assessment`
 
 Creates a real LLM assessment using the OpenAI/LangChain service.
 

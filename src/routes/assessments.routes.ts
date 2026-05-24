@@ -92,7 +92,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
             console.error("Error during mock assessment:", error);
 
             return reply.status(500).send({
-                error: "An error occurred during the LLM assessment.",
+                error: "An error occurred during the mock assessment.",
             });
         }
     });
@@ -123,7 +123,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
             }
 
             return reply.status(500).send({
-                error: "An error occurred during the LLM assessment.",
+                error: "An error occurred during the Mistral assessment.",
             });
         }
     });
@@ -155,7 +155,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
     }
 
     return reply.status(500).send({
-      error: "An error occurred during the LLM assessment.",
+      error: "An error occurred during the OpenAI assessment.",
     });
   }
 });
