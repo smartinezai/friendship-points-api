@@ -5,7 +5,7 @@ import { mockLlmAssessment } from '../ai/mockAssessment.service.js';
 import { langchainAssessEvent } from '../ai/langchainAssessment.service.js';
 import { mistralAssessEvent } from "../ai/mistralAssessment.service.js";
 import { get } from 'node:http';
-import { getEventWithFriendAndActiveRules } from '../services/assessments.service.js';
+import { getEventWithFriendAndActiveRules, buildLlmAssessmentInput } from '../services/assessments.service.js';
 
 export async function assessmentRoutes(app: FastifyInstance) {
     app.post<{
@@ -80,27 +80,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
             return reply.status(404).send({ error: "Event not found" });
         }
 
-        const friend = event.friend;
-        const rules = event.friend.rules;
-        const llmInput = {
-            friend: {
-                id: friend.id,
-                displayName: friend.displayName,
-                notes: friend.notes,
-            },
-            event: {
-                id: event.id,
-                eventText: event.eventText,
-                happenedAt: event.happenedAt ? event.happenedAt.toISOString() : null,
-            },
-            rules: rules.map(rule => ({
-                id: rule.id,
-                title: rule.title,
-                description: rule.description,
-                impactDirection: rule.impactDirection,
-                weight: rule.weight,
-            })),
-        };
+        const llmInput = buildLlmAssessmentInput(event); //build the LLM assessment input using the service function we created
 
         try {
             const llmResult = await mockLlmAssessment(llmInput);
@@ -134,28 +114,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
             return reply.status(404).send({ error: "Event not found" });
         }
 
-        const friend = event.friend;
-        const rules = event.friend.rules;
-
-        const llmInput = {
-            friend: {
-                id: friend.id,
-                displayName: friend.displayName,
-                notes: friend.notes,
-            },
-            event: {
-                id: event.id,
-                eventText: event.eventText,
-                happenedAt: event.happenedAt ? event.happenedAt.toISOString() : null,
-            },
-            rules: rules.map((rule) => ({
-                id: rule.id,
-                title: rule.title,
-                description: rule.description,
-                impactDirection: rule.impactDirection,
-                weight: rule.weight,
-            })),
-        };
+        const llmInput = buildLlmAssessmentInput(event);
 
         try {
             const llmResult = await mistralAssessEvent(llmInput);
@@ -202,28 +161,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
             return reply.status(404).send({ error: "Event not found" });
         }
 
-        const friend = event.friend;
-        const rules = event.friend.rules;
-
-        const llmInput = {
-            friend: {
-                id: friend.id,
-                displayName: friend.displayName,
-                notes: friend.notes,
-            },
-            event: {
-                id: event.id,
-                eventText: event.eventText,
-                happenedAt: event.happenedAt ? event.happenedAt.toISOString() : null,
-            },
-            rules: rules.map((rule) => ({
-                id: rule.id,
-                title: rule.title,
-                description: rule.description,
-                impactDirection: rule.impactDirection,
-                weight: rule.weight,
-            })),
-        };
+        const llmInput = buildLlmAssessmentInput(event);
 
         try {
             const llmResult = await langchainAssessEvent(llmInput);
