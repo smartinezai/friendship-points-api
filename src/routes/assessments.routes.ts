@@ -4,6 +4,8 @@ import { getFriendById } from "../services/friends.service.js";
 import { mockLlmAssessment } from '../ai/mockAssessment.service.js';
 import { langchainAssessEvent } from '../ai/langchainAssessment.service.js';
 import { mistralAssessEvent } from "../ai/mistralAssessment.service.js";
+import { get } from 'node:http';
+import { getEventWithFriendAndActiveRules } from '../services/assessments.service.js';
 
 export async function assessmentRoutes(app: FastifyInstance) {
     app.post<{
@@ -73,20 +75,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
         Params: { eventId: string }
     }>("/events/:eventId/mock-assessment", async (request, reply) => {
         const { eventId } = request.params; //get eventId from request params
-        const event = await prisma.event.findUnique({ //check if the event exists
-            where: { id: eventId }, //find one event by id and inclue the friend connet3ed to that event and the active rules of that friend
-            include: {
-                friend: {
-                    include: {
-                        rules: {
-                            where: {
-                                active: true, //only include active rules in the assessment input, since inactive rules should not be considered when evaluating the impact of an event on a friendship. By filtering for active rules, we ensure that the LLM assessment is based on the most relevant and up-to-date information about the friend's preferences and boundaries.
-                            }
-                        }
-                    }
-                }
-            },
-        });
+        const event = await getEventWithFriendAndActiveRules(eventId); //get the event with its associated friend and active rules using the service function we created
         if (!event) {
             return reply.status(404).send({ error: "Event not found" });
         }
@@ -139,20 +128,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
     }>("/events/:eventId/mistral-assessment", async (request, reply) => {
         const { eventId } = request.params;
 
-        const event = await prisma.event.findUnique({
-            where: { id: eventId },
-            include: {
-                friend: {
-                    include: {
-                        rules: {
-                            where: {
-                                active: true,
-                            },
-                        },
-                    },
-                },
-            },
-        });
+        const event = await getEventWithFriendAndActiveRules(eventId);
 
         if (!event) {
             return reply.status(404).send({ error: "Event not found" });
@@ -219,20 +195,8 @@ export async function assessmentRoutes(app: FastifyInstance) {
     }>("/events/:eventId/llm-assessment", async (request, reply) => {
         const { eventId } = request.params;
 
-        const event = await prisma.event.findUnique({
-            where: { id: eventId },
-            include: {
-                friend: {
-                    include: {
-                        rules: {
-                            where: {
-                                active: true,
-                            },
-                        },
-                    },
-                },
-            },
-        });
+        const event = await getEventWithFriendAndActiveRules(eventId);
+              
 
         if (!event) {
             return reply.status(404).send({ error: "Event not found" });

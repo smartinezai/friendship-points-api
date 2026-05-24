@@ -36,7 +36,7 @@ export async function langchainAssessEvent(
 
     Instructions:
     - Determine whether the event is positive, negative, mixed or neutral.
-    - Assign scoreDelta as a number between -10 and 10 based on the weight of the matched rules and impact direction (a positive impact might increase points, while a negative impact might decrease points).
+    - Assign scoreDelta as a number between -10 and 10 based on the event impact, any matched rules, and rule weights (a positive impact might increase points, while a negative impact might decrease points).
     - Provide a confidence level for your assessment between 0 and 1.
     - Use higher confidence when the event clearly matches rules and the wording is factual.
     - Use lower confidence when the event is ambiguous, emotionally loaded, missing context, or depends on assumptions.
@@ -44,8 +44,13 @@ export async function langchainAssessEvent(
     - Consider narrator bias, emotionally loaded wording, missing context, and uncertainty.
     - Do not assume the other person's intent unless clearly supported.
     - Return a short and concise reasoningSummary for the assignment.
-    - Note any potential biases that might be affecting your assessment, such as emotionally loaded wording, missing context, or assumptions about intent.
-    - Assess the impact of the event on the friendship using the provided information and rules.`;
+    - Note any potential biases in biasNotes that might be affecting your assessment, such as emotionally loaded wording, missing context, or assumptions about intent.
+    - Assess the impact of the event on the friendship using the provided information and rules.
+    - Only include a rule ID in matchedRuleIds if the rule is directly semantically relevant to the event.
+    - Do not match a rule just because it exists.
+    - If no rule clearly applies, return matchedRuleIds as an empty array.
+    - A rule about one topic should not be used to assess an unrelated event.
+    - If the event is positive or negative even without a matching rule, you may still assign a scoreDelta, but matchedRuleIds should remain empty.`;
 
     const result = await structuredModel.invoke(prompt);
     return assessmentSchema.parse(result); //validate the result against the schema and return it as a LlmAssessmentResult, or throw an error if it doesn't match the schema
