@@ -66,3 +66,31 @@ export async function saveLlmAssessment(
     },
   });
 }
+
+
+export async function assessEventWithProvider(
+  eventId: string,
+  source: string,
+  assessFn: (input: LlmAssessmentInput) => Promise<LlmAssessmentResult>
+) {
+    /**
+     * from the event id, fetch event with friend and active rules
+     * then build the llm input from that data
+     * call the chosen assessment provider (for example mock or langchain)
+     * then save the assessment and return the assessment as well as the LLM output result
+     */
+  const event = await getEventWithFriendAndActiveRules(eventId);
+
+  if (!event) {
+    return null;
+  }
+
+  const llmInput = buildLlmAssessmentInput(event);
+  const llmResult = await assessFn(llmInput);
+  const assessment = await saveLlmAssessment(eventId, llmResult, source);
+
+  return {
+    assessment,
+    llmResult,
+  };
+}

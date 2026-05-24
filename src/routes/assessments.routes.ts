@@ -5,7 +5,7 @@ import { mockLlmAssessment } from '../ai/mockAssessment.service.js';
 import { langchainAssessEvent } from '../ai/langchainAssessment.service.js';
 import { mistralAssessEvent } from "../ai/mistralAssessment.service.js";
 
-import { getEventWithFriendAndActiveRules, buildLlmAssessmentInput, saveLlmAssessment } from '../services/assessments.service.js';
+import { assessEventWithProvider } from '../services/assessments.service.js';
 
 export async function assessmentRoutes(app: FastifyInstance) {
     app.post<{
@@ -72,52 +72,56 @@ export async function assessmentRoutes(app: FastifyInstance) {
     });
 
     app.post<{
-        Params: { eventId: string }
+        Params: { eventId: string };
     }>("/events/:eventId/mock-assessment", async (request, reply) => {
-        const { eventId } = request.params; //get eventId from request params
-        const event = await getEventWithFriendAndActiveRules(eventId); //get the event with its associated friend and active rules using the service function we created
-        if (!event) {
-            return reply.status(404).send({ error: "Event not found" });
-        }
-
-        const llmInput = buildLlmAssessmentInput(event); //build the LLM assessment input using the service function we created
+        const { eventId } = request.params;
 
         try {
-            const llmResult = await mockLlmAssessment(llmInput);
-            const assessment = await saveLlmAssessment(eventId, llmResult, "mock");
-            return reply.status(201).send({ assessment, llmResult });
+            const result = await assessEventWithProvider(
+                eventId,
+                "mock",
+                mockLlmAssessment
+            );
+
+            if (!result) {
+                return reply.status(404).send({ error: "Event not found" });
+            }
+
+            return reply.status(201).send(result);
         } catch (error) {
-            console.error("Error during LLM assessment:", error);
-            return reply.status(500).send({ error: "An error occurred during the LLM assessment." });
+            console.error("Error during mock assessment:", error);
+
+            return reply.status(500).send({
+                error: "An error occurred during the LLM assessment.",
+            });
         }
     });
 
-    app.post < {
-        Params: { eventId: string }
+    app.post<{
+        Params: { eventId: string };
     }>("/events/:eventId/mistral-assessment", async (request, reply) => {
         const { eventId } = request.params;
 
-        const event = await getEventWithFriendAndActiveRules(eventId);
-
-        if (!event) {
-            return reply.status(404).send({ error: "Event not found" });
-        }
-
-        const llmInput = buildLlmAssessmentInput(event);
-
         try {
-            const llmResult = await mistralAssessEvent(llmInput);
+            const result = await assessEventWithProvider(
+                eventId,
+                "mistral",
+                mistralAssessEvent
+            );
 
-            const assessment = await saveLlmAssessment(eventId, llmResult, "mistral");
+            if (!result) {
+                return reply.status(404).send({ error: "Event not found" });
+            }
 
-            return reply.status(201).send({ assessment, llmResult });
+            return reply.status(201).send(result);
         } catch (error) {
-            console.error("Error during LLM assessment:", error);
+            console.error("Error during Mistral assessment:", error);
 
             if (error instanceof Error) {
                 console.error("Error message:", error.message);
                 console.error("Error stack:", error.stack);
             }
+
             return reply.status(500).send({
                 error: "An error occurred during the LLM assessment.",
             });
@@ -125,37 +129,34 @@ export async function assessmentRoutes(app: FastifyInstance) {
     });
 
 
-    
-    
     app.post<{
-        Params: { eventId: string }
-    }>("/events/:eventId/llm-assessment", async (request, reply) => {
-        const { eventId } = request.params;
+  Params: { eventId: string };
+}>("/events/:eventId/openai-assessment", async (request, reply) => {
+  const { eventId } = request.params;
 
-        const event = await getEventWithFriendAndActiveRules(eventId);
-              
+  try {
+    const result = await assessEventWithProvider(
+      eventId,
+      "openai",
+      langchainAssessEvent
+    );
 
-        if (!event) {
-            return reply.status(404).send({ error: "Event not found" });
-        }
+    if (!result) {
+      return reply.status(404).send({ error: "Event not found" });
+    }
 
-        const llmInput = buildLlmAssessmentInput(event);
+    return reply.status(201).send(result);
+  } catch (error) {
+    console.error("Error during OpenAI assessment:", error);
 
-        try {
-            const llmResult = await langchainAssessEvent(llmInput);
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
 
-            const assessment = await saveLlmAssessment(eventId, llmResult, "openai");
-            return reply.status(201).send({ assessment, llmResult });
-        } catch (error) {
-            console.error("Error during LLM assessment:", error);
-
-            if (error instanceof Error) {
-                console.error("Error message:", error.message);
-                console.error("Error stack:", error.stack);
-            }
-            return reply.status(500).send({
-                error: "An error occurred during the LLM assessment.",
-            });
-        }
+    return reply.status(500).send({
+      error: "An error occurred during the LLM assessment.",
     });
+  }
+});
 }
