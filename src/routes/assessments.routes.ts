@@ -84,7 +84,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
 
         try {
             const llmResult = await mockLlmAssessment(llmInput);
-            const assessment = await saveLlmAssessment(eventId, llmResult, "mock-llm");
+            const assessment = await saveLlmAssessment(eventId, llmResult, "mock");
             return reply.status(201).send({ assessment, llmResult });
         } catch (error) {
             console.error("Error during LLM assessment:", error);
@@ -144,7 +144,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
         try {
             const llmResult = await langchainAssessEvent(llmInput);
 
-            const assessment = await saveLlmAssessment(eventId, llmResult, "llm");
+            const assessment = await saveLlmAssessment(eventId, llmResult, "openai");
             return reply.status(201).send({ assessment, llmResult });
         } catch (error) {
             console.error("Error during LLM assessment:", error);
