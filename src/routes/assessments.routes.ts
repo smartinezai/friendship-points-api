@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { prisma } from "../db/prisma.js";
 import { getFriendById } from "../services/friends.service.js";
 import { mockLlmAssessment } from '../ai/mockAssessment.service.js';
-import { langchainAssessEvent } from '../ai/langchainAssessment.service.js';
+import { langchainAssessEvent } from '../ai/openAI.Assessment.service.js';
 import { mistralAssessEvent } from "../ai/mistralAssessment.service.js";
 
 import { assessEventWithProvider } from '../services/assessments.service.js';
