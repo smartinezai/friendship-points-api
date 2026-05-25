@@ -427,9 +427,9 @@ Learning focus:
 
 ---
 
-## Day 10: Prompt Extraction and Provider Cleanup
+## Day 10: Prompt Extraction, Provider Cleanup, and Metadata
 
-Status: Planned.
+Status: In progress.
 
 Goals:
 
@@ -437,10 +437,12 @@ Goals:
 - Avoid duplicating prompts between Mistral and OpenAI services
 - Create `src/ai/prompts/friendshipAssessment.prompt.ts`
 - Make prompt updates easier and safer
+- Add shared provider/model configuration
+- Add prompt version tracking
+- Store `modelName` and `promptVersion` on assessments
 - Add provider-specific overrides only where needed
-- Add small commits for prompt extraction and provider cleanup
 
-Possible files:
+Implemented / planned files:
 
 ```txt
 src/ai/prompts/friendshipAssessment.prompt.ts
@@ -452,6 +454,8 @@ Learning focus:
 - prompt modularization
 - provider-agnostic prompt design
 - maintainable AI service structure
+- LLM metadata tracking
+- foundation for future tracing and evaluation
 
 ---
 
@@ -964,3 +968,40 @@ cost
 structured output validity
 final scoreDelta
 ```
+
+---
+
+## Final Future Task: Responsive GUI / Frontend
+
+Status: Final backlog task.
+
+This should stay last because frontend development is not the main focus of this project.
+
+Goals:
+
+- Build a simple responsive GUI for the API
+- View, create, and search friends
+- Manage rules
+- Add events
+- View balances
+- Trigger mock, Mistral, or OpenAI assessments
+- Display LLM assessment results, including `scoreDelta`, `impactDirection`, `confidence`, `matchedRuleIds`, `biasNotes`, `modelName`, and `promptVersion`
+- Make the app usable without curl or Prisma Studio
+
+Possible frontend options:
+
+```txt
+React
+Next.js
+SvelteKit
+Vue
+simple server-rendered UI
+```
+
+Learning focus:
+
+- consuming backend APIs from a frontend
+- responsive UI basics
+- frontend/backend integration
+- presenting LLM output safely
+- keeping frontend work secondary to backend and AI engineering

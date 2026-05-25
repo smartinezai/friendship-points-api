@@ -2,7 +2,7 @@
 
 A TypeScript backend API for tracking friendship-related events, rules, point changes, and LLM-assisted friendship assessments.
 
-The long-term goal of this project is to build a production-style backend where friendship-related events can be stored, evaluated, searched, and assessed with help from LangChain, PostgreSQL, retrieval pipelines, and later observability, DevOps, security, and evaluation tooling.
+The long-term goal of this project is to build a production-style backend where friendship-related events can be stored, evaluated, searched, and assessed with help from LangChain, PostgreSQL, retrieval pipelines, and later observability, DevOps, security, evaluation tooling, and finally a responsive frontend.
 
 This is primarily a learning project for practicing backend engineering, TypeScript, PostgreSQL, applied AI engineering, and production-grade AI system design.
 
@@ -39,12 +39,13 @@ This project is designed to practice:
 - LLM tracing and analytics
 - document ingestion and preprocessing for retrieval
 - automated evaluation and testing for LLM features
+- eventually, a responsive GUI/frontend as the final task
 
 ---
 
 ## Current Status
 
-Day 9 is complete.
+Day 10 is in progress.
 
 The project currently contains:
 
@@ -65,6 +66,10 @@ The project currently contains:
 - OpenAI/LangChain assessment endpoint, currently blocked by API quota
 - Zod schema validation for structured LLM output
 - Service helpers for repeated assessment logic
+- Shared friendship assessment prompt builder
+- Shared LLM provider configuration
+- Prompt version tracking
+- Assessment metadata fields for `modelName` and `promptVersion`
 
 ---
 
@@ -95,6 +100,7 @@ The project currently contains:
 - LLM tracing tooling
 - RAG and reranking tooling
 - Evaluation frameworks such as DeepEval or LangSmith evaluations
+- A responsive frontend/GUI as the final task
 
 ---
 
@@ -115,18 +121,7 @@ The final API should allow me to:
 - Predict the possible impact of hypothetical actions
 - Trace, test, and evaluate LLM behavior
 - Eventually support RAG, reranking, vector search, document ingestion, and production-style monitoring
-
-Example rule:
-
-```txt
-Cole dislikes unexpected phone calls.
-```
-
-Example event:
-
-```txt
-I called Cole without prior warning.
-```
+- Eventually offer a responsive GUI/frontend after the backend and AI system are mature
 
 Example LLM-assisted assessment:
 
@@ -150,8 +145,6 @@ Example LLM-assisted assessment:
 ### `GET /health`
 
 Checks whether the API server is running.
-
-Example response:
 
 ```json
 {
@@ -179,8 +172,6 @@ Searches friends by name.
 
 Creates a new friend.
 
-Request body:
-
 ```json
 {
   "displayName": "Test Friend",
@@ -191,21 +182,6 @@ Request body:
 Duplicate handling:
 
 If a friend with the exact same `displayName` already exists, the API returns `409 Conflict` and the existing friend information.
-
-Example duplicate response:
-
-```json
-{
-  "error": "Friend with this display name already exists",
-  "existingFriend": {
-    "id": "friend-id",
-    "displayName": "Cole William Bailey",
-    "notes": "Existing notes",
-    "createdAt": "timestamp",
-    "updatedAt": "timestamp"
-  }
-}
-```
 
 To intentionally create a duplicate:
 
@@ -229,8 +205,6 @@ Returns all rules for a friend.
 
 Creates a rule for a friend.
 
-Request body:
-
 ```json
 {
   "title": "Unexpected calls are bad",
@@ -243,8 +217,6 @@ Request body:
 ### `PATCH /rules/:ruleId/weight`
 
 Updates a rule's weight.
-
-Request body:
 
 ```json
 {
@@ -274,8 +246,6 @@ Returns all events for a friend.
 
 Creates an event for a friend.
 
-Request body:
-
 ```json
 {
   "eventText": "I called Cole without prior warning.",
@@ -297,8 +267,6 @@ Returns one event by ID.
 
 Creates a manual human-written assessment for an event.
 
-Request body:
-
 ```json
 {
   "scoreDelta": -3.5,
@@ -306,19 +274,9 @@ Request body:
 }
 ```
 
-Rules:
-
-- `scoreDelta` must be a number between `-10` and `10`.
-- `reason` is optional.
-- `source` is stored as `manual`.
-
----
-
 ### `GET /friends/:friendId/balance`
 
 Returns the friendship point balance for a friend by summing all `scoreDelta` values for assessments connected to that friend's events.
-
-Example response:
 
 ```json
 {
@@ -326,8 +284,6 @@ Example response:
   "balance": 9.5
 }
 ```
-
----
 
 ### `POST /events/:eventId/mock-assessment`
 
@@ -338,8 +294,6 @@ Stored source:
 ```txt
 mock
 ```
-
----
 
 ### `POST /events/:eventId/mistral-assessment`
 
@@ -361,9 +315,9 @@ confidence
 matchedRuleIds
 biasNotes
 source
+modelName
+promptVersion
 ```
-
----
 
 ### `POST /events/:eventId/openai-assessment`
 
@@ -445,6 +399,8 @@ model Assessment {
   biasNotes       String?
   confidence      Float?
   matchedRuleIds  String[] @default([])
+  modelName       String?
+  promptVersion   String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -469,33 +425,20 @@ src/
     friends.service.ts
     assessments.service.ts
   ai/
+    providers.ts
     assessment.types.ts
     assessment.schema.ts
     mockAssessment.service.ts
     langchainAssessment.service.ts
     mistralAssessment.service.ts
+    prompts/
+      friendshipAssessment.prompt.ts
   schemas/
   types/
   utils/
 ```
 
 ## Important Files
-
-### `src/app.ts`
-
-Creates and configures the Fastify app. It defines the `/health` route and registers route files.
-
-### `src/server.ts`
-
-Starts the Fastify server and listens on the configured port.
-
-### `src/db/prisma.ts`
-
-Creates and exports the Prisma client used to query PostgreSQL.
-
-### `src/routes/`
-
-Contains API route definitions.
 
 ### `src/services/`
 
@@ -513,7 +456,7 @@ assessEventWithProvider
 
 ### `src/ai/`
 
-Contains LLM-related types, schemas, prompts/services, and provider-specific assessment logic.
+Contains LLM-related types, schemas, shared provider config, prompts/services, and provider-specific assessment logic.
 
 ---
 
@@ -582,14 +525,6 @@ http://localhost:3000
 
 ```bash
 curl http://localhost:3000/health
-```
-
-Expected response:
-
-```json
-{
-  "status": "ok"
-}
 ```
 
 ## 9. Open Prisma Studio
@@ -671,6 +606,20 @@ git commit -m "Extract assessment provider orchestration helper"
 
 ---
 
+# Hosting Direction
+
+A good future deployment path is:
+
+```txt
+API backend: Render, Railway, or Fly.io
+Database: Supabase or Neon Postgres
+Frontend later: Vercel, Netlify, Render static site, or similar
+```
+
+Streamlit is not a natural fit for this backend because this project is a Node.js/Fastify API, while Streamlit is primarily a Python data-app framework.
+
+---
+
 # Roadmap
 
 The detailed project roadmap has been moved to [`ROADMAP.md`](./ROADMAP.md).
@@ -679,6 +628,6 @@ The detailed project roadmap has been moved to [`ROADMAP.md`](./ROADMAP.md).
 
 # Notes
 
-This is a private learning project meant to be social commentary on government surveillance and the social credit score system implemented by the CCP.
+This is a private learning project meant to be social commentary on government surveillance and the social credit score system imposed by the CCP.
 
 The LLM will be used as an assistant for generating structured suggestions, but the backend will remain responsible for validation, storage, and final business logic.
