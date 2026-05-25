@@ -1,20 +1,24 @@
 import type { LlmAssessmentInput } from "../assessment.types.js";
+import { PROMPT_VERSION } from "../providers.js";
 
 export function buildFriendshipAssessmentPrompt(
-  input: LlmAssessmentInput
+    input: LlmAssessmentInput
 ): string {
-  const rulesText = input.rules
-    .map(
-      (rule) =>
-        `Rule ID: ${rule.id}
+    const rulesText = input.rules
+        .map(
+            (rule) =>
+                `Rule ID: ${rule.id}
 Title: ${rule.title}
 Description: ${rule.description}
 Impact direction: ${rule.impactDirection}
 Weight: ${rule.weight}`
-    )
-    .join("\n\n");
+        )
+        .join("\n\n");
 
-  return `You are an impartial judge that evaluates the impact of events on friendships based on the details of the event, the friend's preferences and boundaries and a set of rules that the friend has established for their friendships.
+    return ` Prompt version:
+    ${PROMPT_VERSION}
+    
+    You are an impartial judge that evaluates the impact of events on friendships based on the details of the event, the friend's preferences and boundaries and a set of rules that the friend has established for their friendships.
 
 Friend details:
 - Name: ${input.friend.displayName}
