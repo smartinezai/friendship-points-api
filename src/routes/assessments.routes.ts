@@ -2,9 +2,9 @@ import type { FastifyInstance } from 'fastify';
 import { prisma } from "../db/prisma.js";
 import { getFriendById } from "../services/friends.service.js";
 import { mockLlmAssessment } from '../ai/mockAssessment.service.js';
-import { langchainAssessEvent } from '../ai/openAI.Assessment.service.js';
+import { openAiAssessEvent } from '../ai/openAi.Assessment.service.js';
 import { mistralAssessEvent } from "../ai/mistralAssessment.service.js";
-
+import { LLM_MODELS, PROMPT_VERSION } from '../ai/providers.js';
 import { assessEventWithProvider } from '../services/assessments.service.js';
 
 export async function assessmentRoutes(app: FastifyInstance) {
@@ -80,7 +80,11 @@ export async function assessmentRoutes(app: FastifyInstance) {
             const result = await assessEventWithProvider(
                 eventId,
                 "mock",
-                mockLlmAssessment
+                mockLlmAssessment,
+                {
+                    modelName: "mock",
+                    promptVersion: PROMPT_VERSION,
+                },
             );
 
             if (!result) {
@@ -106,7 +110,11 @@ export async function assessmentRoutes(app: FastifyInstance) {
             const result = await assessEventWithProvider(
                 eventId,
                 "mistral",
-                mistralAssessEvent
+                mistralAssessEvent,
+                {
+                    modelName: LLM_MODELS.mistral,
+                    promptVersion: PROMPT_VERSION
+                },
             );
 
             if (!result) {
@@ -138,7 +146,11 @@ export async function assessmentRoutes(app: FastifyInstance) {
     const result = await assessEventWithProvider(
       eventId,
       "openai",
-      langchainAssessEvent
+      openAiAssessEvent,
+      {
+        modelName: LLM_MODELS.openAI,
+        promptVersion: PROMPT_VERSION,
+      },
     );
 
     if (!result) {

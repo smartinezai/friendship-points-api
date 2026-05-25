@@ -58,4 +58,6 @@ model Assessment {
   matchedRuleIds  String[] @default([])
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  modelName       String?
+  promptVersion   String?
 }

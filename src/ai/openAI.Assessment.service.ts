@@ -4,7 +4,7 @@ import {assessmentSchema, type LlmAssessmentResult} from "./assessment.schema.js
 import { buildFriendshipAssessmentPrompt } from "./prompts/friendshipAssessment.prompt.js";
 import { LLM_MODELS, LLM_TEMPERATURE } from "./providers.js";
 
-export async function langchainAssessEvent(
+export async function openAiAssessEvent(
     input: LlmAssessmentInput
 ): Promise<LlmAssessmentResult> {
     const model = new ChatOpenAI({
