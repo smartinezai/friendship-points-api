@@ -1,75 +1,81 @@
 # Friendship Points API
 
-A TypeScript backend API for tracking friendship-related events, rules, point changes, and LLM-assisted friendship assessments.
+## Non-technical introduction
 
-The long-term goal of this project is to build a production-style backend where friendship-related events can be stored, evaluated, searched, and assessed with help from LangChain, PostgreSQL, retrieval pipelines, and later observability, DevOps, security, evaluation tooling, and finally a responsive frontend.
+Friendship Points API is a backend app for tracking friendship-related events, rules, notes, and point changes over time.
 
-This is primarily a learning project for practicing backend engineering, TypeScript, PostgreSQL, applied AI engineering, and production-grade AI system design.
+In plain language, the app lets you:
 
-For the detailed 21-day roadmap and future backlog, see [`ROADMAP.md`](./ROADMAP.md).
+- add friends or people
+- define friendship rules and preferences
+- record things that happened
+- manually score how positive or negative an event was
+- ask an LLM to suggest an assessment
+- track a friendship balance
+- later use relationship notes, shared habits, past events, and retrieved context to make better assessments
+
+Example:
+
+```txt
+Rule:
+Cole dislikes unexpected phone calls.
+
+Event:
+I called Cole without warning.
+
+Possible assessment:
+This may negatively affect the friendship because it violates a known preference.
+```
+
+The project is primarily a learning project for practicing backend engineering, TypeScript, PostgreSQL, Prisma, Fastify, LangChain, structured LLM outputs, retrieval/RAG, testing, observability, security, deployment, and finally a simple responsive frontend.
+
+For the detailed 30-day roadmap and future backlog, see [`ROADMAP.md`](./ROADMAP.md).
 
 ---
 
-## Learning Goals
+## Technical overview
 
-This project is designed to practice:
+A TypeScript backend API for tracking friendship-related events, rules, point changes, and LLM-assisted friendship assessments.
 
-- TypeScript
-- Fastify
-- PostgreSQL
-- Prisma
-- API design
-- relational data modeling
-- backend project structure
-- service-layer refactoring
-- Zod validation
-- LangChain.js
-- structured LLM outputs
-- Mistral and OpenAI-style LLM provider integrations
-- prompt design
-- bias-aware LLM assessment
-- RAG and reranking
-- vector databases
-- Supabase
-- Docker
-- DevOps workflows
-- secure development practices
-- observability and debugging
-- logging and monitoring
-- LLM tracing and analytics
-- document ingestion and preprocessing for retrieval
-- automated evaluation and testing for LLM features
-- eventually, a responsive GUI/frontend as the final task
+The project currently supports:
+
+- creating and searching friends
+- creating rules for friends
+- creating events for friends
+- manually assessing events
+- calculating friendship balances
+- validating route input with Zod
+- creating mock LLM assessments
+- creating real Mistral LLM assessments through LangChain
+- storing structured LLM assessment metadata
+- tracking prompt/model metadata for LLM assessments
 
 ---
 
 ## Current Status
 
-Day 10 is in progress.
+Day 11 is complete.
 
-The project currently contains:
+Implemented so far:
 
-- A Fastify server
-- A health check endpoint
+- Fastify server
 - PostgreSQL connection through Prisma
-- A `Friend` database model
-- A `Rule` database model
-- An `Event` database model
-- An `Assessment` database model
-- Friend API endpoints
-- Rule API endpoints
-- Event API endpoints
-- Manual assessment endpoint
-- Balance calculation endpoint
+- `Friend`, `Rule`, `Event`, and `Assessment` models
+- Friend, rule, event, and assessment endpoints
+- Manual assessment and balance calculation
 - Mock LLM assessment endpoint
 - Mistral LLM assessment endpoint
 - OpenAI/LangChain assessment endpoint, currently blocked by API quota
-- Zod schema validation for structured LLM output
-- Service helpers for repeated assessment logic
-- Shared friendship assessment prompt builder
+- Zod validation for:
+  - manual assessment requests
+  - friend creation requests
+  - rule creation requests
+  - rule weight update requests
+  - event creation requests
+- Shared LLM prompt builder
 - Shared LLM provider configuration
 - Prompt version tracking
-- Assessment metadata fields for `modelName` and `promptVersion`
+- Assessment metadata fields: `modelName` and `promptVersion`
 
 ---
 
@@ -98,43 +104,9 @@ The project currently contains:
 - GitHub Actions
 - Observability tooling
 - LLM tracing tooling
-- RAG and reranking tooling
-- Evaluation frameworks such as DeepEval or LangSmith evaluations
-- A responsive frontend/GUI as the final task
-
----
-
-## Project Goal
-
-The final API should allow me to:
-
-- Create friend profiles
-- Define friendship rules for a specific friend
-- Add friendship-related events
-- Store subjective friendship events in PostgreSQL
-- Add manual point assessments
-- Query friendship point balances
-- Use LangChain to assess event impact
-- Use rules and retrieved context to support LLM assessments
-- Classify events as positive, negative, mixed, or neutral
-- Account for narrator bias and missing context
-- Predict the possible impact of hypothetical actions
-- Trace, test, and evaluate LLM behavior
-- Eventually support RAG, reranking, vector search, document ingestion, and production-style monitoring
-- Eventually offer a responsive GUI/frontend after the backend and AI system are mature
-
-Example LLM-assisted assessment:
-
-```json
-{
-  "scoreDelta": -6.5,
-  "impactDirection": "negative",
-  "confidence": 0.82,
-  "reasoningSummary": "This likely violates the rule about unexpected phone calls.",
-  "matchedRuleIds": ["rule-id-1"],
-  "biasNotes": "The event is described from one perspective, so missing context may affect the assessment."
-}
-```
+- RAG and reranking
+- DeepEval or LangSmith evaluations
+- Responsive frontend/GUI as the final task
 
 ---
 
@@ -143,8 +115,6 @@ Example LLM-assisted assessment:
 ## Health Check
 
 ### `GET /health`
-
-Checks whether the API server is running.
 
 ```json
 {
@@ -178,6 +148,12 @@ Creates a new friend.
   "notes": "Created through API"
 }
 ```
+
+Validation:
+
+- `displayName` must be at least 2 characters.
+- `notes` is optional.
+- `allowDuplicate` is optional and defaults to `false`.
 
 Duplicate handling:
 
@@ -214,17 +190,26 @@ Creates a rule for a friend.
 }
 ```
 
+Validation:
+
+- `title`: 2 to 100 characters
+- `description`: 10 to 1000 characters
+- `impactDirection`: `positive`, `negative`, `neutral`, or `mixed`
+- `weight`: `minimal`, `low`, `medium`, `high`, `critical`, or `extreme`
+
+`extreme` is reserved for rare exceptional cases and should not be used for ordinary high-impact events.
+
 ### `PATCH /rules/:ruleId/weight`
 
 Updates a rule's weight.
 
 ```json
 {
-  "weight": "medium"
+  "weight": "critical"
 }
 ```
 
-Allowed weights currently include:
+Allowed weights:
 
 ```txt
 minimal
@@ -232,6 +217,7 @@ low
 medium
 high
 critical
+extreme
 ```
 
 ---
@@ -253,7 +239,10 @@ Creates an event for a friend.
 }
 ```
 
-`happenedAt` is optional.
+Validation:
+
+- `eventText`: 10 to 2000 characters
+- `happenedAt`: optional ISO datetime string
 
 ### `GET /events/:eventId`
 
@@ -273,6 +262,12 @@ Creates a manual human-written assessment for an event.
   "reason": "Testing decimal score."
 }
 ```
+
+Validation:
+
+- `scoreDelta` must be a number between `-10` and `10`.
+- `reason` is optional.
+- `source` is stored as `manual`.
 
 ### `GET /friends/:friendId/balance`
 
@@ -424,6 +419,11 @@ src/
   services/
     friends.service.ts
     assessments.service.ts
+  schemas/
+    assessments.schema.ts
+    friends.schema.ts
+    rules.schema.ts
+    events.schema.ts
   ai/
     providers.ts
     assessment.types.ts
@@ -433,30 +433,9 @@ src/
     mistralAssessment.service.ts
     prompts/
       friendshipAssessment.prompt.ts
-  schemas/
   types/
   utils/
 ```
-
-## Important Files
-
-### `src/services/`
-
-Contains reusable application/database logic.
-
-Current service helpers include:
-
-```txt
-getFriendById
-getEventWithFriendAndActiveRules
-buildLlmAssessmentInput
-saveLlmAssessment
-assessEventWithProvider
-```
-
-### `src/ai/`
-
-Contains LLM-related types, schemas, shared provider config, prompts/services, and provider-specific assessment logic.
 
 ---
 
@@ -479,13 +458,9 @@ MISTRAL_API_KEY=
 OPENAI_API_KEY=
 ```
 
-Use `.env.example` as a reference.
-
-Do not commit `.env`.
+Use `.env.example` as a reference. Do not commit `.env`.
 
 ## 3. Start PostgreSQL
-
-Example using Homebrew on macOS:
 
 ```bash
 brew services start postgresql@16
@@ -515,12 +490,6 @@ npx prisma generate
 npm run dev
 ```
 
-The server should start on:
-
-```txt
-http://localhost:3000
-```
-
 ## 8. Test the health endpoint
 
 ```bash
@@ -533,7 +502,7 @@ curl http://localhost:3000/health
 npx prisma studio
 ```
 
-This opens an interactive browser view of the database, usually at:
+Usually opens at:
 
 ```txt
 http://localhost:5555
@@ -545,49 +514,15 @@ http://localhost:5555
 
 ```bash
 npm run dev
-```
-
-Runs the server in development mode with automatic reload using `tsx watch`.
-
-```bash
 npm run build
-```
-
-Compiles the TypeScript code.
-
-```bash
 npm start
-```
-
-Runs the compiled JavaScript code from the `dist` folder.
-
----
-
-# Environment Variables
-
-Create a `.env` file in the project root.
-
-```txt
-PORT=3000
-DATABASE_URL="postgresql://YOUR_USERNAME@localhost:5432/friendship_points_api"
-MISTRAL_API_KEY=
-OPENAI_API_KEY=
-```
-
-Planned future variables:
-
-```txt
-LANGCHAIN_API_KEY=
-LANGSMITH_API_KEY=
-SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
 ```
 
 ---
 
 # Development Workflow
 
-Going forward, this project should use small commits.
+Use small commits.
 
 Preferred pattern:
 
@@ -598,25 +533,10 @@ one logical change = one commit
 Examples:
 
 ```bash
-git commit -m "Add Mistral assessment service"
-git commit -m "Add Mistral assessment route"
-git commit -m "Improve LLM rule matching prompt"
-git commit -m "Extract assessment provider orchestration helper"
+git commit -m "Validate event creation requests with Zod"
+git commit -m "Extract shared friendship assessment prompt"
+git commit -m "Store assessment model metadata"
 ```
-
----
-
-# Hosting Direction
-
-A good future deployment path is:
-
-```txt
-API backend: Render, Railway, or Fly.io
-Database: Supabase or Neon Postgres
-Frontend later: Vercel, Netlify, Render static site, or similar
-```
-
-Streamlit is not a natural fit for this backend because this project is a Node.js/Fastify API, while Streamlit is primarily a Python data-app framework.
 
 ---
 
