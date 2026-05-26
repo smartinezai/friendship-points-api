@@ -8,7 +8,7 @@ export async function openAiAssessEvent(
     input: LlmAssessmentInput
 ): Promise<LlmAssessmentResult> {
     const model = new ChatOpenAI({
-        model: LLM_MODELS.openAI,
+        model: LLM_MODELS.openAi,
         temperature: LLM_TEMPERATURE,
     });
 
