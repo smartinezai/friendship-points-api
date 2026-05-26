@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../db/prisma.js";
 import { getFriendById } from "../services/friends.service.js";
+import { createEventBodySchema } from "../schemas/events.schema.js";
 
 export async function eventRoutes(app: FastifyInstance) {
 
@@ -51,14 +52,16 @@ export async function eventRoutes(app: FastifyInstance) {
             reply.status(404);
             return { error: "Friend not found" };
         }
-        const { eventText, happenedAt } = request.body; //destructure body from request body, and type it as an object with the required fields
-        if (
-            !eventText ||
-            eventText.trim() === ""
-        ) {
-            reply.status(400);
-            return { error: "Event text is required" };
+        const parsedBody = createEventBodySchema.safeParse(request.body);
+
+        if (!parsedBody.success) {
+            return reply.status(400).send({ 
+                error: "Invalid request body", 
+                details: parsedBody.error.issues
+             });
         }
+
+        const { eventText, happenedAt } = parsedBody.data; //destructure body from request body, and type it as an object with the required fields
 
         const event = await prisma.event.create({
             data: {
