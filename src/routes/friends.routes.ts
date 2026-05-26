@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../db/prisma.js";
 import { getFriendById } from "../services/friends.service.js";
+import {createFriendBodySchema} from "../schemas/friends.schema.js";
 
 export async function friendRoutes(app: FastifyInstance) {
 
@@ -55,12 +56,15 @@ export async function friendRoutes(app: FastifyInstance) {
             allowDuplicate?: boolean;
         }
     }>("/friends", async (request, reply) => {
-        const { displayName, notes, allowDuplicate = false } = request.body;
+        const parsedBody = createFriendBodySchema.safeParse(request.body);
 
-        if (!displayName || displayName.trim() === "") {
-            reply.status(400);
-            return { error: "displayName is required" };
+        if (!parsedBody.success) {
+            return reply.status(400).send({ 
+                error: "Invalid request body", 
+                details: parsedBody.error.issues });
         }
+
+        const { displayName, notes, allowDuplicate } = parsedBody.data;
 
         const existingFriend = await prisma.friend.findFirst({
             where: { displayName }
