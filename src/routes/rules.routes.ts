@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../db/prisma.js";
 import { getFriendById } from "../services/friends.service.js";
+import { createRuleBodySchema } from "../schemas/rules.schema.js";
 
 export async function ruleRoutes(app: FastifyInstance) {
 
@@ -38,7 +39,15 @@ export async function ruleRoutes(app: FastifyInstance) {
             reply.status(404);
             return { error: "Friend not found" };
         }
-        const { title, description, impactDirection, weight } = request.body; //destructure body from request body, and type it as an object with the required fields
+
+        const parsedBody = createRuleBodySchema.safeParse(request.body);
+        if (!parsedBody.success) {
+            return reply.status(400).send({ 
+                error: "Invalid request body", 
+                details: parsedBody.error.issues });
+        }
+        const { title, description, impactDirection, weight } = parsedBody.data; //destructure body from request body, and type it as an object with the required fields
+        
         if (
             !title ||
             title.trim() === "" ||
@@ -74,7 +83,7 @@ export async function ruleRoutes(app: FastifyInstance) {
     }>("/rules/:ruleId/weight", async (request, reply) => {
         const { ruleId } = request.params;
         const { weight } = request.body;
-        const allowedWeights = ["minimal", "low", "medium", "high", "critical"];
+        const allowedWeights = ["minimal", "low", "medium", "high", "critical", "extreme"];
         const rule = await prisma.rule.findUnique({
             where: { id: ruleId },
         });

@@ -1,8 +1,10 @@
 import { z } from "zod";
 
 export const createRuleBodySchema = z.object({
-  scoreDelta: z.number().min(-10).max(10),
-  reason: z.string().trim().min(8).max(1000).optional(), //reason is optional but if provided, it must be between 10 and 1000 characters
+  title: z.string().min(2 , "Title must be at least 2 characters long").max(100, "Title must be at most 100 characters long"),
+  description: z.string().min(10, "Description must be at least 10 characters long").max(1000, "Description must be at most 1000 characters long"),
+  impactDirection: z.enum(["positive", "negative", "neutral", "mixed"]),
+  weight: z.enum(["minimal", "low", "medium", "high", "critical", "extreme"]),
 });
 
 export type CreateRuleBody = z.infer<
