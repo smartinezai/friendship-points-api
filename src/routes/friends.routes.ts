@@ -59,7 +59,7 @@ export async function friendRoutes(app: FastifyInstance) {
             allowDuplicate?: boolean;
         }
     }>("/friends", async (request, reply) => {
-        const parsedBody = createFriendNBodySchema.safeParse(request.body);
+        const parsedBody = createFriendBodySchema.safeParse(request.body);
 
         if (!parsedBody.success) {
             return reply.status(400).send({

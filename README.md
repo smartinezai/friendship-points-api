@@ -12,6 +12,8 @@ In plain language, the app lets you:
 - manually score how positive or negative an event was
 - ask an LLM to suggest an assessment
 - track a friendship balance
+- update friend information
+- append new notes without deleting older notes
 - later use relationship notes, shared habits, past events, and retrieved context to make better assessments
 
 Example:
@@ -35,11 +37,13 @@ For the detailed 30-day roadmap and future backlog, see [`ROADMAP.md`](./ROADMAP
 
 ## Technical overview
 
-A TypeScript backend API for tracking friendship-related events, rules, point changes, and LLM-assisted friendship assessments.
+A TypeScript backend API for tracking friendship-related events, rules, point changes, notes, and LLM-assisted friendship assessments.
 
 The project currently supports:
 
 - creating and searching friends
+- updating friend display names and notes
+- appending friend notes without replacing existing notes
 - creating rules for friends
 - creating events for friends
 - manually assessing events
@@ -54,7 +58,7 @@ The project currently supports:
 
 ## Current Status
 
-Day 11 is complete.
+Day 12 is mostly complete.
 
 Implemented so far:
 
@@ -66,16 +70,18 @@ Implemented so far:
 - Mock LLM assessment endpoint
 - Mistral LLM assessment endpoint
 - OpenAI/LangChain assessment endpoint, currently blocked by API quota
-- Zod validation for:
-  - manual assessment requests
-  - friend creation requests
-  - rule creation requests
-  - rule weight update requests
-  - event creation requests
+- Zod validation for manual assessment, friend creation/update/note append, rule creation/weight update, and event creation
 - Shared LLM prompt builder
 - Shared LLM provider configuration
 - Prompt version tracking
 - Assessment metadata fields: `modelName` and `promptVersion`
+
+Not implemented yet:
+
+- friend soft delete
+- authentication/accounts
+- RAG/vector search
+- frontend
 
 ---
 
@@ -104,8 +110,9 @@ Implemented so far:
 - GitHub Actions
 - Observability tooling
 - LLM tracing tooling
-- RAG and reranking
+- RAG and reranking tooling
 - DeepEval or LangSmith evaluations
+- German/EU data privacy compliance planning
 - Responsive frontend/GUI as the final task
 
 ---
@@ -168,6 +175,45 @@ To intentionally create a duplicate:
   "allowDuplicate": true
 }
 ```
+
+### `PATCH /friends/:id`
+
+Updates a friend's display name and/or replaces notes.
+
+```json
+{
+  "displayName": "Cole Updated",
+  "notes": "Replacement notes for Cole."
+}
+```
+
+Notes:
+
+- This endpoint replaces the `notes` field if `notes` is provided.
+- Use `POST /friends/:id/notes/append` to append notes without deleting existing notes.
+- At least one field must be provided.
+
+### `POST /friends/:id/notes/append`
+
+Appends a new note to an existing friend's notes without replacing old notes.
+
+```json
+{
+  "note": "Cole also likes clear planning before calls."
+}
+```
+
+### `DELETE /friends/:id`
+
+Not implemented yet.
+
+Planned approach:
+
+- Use soft delete instead of immediate hard delete.
+- Add a `deletedAt DateTime?` field to the `Friend` model.
+- Set `deletedAt` when deleting.
+- Filter deleted friends out of normal list/search endpoints.
+- Keep related rules, events, and assessments available for audit/history unless explicitly designed otherwise.
 
 ---
 
@@ -346,6 +392,12 @@ model Friend {
   rules       Rule[]
   events      Event[]
 }
+```
+
+Planned soft-delete extension:
+
+```prisma
+deletedAt DateTime?
 ```
 
 ## Rule
@@ -534,8 +586,9 @@ Examples:
 
 ```bash
 git commit -m "Validate event creation requests with Zod"
-git commit -m "Extract shared friendship assessment prompt"
-git commit -m "Store assessment model metadata"
+git commit -m "Add friend update endpoint"
+git commit -m "Add friend note append endpoint"
+git commit -m "Document soft delete plan"
 ```
 
 ---

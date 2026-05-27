@@ -24,13 +24,6 @@ Goals:
 - Add a `/health` endpoint
 - Add GitHub repository setup
 
-Learning focus:
-
-- TypeScript project structure
-- Fastify basics
-- environment variables
-- Git/GitHub workflow
-
 ---
 
 ## Day 2: PostgreSQL + Prisma Setup
@@ -47,14 +40,6 @@ Goals:
 - Generate Prisma Client
 - Use Prisma Studio
 - Connect the Fastify app to PostgreSQL
-
-Learning focus:
-
-- PostgreSQL basics
-- Prisma schema
-- migrations
-- database connection from TypeScript
-- Prisma Studio
 
 ---
 
@@ -319,38 +304,60 @@ PATCH /rules/:ruleId/weight
 POST /friends/:friendId/events
 ```
 
-Learning focus:
-
-- runtime validation
-- difference between TypeScript types and incoming HTTP data
-- clean `400 Bad Request` responses
-
 ---
 
 ## Day 12: Friend Management Endpoints
 
-Status: Planned.
+Status: Mostly done.
 
-Goals:
-
-- Add `PATCH /friends/:id`
-- Update friend display name
-- Replace friend notes
-- Add `POST /friends/:id/notes/append`
-- Append new note text without deleting previous notes
-- Think carefully about `DELETE /friends/:id`
-
-Possible endpoints:
+Implemented:
 
 ```http
 PATCH /friends/:id
 POST /friends/:id/notes/append
+```
+
+Implemented goals:
+
+- Update friend display name
+- Replace friend notes
+- Append new note text without deleting previous notes
+- Validate update and append request bodies with Zod
+
+Still planned:
+
+```http
 DELETE /friends/:id
 ```
 
-Delete design note:
+Delete design decision:
 
-Deleting friends is risky because friends have related rules, events, and assessments. Prefer soft delete or explicit cascade behavior later.
+Do not implement hard delete casually. A friend has related rules, events, and assessments. Hard deletion can destroy useful history and cause relational issues.
+
+Planned soft-delete approach:
+
+- Add `deletedAt DateTime?` to `Friend`.
+- `DELETE /friends/:id` sets `deletedAt` instead of removing the row.
+- `GET /friends` excludes friends where `deletedAt` is not null.
+- `GET /friends/search` excludes soft-deleted friends.
+- Decide whether `GET /friends/:id` should return soft-deleted friends or return `404`.
+- Keep related rules, events, and assessments available for history/audit unless explicitly designed otherwise.
+- Later consider restore endpoint such as `POST /friends/:id/restore`.
+
+Possible future endpoints:
+
+```http
+DELETE /friends/:id
+POST /friends/:id/restore
+```
+
+Learning focus:
+
+- partial updates
+- append vs replace semantics
+- soft delete vs hard delete
+- relational data safety
+- preserving audit/history
 
 ---
 
@@ -673,7 +680,7 @@ Notification
 
 ---
 
-## Day 29: Multi-Perspective Events, Claim Verification, and Privacy Controls
+## Day 29: Multi-Perspective Events, Claim Verification, Privacy Controls, and Legal Compliance
 
 Status: Planned.
 
@@ -685,6 +692,7 @@ Goals:
 - Treat denied claims as disputed evidence
 - Treat unverified claims cautiously
 - Add audit trails, visibility controls, data governance, privacy boundaries, and dispute handling
+- Plan German/EU data privacy compliance before real-user usage
 
 Possible models:
 
@@ -710,9 +718,28 @@ Claim verification safety requirements:
 - clear explanation of consequences before verification
 - explicit confirmation that verification is voluntary and not coerced
 
+German/EU privacy compliance scope:
+
+- GDPR / DSGVO principles
+- German BDSG considerations where relevant
+- lawful basis / consent design
+- data minimization
+- purpose limitation
+- privacy notices
+- user rights:
+  - access
+  - deletion
+  - export
+  - correction
+- retention and deletion policies
+- secure processing
+- audit logs
+- visibility controls
+- special care around sensitive relationship, event, claim, and verification data
+
 Critical design note:
 
-A checkbox alone does not prove absence of coercion. The feature needs privacy, revocation, dispute handling, and careful visibility controls.
+A checkbox alone does not prove absence of coercion. The feature needs privacy, revocation, dispute handling, careful visibility controls, and legal/privacy review before real users use it.
 
 ---
 
