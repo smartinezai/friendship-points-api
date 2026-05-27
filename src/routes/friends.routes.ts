@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../db/prisma.js";
 import { getFriendById } from "../services/friends.service.js";
-import {createFriendBodySchema} from "../schemas/friends.schema.js";
+import { createFriendBodySchema, updateFriendBodySchema } from "../schemas/friends.schema.js";
 
 export async function friendRoutes(app: FastifyInstance) {
 
@@ -59,9 +59,10 @@ export async function friendRoutes(app: FastifyInstance) {
         const parsedBody = createFriendBodySchema.safeParse(request.body);
 
         if (!parsedBody.success) {
-            return reply.status(400).send({ 
-                error: "Invalid request body", 
-                details: parsedBody.error.issues });
+            return reply.status(400).send({
+                error: "Invalid request body",
+                details: parsedBody.error.issues
+            });
         }
 
         const { displayName, notes, allowDuplicate } = parsedBody.data;
@@ -88,5 +89,48 @@ export async function friendRoutes(app: FastifyInstance) {
 
         reply.status(201);
         return { friend };
+    });
+
+    app.patch<{
+        Params: { id: string };
+    }>("/friends/:id", async (request, reply) => {
+        const { id } = request.params;
+
+        const parsedBody = updateFriendBodySchema.safeParse(request.body);
+
+        if (!parsedBody.success) {
+            return reply.status(400).send({
+                error: "Invalid request body",
+                details: parsedBody.error.issues,
+            });
+        }
+
+        const existingFriend = await prisma.friend.findUnique({
+            where: { id },
+        });
+
+        if (!existingFriend) {
+            return reply.status(404).send({ error: "Friend not found" });
+        }
+
+        const updateData: {
+            displayName?: string;
+            notes?: string | null;
+        } = {};
+
+        if (parsedBody.data.displayName !== undefined) {
+            updateData.displayName = parsedBody.data.displayName;
+        }
+
+        if (parsedBody.data.notes !== undefined) {
+            updateData.notes = parsedBody.data.notes;
+        }
+
+        const updatedFriend = await prisma.friend.update({
+            where: { id },
+            data: updateData,
+        });
+
+        return reply.send({ friend: updatedFriend });
     });
 }
