@@ -1,7 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../db/prisma.js";
 import { getFriendById } from "../services/friends.service.js";
-import { createFriendBodySchema, updateFriendBodySchema } from "../schemas/friends.schema.js";
+import { createFriendBodySchema, 
+    updateFriendBodySchema, 
+    appendFriendNoteBodySchema,
+} from "../schemas/friends.schema.js";
 
 export async function friendRoutes(app: FastifyInstance) {
 
@@ -56,7 +59,7 @@ export async function friendRoutes(app: FastifyInstance) {
             allowDuplicate?: boolean;
         }
     }>("/friends", async (request, reply) => {
-        const parsedBody = createFriendBodySchema.safeParse(request.body);
+        const parsedBody = createFriendNBodySchema.safeParse(request.body);
 
         if (!parsedBody.success) {
             return reply.status(400).send({
@@ -133,4 +136,52 @@ export async function friendRoutes(app: FastifyInstance) {
 
         return reply.send({ friend: updatedFriend });
     });
+
+
+    /**
+     * //registering a post route that has type information
+        <{ Params: { id: string } }>
+            takes a path and an async function that takes a request and a reply
+     */
+    app.post<{
+        Params: { id: string};
+    }>("/friends/:id/notes/append", async (request, reply) => { 
+        const { id } = request.params;
+
+        const parsedBody = appendFriendNoteBodySchema.safeParse(request.body);
+
+        if (!parsedBody.success) {
+            return reply.status(400).send({
+                error: "Invalid request body",
+                details: parsedBody.error.issues,
+            });
+        }
+
+        const existingFriend = await prisma.friend.findUnique({
+            where: { id },
+        });
+
+        if (!existingFriend) {
+            return reply.status(404).send({ error: "Friend not found" });
+        }
+
+        const { note } = parsedBody.data;
+        
+        /**
+         * here we use a ternary operator
+         * if existingFriend.notes already has something
+         * then use old notes + blank line + new note
+         * otherwise just use the new note
+         */
+        const updatedNotes = existingFriend.notes
+            ? `${existingFriend.notes}\n\n${note}`
+            : note;
+
+        const updatedFriend = await prisma.friend.update({
+            where: { id },
+            data: { notes: updatedNotes },
+        });
+
+        return reply.send({ friend: updatedFriend });
+    });     
 }

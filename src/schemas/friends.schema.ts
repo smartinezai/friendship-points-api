@@ -18,5 +18,14 @@ export const updateFriendBodySchema = updateFriendFieldsSchema.refine(
   }
 );
 
+export const appendFriendNoteBodySchema = z.object({
+  note: z
+    .string()
+    .trim()
+    .min(2, "Note must be at least 2 characters long")
+    .max(1000, "Note must be at most 1000 characters long"),
+});
+
 export type CreateFriendBody = z.infer<typeof createFriendBodySchema>;
 export type UpdateFriendBody = z.infer<typeof updateFriendBodySchema>;
+export type AppendFriendNoteBody = z.infer<typeof appendFriendNoteBodySchema>;
