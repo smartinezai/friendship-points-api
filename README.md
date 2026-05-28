@@ -44,6 +44,8 @@ The project currently supports:
 - creating and searching friends
 - updating friend display names and notes
 - appending friend notes without replacing existing notes
+- creating mock predictions for hypothetical actions without saving events or assessments
+- creating real Mistral predictions for hypothetical actions without saving events or assessments
 - creating rules for friends
 - creating events for friends
 - manually assessing events
@@ -58,23 +60,25 @@ The project currently supports:
 
 ## Current Status
 
-Day 12 is mostly complete.
+Day 13 is complete.
 
 Implemented so far:
 
 - Fastify server
 - PostgreSQL connection through Prisma
 - `Friend`, `Rule`, `Event`, and `Assessment` models
-- Friend, rule, event, and assessment endpoints
+- Friend, rule, event, assessment, and prediction endpoints
 - Manual assessment and balance calculation
 - Mock LLM assessment endpoint
 - Mistral LLM assessment endpoint
 - OpenAI/LangChain assessment endpoint, currently blocked by API quota
-- Zod validation for manual assessment, friend creation/update/note append, rule creation/weight update, and event creation
+- Zod validation for manual assessment, friend creation/update/note append, rule creation/weight update, event creation, and prediction requests
 - Shared LLM prompt builder
 - Shared LLM provider configuration
 - Prompt version tracking
 - Assessment metadata fields: `modelName` and `promptVersion`
+- Prediction input builder for mock and Mistral predictions
+- Friend-with-active-rules lookup helper for predictions
 
 Not implemented yet:
 
@@ -378,6 +382,62 @@ openai
 
 ---
 
+## Predictions
+
+### `POST /friends/:friendId/predict`
+
+Creates a mock prediction for a hypothetical action without saving an `Event` or `Assessment`.
+
+Request body:
+
+```json
+{
+  "hypotheticalAction": "I call Cole without warning tomorrow."
+}
+```
+
+Response includes:
+
+```txt
+prediction
+saved: false
+provider: mock
+```
+
+Purpose:
+
+- Test prediction flow without using external API quota.
+- Reuse the same LLM assessment input shape as real event assessment.
+- Keep hypothetical predictions separate from persisted event history.
+
+### `POST /friends/:friendId/predict/mistral`
+
+Creates a real Mistral prediction for a hypothetical action without saving an `Event` or `Assessment`.
+
+Request body:
+
+```json
+{
+  "hypotheticalAction": "I call Cole without warning tomorrow."
+}
+```
+
+Response includes:
+
+```txt
+prediction
+saved: false
+provider: mistral
+```
+
+Important behavior:
+
+- This endpoint should not create a new `Event`.
+- This endpoint should not create a new `Assessment`.
+- It uses the friend, the friend's notes, and the friend's active rules as context.
+
+---
+
 # Database Models
 
 ## Friend
@@ -394,11 +454,18 @@ model Friend {
 }
 ```
 
-Planned soft-delete extension:
+Planned future extensions:
 
 ```prisma
+pronouns  String?
 deletedAt DateTime?
 ```
+
+Notes:
+
+- `pronouns` should be optional, user-provided, editable, and privacy-aware.
+- In the future multi-user version, pronoun visibility should be controlled by the person the pronouns belong to.
+- `deletedAt` is planned for soft delete.
 
 ## Rule
 
@@ -468,14 +535,17 @@ src/
     rules.routes.ts
     events.routes.ts
     assessments.routes.ts
+    predictions.routes.ts
   services/
     friends.service.ts
     assessments.service.ts
+    predictions.service.ts
   schemas/
     assessments.schema.ts
     friends.schema.ts
     rules.schema.ts
     events.schema.ts
+    predictions.schema.ts
   ai/
     providers.ts
     assessment.types.ts
@@ -588,6 +658,8 @@ Examples:
 git commit -m "Validate event creation requests with Zod"
 git commit -m "Add friend update endpoint"
 git commit -m "Add friend note append endpoint"
+git commit -m "Add mock prediction endpoint"
+git commit -m "Add Mistral prediction endpoint"
 git commit -m "Document soft delete plan"
 ```
 

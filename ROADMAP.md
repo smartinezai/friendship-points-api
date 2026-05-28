@@ -363,20 +363,42 @@ Learning focus:
 
 ## Day 13: Prediction Endpoint
 
-Status: Planned.
+Status: Done.
 
-Goals:
-
-- Add endpoint for hypothetical actions
-- Use rules and context without saving an event
-- Return predicted score impact
-- Keep prediction separate from persisted event history
-
-Endpoint:
+Implemented endpoints:
 
 ```http
 POST /friends/:friendId/predict
+POST /friends/:friendId/predict/mistral
 ```
+
+Implemented goals:
+
+- Add endpoint for hypothetical actions
+- Use friend details, friend notes, and active rules as context
+- Return predicted score impact
+- Keep prediction separate from persisted event history
+- Validate prediction request bodies with Zod
+- Reuse the LLM assessment input shape for hypothetical events
+- Add prediction input builder helper
+- Add friend-with-active-rules lookup helper
+- Support mock predictions without external API calls
+- Support real Mistral predictions
+- Return `saved: false` to make clear that no event or assessment was persisted
+
+Important behavior:
+
+- Prediction endpoints do not create `Event` records.
+- Prediction endpoints do not create `Assessment` records.
+- The mock prediction provider is structurally useful but not semantically reliable because it uses hardcoded output.
+
+Learning focus:
+
+- prediction vs persisted facts
+- route design for AI features
+- provider reuse
+- avoiding unnecessary database writes
+- separating route logic from input-building helper logic
 
 ---
 
@@ -773,6 +795,29 @@ simple server-rendered UI
 ---
 
 # Future Backlog Beyond Day 30
+
+## Optional Pronouns Field
+
+Status: Future backlog task.
+
+Goal:
+
+Add optional pronouns to the current `Friend` model or, preferably later, to the future generalized `Person` model.
+
+Possible Prisma field:
+
+```prisma
+pronouns String?
+```
+
+Design notes:
+
+- Pronouns should be optional.
+- Pronouns should be user-provided and editable.
+- In the future multi-user version, pronoun visibility should be controlled by the person the pronouns belong to.
+- Privacy and visibility implications should be considered before real-user usage.
+
+---
 
 ## Advanced LLM Tracing and Analytics
 
