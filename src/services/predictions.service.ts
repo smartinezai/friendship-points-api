@@ -1,5 +1,5 @@
 import type { LlmAssessmentInput } from "../ai/assessment.types.js";
-
+import { prisma } from "../db/prisma.js";
 
 type FriendWithActiveRules = {
   id: string;
@@ -13,6 +13,17 @@ type FriendWithActiveRules = {
     weight: string;
   }[];
 };
+
+export async function getFriendWithActiveRules(friendId: string) {
+  return prisma.friend.findUnique({
+    where: { id: friendId },
+    include: {
+      rules: {
+        where: { active: true },
+      },
+    },
+  });
+}
 
 export function buildPredictionInput(
   friend: FriendWithActiveRules,

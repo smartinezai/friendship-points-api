@@ -1,8 +1,7 @@
 import type { FastifyInstance } from "fastify";
-import { prisma } from "../db/prisma.js";
 import { predictFriendActionBodySchema } from "../schemas/predictions.schema.js";
 import { mockLlmAssessment } from "../ai/mockAssessment.service.js";
-import { buildPredictionInput } from "../services/predictions.service.js";
+import { buildPredictionInput, getFriendWithActiveRules } from "../services/predictions.service.js";
 import { mistralAssessEvent } from "../ai/mistralAssessment.service.js";
 /**
  * 
@@ -26,14 +25,7 @@ export async function predictionRoutes(app: FastifyInstance) {
             });
         }
 
-        const friend = await prisma.friend.findUnique({
-            where: { id: friendId },
-            include: {
-                rules: {
-                    where: { active: true },
-                },
-            },
-        });
+        const friend = await getFriendWithActiveRules(friendId);
 
         if (!friend) {
             return reply.status(404).send({ error: "Friend not found" });
@@ -67,14 +59,7 @@ export async function predictionRoutes(app: FastifyInstance) {
             });
         }
 
-        const friend = await prisma.friend.findUnique({
-            where: { id: friendId },
-            include: {
-                rules: {
-                    where: { active: true },
-                },
-            },
-        });
+        const friend = await getFriendWithActiveRules(friendId);
 
         if (!friend) {
             return reply.status(404).send({ error: "Friend not found" });
