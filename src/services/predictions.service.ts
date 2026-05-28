@@ -1,21 +1,17 @@
 import type { LlmAssessmentInput } from "../ai/assessment.types.js";
-import type { z } from "zod";
-import type { impactDirectionSchema, ruleWeightSchema } from "../schemas/rules.schema.js";
 
-type ImpactDirection = z.infer<typeof impactDirectionSchema>;
-type RuleWeight = z.infer<typeof ruleWeightSchema>;
 
 type FriendWithActiveRules = {
+  id: string;
+  displayName: string;
+  notes: string | null;
+  rules: {
     id: string;
-    displayName: string;
-    notes: string | null;// notes can be null in the database
-    rules: {
-        id: string;
-        title: string;
-        description: string;
-        impactDirection: ImpactDirection;
-        weight: RuleWeight;
-    }[]; //an array of rules, where each rule has an id, title, description, impactDirection, and weight
+    title: string;
+    description: string;
+    impactDirection: string;
+    weight: string;
+  }[];
 };
 
 export function buildPredictionInput(
