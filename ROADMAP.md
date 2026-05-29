@@ -1,12 +1,12 @@
 # Friendship Points API Roadmap
 
-This file contains the detailed 30-day roadmap and future backlog for the Friendship Points API project.
+This file contains the detailed 40-day roadmap and future backlog for the Friendship Points API project.
 
 The main project README is in [`README.md`](./README.md).
 
 ---
 
-# Detailed 30-Day Roadmap
+# Detailed 40-Day Roadmap
 
 ## Phase 1: Core TypeScript API and PostgreSQL Foundations
 
@@ -24,6 +24,13 @@ Goals:
 - Add a `/health` endpoint
 - Add GitHub repository setup
 
+Learning focus:
+
+- TypeScript project structure
+- Fastify basics
+- environment variables
+- Git/GitHub workflow
+
 ---
 
 ## Day 2: PostgreSQL + Prisma Setup
@@ -40,6 +47,14 @@ Goals:
 - Generate Prisma Client
 - Use Prisma Studio
 - Connect the Fastify app to PostgreSQL
+
+Learning focus:
+
+- PostgreSQL basics
+- Prisma schema
+- migrations
+- database connection from TypeScript
+- Prisma Studio
 
 ---
 
@@ -140,6 +155,13 @@ POST /events/:eventId/manual-assessment
 GET /friends/:friendId/balance
 ```
 
+Learning focus:
+
+- manual scoring before AI
+- numeric validation
+- database relations
+- balance calculation
+
 ---
 
 ## Day 7: Refactor, Validation, and Duplicate Handling
@@ -191,6 +213,14 @@ event
 → validate structured output
 → store assessment
 ```
+
+Bias handling requirements:
+
+- Consider narrator bias
+- Consider emotionally loaded wording
+- Consider missing context
+- Distinguish observed facts from interpretation
+- Do not assume intent unless clearly supported
 
 ---
 
@@ -250,6 +280,12 @@ mistral = working real LLM provider
 openai  = route exists, currently blocked by API quota
 ```
 
+Important prompt rule:
+
+- Only include a rule ID in `matchedRuleIds` if the rule is semantically relevant.
+- Do not match a rule just because it exists.
+- Return `matchedRuleIds: []` if no rule clearly applies.
+
 ---
 
 ## Day 10: Prompt Extraction, Provider Cleanup, and Metadata
@@ -269,6 +305,13 @@ Implemented:
 src/ai/prompts/friendshipAssessment.prompt.ts
 src/ai/providers.ts
 ```
+
+Learning focus:
+
+- prompt modularization
+- provider-agnostic prompt design
+- LLM metadata tracking
+- future tracing/evaluation foundation
 
 ---
 
@@ -344,21 +387,6 @@ Planned soft-delete approach:
 - Keep related rules, events, and assessments available for history/audit unless explicitly designed otherwise.
 - Later consider restore endpoint such as `POST /friends/:id/restore`.
 
-Possible future endpoints:
-
-```http
-DELETE /friends/:id
-POST /friends/:id/restore
-```
-
-Learning focus:
-
-- partial updates
-- append vs replace semantics
-- soft delete vs hard delete
-- relational data safety
-- preserving audit/history
-
 ---
 
 ## Day 13: Prediction Endpoint
@@ -392,30 +420,44 @@ Important behavior:
 - Prediction endpoints do not create `Assessment` records.
 - The mock prediction provider is structurally useful but not semantically reliable because it uses hardcoded output.
 
-Learning focus:
-
-- prediction vs persisted facts
-- route design for AI features
-- provider reuse
-- avoiding unnecessary database writes
-- separating route logic from input-building helper logic
-
 ---
 
 ## Day 14: Testing Foundation
 
-Status: Planned.
+Status: Done.
 
-Goals:
+Implemented:
 
-- Add Vitest
-- Test friends, rules, events, assessments, and balance logic
-- Test duplicate friend-name handling
-- Test validation behavior
-- Test mock LLM behavior
-- Avoid testing real LLM calls first
+- Added Vitest
+- Added a basic test setup
+- Added test for prediction input builder
+- Added tests for prediction request validation
+- Added tests for manual assessment validation
+- Added tests for friend creation validation
+- Added tests for friend update validation
+- Added tests for friend note append validation
+- Added tests for rule validation
+- Added tests for event validation
+- Fixed TypeScript build include paths
+
+Checks to run regularly:
+
+```bash
+npm test
+npm run build
+```
+
+Learning focus:
+
+- unit testing
+- schema testing
+- pure helper tests
+- regression prevention
+- build checks
 
 ---
+
+## Phase 3: Backend Quality, Error Handling, and Data Safety
 
 ## Day 15: Error Handling and Response Consistency
 
@@ -425,12 +467,141 @@ Goals:
 
 - Standardize error response shape
 - Add reusable validation error helper
-- Add reusable not-found helpers
-- Avoid leaking stack traces or implementation details
+- Add reusable not-found helper
+- Make route error responses consistent
+- Avoid leaking stack traces or implementation details to clients
+- Improve catch blocks where needed
+
+Possible response shape:
+
+```json
+{
+  "error": "Invalid request body",
+  "details": []
+}
+```
+
+Learning focus:
+
+- API ergonomics
+- safe error responses
+- route cleanup
+- maintainable error handling
 
 ---
 
-## Day 16: Polish and Documentation
+## Day 16: Safe Internal Logging
+
+Status: Planned.
+
+Goals:
+
+- Add safer internal error logging
+- Log detailed internal errors in server logs
+- Return generic client-facing errors
+- Avoid exposing stack traces to API clients
+- Prepare for structured logging later
+
+Possible future tools:
+
+```txt
+pino
+Sentry
+OpenTelemetry
+```
+
+Learning focus:
+
+- difference between internal logs and client responses
+- production-safe error handling
+- debugging without leaking sensitive details
+
+---
+
+## Day 17: Friend Soft Delete
+
+Status: Planned.
+
+Goals:
+
+- Add `deletedAt DateTime?` to `Friend`
+- Add Prisma migration
+- Implement `DELETE /friends/:id` as soft delete
+- Filter soft-deleted friends out of normal list/search results
+- Decide behavior for `GET /friends/:id` on deleted friends
+- Consider a restore endpoint later
+
+Possible endpoints:
+
+```http
+DELETE /friends/:id
+POST /friends/:id/restore
+```
+
+Learning focus:
+
+- soft delete vs hard delete
+- relational data safety
+- preserving audit/history
+- migration planning
+
+---
+
+## Day 18: Optional Pronouns Field
+
+Status: Planned.
+
+Goals:
+
+- Add optional pronouns to the current `Friend` model
+- Consider whether this should later move to a generalized `Person` model
+- Keep pronouns optional and user-provided
+- Consider privacy and visibility implications for the future multi-user version
+
+Possible Prisma field:
+
+```prisma
+pronouns String?
+```
+
+Learning focus:
+
+- schema migration
+- optional profile data
+- privacy-aware data modeling
+- future compatibility with `Person`
+
+---
+
+## Day 19: Friend Management Tests and Route Tests
+
+Status: Planned.
+
+Goals:
+
+- Add tests for friend update validation
+- Add tests for note append validation
+- Start route-level tests where practical
+- Decide testing strategy for routes that require database access
+- Keep tests fast and reliable
+
+Possible testing targets:
+
+```txt
+PATCH /friends/:id
+POST /friends/:id/notes/append
+soft delete behavior after Day 17
+```
+
+Learning focus:
+
+- unit tests vs route tests
+- test isolation
+- database testing strategy
+
+---
+
+## Day 20: Documentation and Portfolio Polish
 
 Status: Planned.
 
@@ -441,13 +612,160 @@ Goals:
 - Add/update `.env.example`
 - Document endpoints
 - Document architecture
-- Clean up route files
+- Document testing commands
+- Document known limitations, especially mock prediction behavior
+- Keep project portfolio-readable
+
+Learning focus:
+
+- technical documentation
+- portfolio presentation
+- explaining architecture clearly
 
 ---
 
-## Phase 3: Retrieval, RAG, Vector Search, and Document Pipelines
+## Phase 4: Human Feedback, Verification, and LLM Evaluation
 
-## Day 17: Relationship-Specific Notes Design
+## Day 21: Human Verification Design for Model Outputs
+
+Status: Planned.
+
+Goals:
+
+- Design human verification for model-generated assessments and predictions
+- Allow users to mark model output as verified, rejected, corrected, or unverified
+- Support persisted assessments and hypothetical predictions
+- Separate model-generated judgment from human-verified judgment
+
+Possible statuses:
+
+```txt
+unverified
+verified
+rejected
+corrected
+```
+
+Example:
+
+```txt
+Model prediction:
+Calling Sam without announcing would be negative.
+
+Human verification:
+Sam confirms that this prediction is correct.
+```
+
+Learning focus:
+
+- human-in-the-loop AI
+- feedback data modeling
+- separating prediction from verified truth
+
+---
+
+## Day 22: Human Verification Data Model
+
+Status: Planned.
+
+Goals:
+
+- Add data model for verification decisions
+- Store who verified the output
+- Store when it was verified
+- Store whether it was verified, rejected, or corrected
+- Store optional correction/explanation
+- Add audit/history of verification changes
+
+Possible models:
+
+```txt
+AssessmentVerification
+PredictionVerification
+HumanFeedback
+VerificationHistory
+```
+
+Learning focus:
+
+- auditability
+- feedback storage
+- human-labeled data
+- future evaluation data
+
+---
+
+## Day 23: LLM Evaluation and Golden Examples
+
+Status: Planned.
+
+Goals:
+
+- Create golden test cases for LLM assessments and predictions
+- Evaluate scoring consistency
+- Check whether relevant rules are matched
+- Penalize irrelevant rule matches
+- Regression test prompt changes
+- Include cases with `matchedRuleIds: []`
+
+Example irrelevant-rule test case:
+
+```txt
+Input event:
+Cole said something hurtful.
+
+Available rule:
+Cole dislikes unexpected phone calls.
+
+Expected:
+matchedRuleIds: []
+```
+
+Learning focus:
+
+- automated AI evaluation
+- prompt regression testing
+- deterministic tests around nondeterministic systems
+- rule matching quality
+
+---
+
+## Day 24: LLM Tracing and Prompt Analytics
+
+Status: Planned.
+
+Goals:
+
+- Trace LangChain/LLM calls
+- Track prompt version
+- Track model name
+- Track latency
+- Track token usage/cost where available
+- Track structured output validity
+- Prepare for prompt comparison
+
+Possible tools:
+
+```txt
+LangSmith
+Langfuse
+Helicone
+OpenTelemetry
+custom logging
+```
+
+Learning focus:
+
+- LLM observability
+- debugging prompt behavior
+- cost and latency awareness
+- model comparison
+
+---
+
+## Phase 5: Retrieval, RAG, Vector Search, and Document Pipelines
+
+## Day 25: Relationship-Specific Notes Design
 
 Status: Planned.
 
@@ -476,9 +794,16 @@ RelationshipNote
 Event
 ```
 
+Learning focus:
+
+- relationship-centered data modeling
+- contextual memory
+- retrieval design
+- long-term relationship context
+
 ---
 
-## Day 18: Document Ingestion and Preprocessing
+## Day 26: Document Ingestion and Preprocessing
 
 Status: Planned.
 
@@ -487,7 +812,10 @@ Goals:
 - Add a first document ingestion flow
 - Support basic text input first
 - Later support TXT, Markdown, CSV, DOCX, and PDF
-- Extract, clean, normalize, chunk, and store text with metadata
+- Extract text
+- Clean and normalize text
+- Split content into chunks
+- Add metadata for source, friend/person, date, and document type
 
 Possible models:
 
@@ -496,9 +824,17 @@ Document
 DocumentChunk
 ```
 
+Learning focus:
+
+- document ingestion
+- preprocessing
+- chunking
+- metadata design
+- handling messy input
+
 ---
 
-## Day 19: Embeddings and Vector Storage
+## Day 27: Embeddings and Vector Storage
 
 Status: Planned.
 
@@ -506,7 +842,8 @@ Goals:
 
 - Create embeddings for rules, events, notes, and document chunks
 - Store embeddings in a vector database
-- Start with pgvector or Supabase Vector
+- Start with pgvector or Supabase Vector because the project already uses PostgreSQL
+- Compare options such as Qdrant, Chroma, Weaviate, and Pinecone
 - Add metadata filtering by friend/person and content type
 
 Possible tools:
@@ -520,58 +857,73 @@ Weaviate
 Pinecone
 ```
 
+Learning focus:
+
+- embeddings
+- vector similarity
+- metadata filtering
+- vector database tradeoffs
+- PostgreSQL + vector search
+
 ---
 
-## Day 20: RAG Retrieval and Reranking
+## Day 28: RAG Retrieval and Reranking
 
 Status: Planned.
 
 Goals:
 
-- Retrieve relevant rules, events, notes, and document chunks
+- Retrieve relevant rules, events, notes, and document chunks for a new event or prediction
 - Use semantic retrieval instead of sending all available rules
-- Add reranking
+- Add reranking to prioritize the most relevant context
+- Pass reranked context into the LLM assessment/prediction flow
 - Avoid forcing irrelevant rule matches
 
-Rule-matching goal:
+Possible flow:
 
 ```txt
-Only match semantically relevant rules.
-Allow matchedRuleIds: [] when no rule applies.
+new event or hypothetical action
+→ embedding search
+→ retrieve candidate rules/events/notes/chunks
+→ rerank candidates
+→ pass best context to LLM
+→ generate assessment or prediction
 ```
+
+Learning focus:
+
+- retrieval-augmented generation
+- semantic search
+- reranking
+- context selection
+- RAG evaluation
 
 ---
 
-## Day 21: RAG Evaluation and Golden Examples
+## Day 29: RAG Evaluation
 
 Status: Planned.
 
 Goals:
 
-- Create golden test cases
-- Evaluate relevant rule matching
-- Penalize irrelevant rule matches
 - Evaluate retrieved context quality
-- Regression test prompt and retrieval changes
+- Check whether the right rules/notes/events were retrieved
+- Check whether irrelevant context was excluded
+- Add golden examples for retrieval
+- Use human verification data later as feedback signal
 
-Example:
+Learning focus:
 
-```txt
-Input event:
-Cole said something hurtful.
-
-Available rule:
-Cole dislikes unexpected phone calls.
-
-Expected:
-matchedRuleIds: []
-```
+- retrieval evaluation
+- precision/recall for context
+- reranking quality
+- prompt/context regression tests
 
 ---
 
-## Phase 4: Supabase, Deployment, DevOps, and Production Readiness
+## Phase 6: Supabase, Docker, CI, and Deployment
 
-## Day 22: Supabase Migration Practice
+## Day 30: Supabase Migration Practice
 
 Status: Planned.
 
@@ -582,10 +934,19 @@ Goals:
 - Run Prisma migrations against Supabase
 - Use Supabase dashboard
 - Explore Supabase Vector / pgvector
+- Optionally explore Supabase Auth later
+
+Learning focus:
+
+- hosted Postgres
+- cloud database connection strings
+- database migrations in hosted environments
+- Supabase dashboard
+- Supabase Vector
 
 ---
 
-## Day 23: Docker and Local DevOps
+## Day 31: Docker and Local DevOps
 
 Status: Planned.
 
@@ -596,10 +957,87 @@ Goals:
 - Add `Dockerfile`
 - Add `docker-compose.yml`
 - Run the full app locally with Docker
+- Practice environment variables in containers
+- Add Docker-friendly `.env.example`
+
+Possible services:
+
+```txt
+api
+postgres
+```
+
+Learning focus:
+
+- Docker basics
+- Dockerfile
+- docker-compose
+- reproducible local development setup
 
 ---
 
-## Day 24: API Deployment
+## Day 32: Local Test Automation with Husky
+
+Status: Planned.
+
+Goals:
+
+- Add local pre-commit or pre-push hooks
+- Use Husky or a similar tool
+- Run tests before commit or push
+- Optionally run `npm run build` before push
+- Prevent obviously broken code from being pushed
+
+Important distinction:
+
+```txt
+Husky = local automation
+GitHub Actions = remote CI
+CD = later deployment automation
+```
+
+Learning focus:
+
+- local automation
+- pre-commit/pre-push workflow
+- developer productivity
+- safer small commits
+
+---
+
+## Day 33: GitHub Actions CI
+
+Status: Planned.
+
+Goals:
+
+- Add GitHub Actions workflow
+- Run `npm install` or `npm ci`
+- Run `npm test`
+- Run `npm run build`
+- Trigger on push and pull request
+- Keep CD/deployment automation separate for later
+
+This is CI:
+
+```txt
+push or PR
+→ install dependencies
+→ run tests
+→ run build
+→ report pass/fail
+```
+
+Learning focus:
+
+- Continuous Integration
+- automated quality checks
+- GitHub Actions basics
+- portfolio-ready DevOps workflow
+
+---
+
+## Day 34: API Deployment
 
 Status: Planned.
 
@@ -608,7 +1046,7 @@ Goals:
 - Deploy the Fastify backend API
 - Use Render as likely backend hosting option
 - Use Supabase Postgres as likely hosted database
-- Add environment variables on hosting platform
+- Add environment variables on the hosting platform
 - Run migrations safely
 - Test deployed endpoints
 
@@ -620,22 +1058,16 @@ Database: Supabase Postgres
 Frontend later: Vercel or Render static site
 ```
 
----
+Learning focus:
 
-## Day 25: CI and Build Checks
-
-Status: Planned.
-
-Goals:
-
-- Add GitHub Actions CI
-- Run TypeScript build checks on push
-- Run tests in CI
-- Add basic dependency vulnerability scanning
+- backend deployment
+- hosted environment variables
+- migration safety
+- testing deployed APIs
 
 ---
 
-## Day 26: Security and Access Control Planning
+## Day 35: Security and Access Control Planning
 
 Status: Planned.
 
@@ -647,10 +1079,19 @@ Goals:
 - Add rate limiting
 - Add prompt-injection awareness
 - Add safe LLM usage patterns
+- Add security checks in CI
+
+Learning focus:
+
+- secure API development
+- auth basics
+- least privilege
+- rate limiting
+- secure LLM application design
 
 ---
 
-## Day 27: Logging, Monitoring, and Observability
+## Day 36: Logging, Monitoring, and Observability
 
 Status: Planned.
 
@@ -662,6 +1103,7 @@ Goals:
 - Track endpoint usage metrics
 - Add health checks
 - Add dashboards and alerts later
+- Connect errors to tools such as Sentry later
 
 Possible tools:
 
@@ -672,11 +1114,20 @@ OpenTelemetry
 structured logger
 ```
 
+Learning focus:
+
+- debugging production systems
+- logs
+- metrics
+- traces
+- error monitoring
+- performance diagnosis
+
 ---
 
-## Phase 5: Multi-User System, Privacy, and Frontend
+## Phase 7: Multi-User System, Privacy, and Frontend
 
-## Day 28: Multi-User Accounts and Relationship Model
+## Day 37: Multi-User Accounts and Person/Relationship Model
 
 Status: Planned.
 
@@ -686,7 +1137,7 @@ Goals:
 - Link user accounts to `Person` records
 - Refactor from `Friend` toward `Person`
 - Add `Relationship` model between two people
-- Allow events between two people
+- Allow events between two people rather than implicitly between the user and one friend
 - Notify the other person when an event involving them is submitted
 
 Possible models:
@@ -700,21 +1151,28 @@ Assessment
 Notification
 ```
 
+Learning focus:
+
+- authentication design
+- identity modeling
+- relationship-centered data modeling
+- notification workflows
+- authorization boundaries
+
 ---
 
-## Day 29: Multi-Perspective Events, Claim Verification, Privacy Controls, and Legal Compliance
+## Day 38: Multi-Perspective Events and Claim Verification
 
 Status: Planned.
 
 Goals:
 
-- Allow both users to provide their own version of an event
+- Allow both users in a relationship to optionally provide their own version of the same event
 - Allow users to verify, deny, or leave unverified claims made about them
 - Treat verified claims as stronger evidence
 - Treat denied claims as disputed evidence
-- Treat unverified claims cautiously
-- Add audit trails, visibility controls, data governance, privacy boundaries, and dispute handling
-- Plan German/EU data privacy compliance before real-user usage
+- Treat unverified claims cautiously as one person's perspective
+- Add safety requirements for voluntary claim verification
 
 Possible models:
 
@@ -740,32 +1198,44 @@ Claim verification safety requirements:
 - clear explanation of consequences before verification
 - explicit confirmation that verification is voluntary and not coerced
 
-German/EU privacy compliance scope:
-
-- GDPR / DSGVO principles
-- German BDSG considerations where relevant
-- lawful basis / consent design
-- data minimization
-- purpose limitation
-- privacy notices
-- user rights:
-  - access
-  - deletion
-  - export
-  - correction
-- retention and deletion policies
-- secure processing
-- audit logs
-- visibility controls
-- special care around sensitive relationship, event, claim, and verification data
-
 Critical design note:
 
-A checkbox alone does not prove absence of coercion. The feature needs privacy, revocation, dispute handling, careful visibility controls, and legal/privacy review before real users use it.
+A checkbox alone does not prove absence of coercion. The feature needs privacy, revocation, dispute handling, and careful visibility controls.
 
 ---
 
-## Day 30: Responsive GUI / Frontend
+## Day 39: German/EU Privacy Compliance Planning
+
+Status: Planned.
+
+Goals:
+
+- Plan GDPR / DSGVO compliance before real-user usage
+- Consider German BDSG requirements where relevant
+- Define lawful basis / consent model
+- Apply data minimization
+- Apply purpose limitation
+- Draft privacy notice requirements
+- Design data access, deletion, export, and correction flows
+- Define retention and deletion policies
+- Secure processing of sensitive relationship/event/claim data
+- Add audit logs and visibility controls
+
+Critical design note:
+
+This should be treated as a legal/privacy design task, not just a technical checkbox. Before real users use the app, it should get proper legal review.
+
+Learning focus:
+
+- privacy-by-design
+- user rights
+- data governance
+- consent-aware product design
+- sensitive data handling
+
+---
+
+## Day 40: Responsive GUI / Frontend
 
 Status: Final planned task.
 
@@ -779,7 +1249,9 @@ Goals:
 - Add events
 - View balances
 - Trigger mock, Mistral, or OpenAI assessments
-- Display LLM assessment results
+- Trigger mock and Mistral predictions
+- Display LLM assessment and prediction results
+- Display `scoreDelta`, `impactDirection`, `confidence`, `matchedRuleIds`, `biasNotes`, `modelName`, and `promptVersion`
 - Make the app usable without curl or Prisma Studio
 
 Possible frontend options:
@@ -792,30 +1264,47 @@ Vue
 simple server-rendered UI
 ```
 
+Learning focus:
+
+- consuming backend APIs from a frontend
+- responsive UI basics
+- frontend/backend integration
+- presenting LLM output safely
+- keeping frontend work secondary to backend and AI engineering
+
 ---
 
-# Future Backlog Beyond Day 30
+# Future Backlog Beyond Day 40
 
-## Optional Pronouns Field
-
-Status: Future backlog task.
+## Prisma Enums for Rule Fields
 
 Goal:
 
-Add optional pronouns to the current `Friend` model or, preferably later, to the future generalized `Person` model.
+Move `Rule.impactDirection` and `Rule.weight` from plain `String` fields to Prisma enums.
 
-Possible Prisma field:
+Reason:
+
+Zod currently validates allowed values at the API boundary, but the database still stores plain strings. Prisma enums would make the data model stricter and reduce invalid internal states.
+
+Possible enums:
 
 ```prisma
-pronouns String?
+enum ImpactDirection {
+  positive
+  negative
+  neutral
+  mixed
+}
+
+enum RuleWeight {
+  minimal
+  low
+  medium
+  high
+  critical
+  extreme
+}
 ```
-
-Design notes:
-
-- Pronouns should be optional.
-- Pronouns should be user-provided and editable.
-- In the future multi-user version, pronoun visibility should be controlled by the person the pronouns belong to.
-- Privacy and visibility implications should be considered before real-user usage.
 
 ---
 
@@ -858,3 +1347,22 @@ Goals:
 - Add data retention/deletion policies
 - Add safer LLM usage boundaries
 - Add security checks in CI
+
+---
+
+## Production CD Pipeline
+
+Goal:
+
+Add Continuous Deployment only after deployment is stable and tests/build checks are reliable.
+
+Possible flow:
+
+```txt
+push to main
+→ GitHub Actions CI passes
+→ deploy API automatically
+→ run smoke test
+```
+
+Keep this separate from CI until the deployment process is well understood.
