@@ -457,36 +457,43 @@ Learning focus:
 
 ---
 
-## Phase 3: Backend Quality, Error Handling, and Data Safety
+## Phase 3: Backend Quality, Error Handling, and Local Automation
 
 ## Day 15: Error Handling and Response Consistency
 
-Status: Planned.
+Status: Done.
 
-Goals:
+Implemented:
 
-- Standardize error response shape
-- Add reusable validation error helper
-- Add reusable not-found helper
-- Make route error responses consistent
-- Avoid leaking stack traces or implementation details to clients
-- Improve catch blocks where needed
+- Added shared `sendValidationError` helper for invalid request bodies
+- Added shared `sendBadRequestError` helper for non-body 400 errors such as missing query parameters
+- Added shared `sendNotFoundError` helper for 404 responses
+- Added shared `sendInternalServerError` helper for 500 responses
+- Replaced repeated validation, not-found, and internal-error responses across route files
+- Kept `409 Conflict` for duplicate friend names as a custom conflict response
 
-Possible response shape:
+Important distinction:
 
-```json
-{
-  "error": "Invalid request body",
-  "details": []
-}
+```txt
+Invalid JSON body / Zod body validation failed
+→ sendValidationError(...)
+
+Missing query parameter / general bad request
+→ sendBadRequestError(...)
+
+Missing friend/rule/event in database
+→ sendNotFoundError(...)
+
+Unexpected server/provider failure
+→ sendInternalServerError(...)
 ```
 
 Learning focus:
 
-- API ergonomics
-- safe error responses
-- route cleanup
-- maintainable error handling
+- consistent API error responses
+- difference between body validation errors and general bad requests
+- safer client-facing error messages
+- reducing repeated route code
 
 ---
 
@@ -496,10 +503,11 @@ Status: Planned.
 
 Goals:
 
-- Add safer internal error logging
+- Make internal error logging consistent across routes
 - Log detailed internal errors in server logs
 - Return generic client-facing errors
 - Avoid exposing stack traces to API clients
+- Reduce noisy repeated `console.error` blocks
 - Prepare for structured logging later
 
 Possible future tools:
@@ -518,7 +526,84 @@ Learning focus:
 
 ---
 
-## Day 17: Friend Soft Delete
+## Day 17: Local Test Automation with Husky
+
+Status: Done.
+
+Implemented:
+
+- Installed Husky
+- Added `.husky/pre-push`
+- Runs `npm test` before push
+- Runs `npm run build` before push
+- Added an echo line so the hook is visible when running `git push`
+- Verified the hook blocks push when it fails
+- Confirmed VS Code uses normal Git push flow, though VS Code may not always show hook stdout clearly
+
+Current pre-push behavior:
+
+```bash
+echo "Running pre-push hook..."
+npm test
+npm run build
+```
+
+Important distinction:
+
+```txt
+Husky = local automation before push
+GitHub Actions = remote CI after push / on pull requests
+CD = deployment automation, later
+```
+
+Learning focus:
+
+- local automation
+- pre-push workflow
+- preventing broken code from reaching GitHub
+- safer small commits
+
+---
+
+## Day 18: GitHub Actions CI
+
+Status: Planned.
+
+Goals:
+
+- Add GitHub Actions workflow
+- Run `npm ci`
+- Run `npm test`
+- Run `npm run build`
+- Trigger on push and pull request
+- Keep CD/deployment automation separate for later
+
+This is CI:
+
+```txt
+push or PR
+→ install dependencies
+→ run tests
+→ run build
+→ report pass/fail
+```
+
+Why this comes soon:
+
+- Local hooks are helpful but can be skipped or misconfigured.
+- GitHub Actions provides a stronger remote safety net.
+- CI is valuable now because tests already exist.
+
+Learning focus:
+
+- Continuous Integration
+- automated quality checks
+- GitHub Actions basics
+- portfolio-ready DevOps workflow
+
+---
+
+## Day 19: Friend Soft Delete
 
 Status: Planned.
 
@@ -547,7 +632,7 @@ Learning focus:
 
 ---
 
-## Day 18: Optional Pronouns Field
+## Day 20: Optional Pronouns Field
 
 Status: Planned.
 
@@ -573,16 +658,17 @@ Learning focus:
 
 ---
 
-## Day 19: Friend Management Tests and Route Tests
+## Day 21: Friend Management Route Tests
 
 Status: Planned.
 
 Goals:
 
-- Add tests for friend update validation
-- Add tests for note append validation
-- Start route-level tests where practical
-- Decide testing strategy for routes that require database access
+- Add route-level tests where practical
+- Test friend update route behavior
+- Test note append route behavior
+- Test missing query parameter behavior for `/friends/search`
+- Decide database testing strategy for routes requiring Prisma data
 - Keep tests fast and reliable
 
 Possible testing targets:
@@ -590,18 +676,20 @@ Possible testing targets:
 ```txt
 PATCH /friends/:id
 POST /friends/:id/notes/append
-soft delete behavior after Day 17
+GET /friends/search
+soft delete behavior after Day 19
 ```
 
 Learning focus:
 
-- unit tests vs route tests
-- test isolation
-- database testing strategy
+- route tests vs schema tests
+- Fastify route testing
+- `app.inject(...)`
+- database test strategy
 
 ---
 
-## Day 20: Documentation and Portfolio Polish
+## Day 22: Documentation and Portfolio Polish
 
 Status: Planned.
 
@@ -613,6 +701,7 @@ Goals:
 - Document endpoints
 - Document architecture
 - Document testing commands
+- Document pre-push checks
 - Document known limitations, especially mock prediction behavior
 - Keep project portfolio-readable
 
@@ -626,7 +715,7 @@ Learning focus:
 
 ## Phase 4: Human Feedback, Verification, and LLM Evaluation
 
-## Day 21: Human Verification Design for Model Outputs
+## Day 23: Human Verification Design for Model Outputs
 
 Status: Planned.
 
@@ -664,7 +753,7 @@ Learning focus:
 
 ---
 
-## Day 22: Human Verification Data Model
+## Day 24: Human Verification Data Model
 
 Status: Planned.
 
@@ -695,7 +784,7 @@ Learning focus:
 
 ---
 
-## Day 23: LLM Evaluation and Golden Examples
+## Day 25: LLM Evaluation and Golden Examples
 
 Status: Planned.
 
@@ -707,6 +796,7 @@ Goals:
 - Penalize irrelevant rule matches
 - Regression test prompt changes
 - Include cases with `matchedRuleIds: []`
+- Use human verification data later as feedback signal
 
 Example irrelevant-rule test case:
 
@@ -730,7 +820,7 @@ Learning focus:
 
 ---
 
-## Day 24: LLM Tracing and Prompt Analytics
+## Day 26: LLM Tracing and Prompt Analytics
 
 Status: Planned.
 
@@ -765,7 +855,7 @@ Learning focus:
 
 ## Phase 5: Retrieval, RAG, Vector Search, and Document Pipelines
 
-## Day 25: Relationship-Specific Notes Design
+## Day 27: Relationship-Specific Notes Design
 
 Status: Planned.
 
@@ -803,7 +893,7 @@ Learning focus:
 
 ---
 
-## Day 26: Document Ingestion and Preprocessing
+## Day 28: Document Ingestion and Preprocessing
 
 Status: Planned.
 
@@ -834,7 +924,7 @@ Learning focus:
 
 ---
 
-## Day 27: Embeddings and Vector Storage
+## Day 29: Embeddings and Vector Storage
 
 Status: Planned.
 
@@ -867,7 +957,7 @@ Learning focus:
 
 ---
 
-## Day 28: RAG Retrieval and Reranking
+## Day 30: RAG Retrieval and Reranking
 
 Status: Planned.
 
@@ -900,7 +990,7 @@ Learning focus:
 
 ---
 
-## Day 29: RAG Evaluation
+## Day 31: RAG Evaluation
 
 Status: Planned.
 
@@ -921,9 +1011,9 @@ Learning focus:
 
 ---
 
-## Phase 6: Supabase, Docker, CI, and Deployment
+## Phase 6: Supabase, Docker, Deployment, Security, and Observability
 
-## Day 30: Supabase Migration Practice
+## Day 32: Supabase Migration Practice
 
 Status: Planned.
 
@@ -946,7 +1036,7 @@ Learning focus:
 
 ---
 
-## Day 31: Docker and Local DevOps
+## Day 33: Docker and Local DevOps
 
 Status: Planned.
 
@@ -973,67 +1063,6 @@ Learning focus:
 - Dockerfile
 - docker-compose
 - reproducible local development setup
-
----
-
-## Day 32: Local Test Automation with Husky
-
-Status: Planned.
-
-Goals:
-
-- Add local pre-commit or pre-push hooks
-- Use Husky or a similar tool
-- Run tests before commit or push
-- Optionally run `npm run build` before push
-- Prevent obviously broken code from being pushed
-
-Important distinction:
-
-```txt
-Husky = local automation
-GitHub Actions = remote CI
-CD = later deployment automation
-```
-
-Learning focus:
-
-- local automation
-- pre-commit/pre-push workflow
-- developer productivity
-- safer small commits
-
----
-
-## Day 33: GitHub Actions CI
-
-Status: Planned.
-
-Goals:
-
-- Add GitHub Actions workflow
-- Run `npm install` or `npm ci`
-- Run `npm test`
-- Run `npm run build`
-- Trigger on push and pull request
-- Keep CD/deployment automation separate for later
-
-This is CI:
-
-```txt
-push or PR
-→ install dependencies
-→ run tests
-→ run build
-→ report pass/fail
-```
-
-Learning focus:
-
-- Continuous Integration
-- automated quality checks
-- GitHub Actions basics
-- portfolio-ready DevOps workflow
 
 ---
 
@@ -1239,7 +1268,7 @@ Learning focus:
 
 Status: Final planned task.
 
-This should stay last because frontend development is not the main focus of this project.
+This must remain the final roadmap task because frontend development is not the main focus of this project. Backend, AI, testing, DevOps, security, privacy, compliance, and multi-user design should come first.
 
 Goals:
 
