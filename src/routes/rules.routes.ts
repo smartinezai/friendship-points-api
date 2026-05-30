@@ -12,8 +12,7 @@ export async function ruleRoutes(app: FastifyInstance) {
         const friend = await getFriendById(friendId); //first check if the friend exists
 
         if (!friend) {
-            reply.status(404);
-            return { error: "Friend not found" };
+            return sendNotFoundError(reply, "Friend not found");
         }
         const rules = await prisma.rule.findMany({
             where: { friendId },
@@ -37,8 +36,7 @@ export async function ruleRoutes(app: FastifyInstance) {
         const friend = await getFriendById(friendId); //first check if the friend exists
 
         if (!friend) {
-            reply.status(404);
-            return { error: "Friend not found" };
+            return sendNotFoundError(reply, "Friend not found");
         }
 
         const parsedBody = createRuleBodySchema.safeParse(request.body);
@@ -46,20 +44,6 @@ export async function ruleRoutes(app: FastifyInstance) {
             return sendValidationError(reply, parsedBody.error.issues);
         }
         const { title, description, impactDirection, weight } = parsedBody.data; //destructure body from request body, and type it as an object with the required fields
-        
-        if (
-            !title ||
-            title.trim() === "" ||
-            !description ||
-            description.trim() === "" ||
-            !impactDirection ||
-            impactDirection.trim() === "" ||
-            !weight ||
-            weight.trim() === ""
-        ) {
-            reply.status(400);
-            return { error: "title, description, impactDirection, and weight are required" };
-        }
 
         const rule = await prisma.rule.create({
             data: {

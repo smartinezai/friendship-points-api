@@ -24,3 +24,9 @@ export function sendInternalServerError(
         error: message,
     }); 
 }
+
+export function sendBadRequestError(reply: FastifyReply, message: string) {
+    return reply.status(400).send({
+        error: message,
+    });
+}

@@ -20,16 +20,13 @@ export async function predictionRoutes(app: FastifyInstance) {
         const parsedBody = predictFriendActionBodySchema.safeParse(request.body); //validate the request body using the predictFriendActionBodySchema, which requires a hypotheticalAction string that is at least 10 characters long and at most 2000 characters long
 
         if (!parsedBody.success) {
-            return reply.status(400).send({
-                error: "Invalid request body",
-                details: parsedBody.error.issues,
-            });
+            return sendValidationError(reply, parsedBody.error.issues);
         }
 
         const friend = await getFriendWithActiveRules(friendId);
 
         if (!friend) {
-            return reply.status(404).send({ error: "Friend not found" });
+            return sendNotFoundError(reply, "Friend not found");
         }
 
         const predictionInput = buildPredictionInput(

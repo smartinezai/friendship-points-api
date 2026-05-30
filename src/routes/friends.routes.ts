@@ -5,7 +5,10 @@ import { createFriendBodySchema,
     updateFriendBodySchema, 
     appendFriendNoteBodySchema,
 } from "../schemas/friends.schema.js";
-import { sendNotFoundError, sendValidationError } from "../utils/httpErrors.js";
+import { sendNotFoundError, 
+    sendValidationError,
+    sendBadRequestError,
+ } from "../utils/httpErrors.js";
 
 
 export async function friendRoutes(app: FastifyInstance) {
@@ -15,8 +18,7 @@ export async function friendRoutes(app: FastifyInstance) {
         const { name } = request.query;
 
         if (!name) {
-            reply.status(400);
-            return { message: "Name query parameter is required." };
+           return sendBadRequestError(reply, "Name query parameter is required.");
         }
         const friends = await prisma.friend.findMany({
             where: {
@@ -38,8 +40,7 @@ export async function friendRoutes(app: FastifyInstance) {
         const friend = await getFriendById(id);
 
         if (!friend) {
-            reply.status(404);
-            return { error: "Friend not found" };
+            return sendNotFoundError(reply, "Friend not found");
         }
 
         return { friend };
