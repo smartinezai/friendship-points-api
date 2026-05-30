@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { prisma } from "../db/prisma.js";
 import { getFriendById } from "../services/friends.service.js";
 import { createRuleBodySchema, updateRuleWeightBodySchema } from "../schemas/rules.schema.js";
+import { sendNotFoundError, sendValidationError } from "../utils/httpErrors.js";
 
 export async function ruleRoutes(app: FastifyInstance) {
 
@@ -42,9 +43,7 @@ export async function ruleRoutes(app: FastifyInstance) {
 
         const parsedBody = createRuleBodySchema.safeParse(request.body);
         if (!parsedBody.success) {
-            return reply.status(400).send({ 
-                error: "Invalid request body", 
-                details: parsedBody.error.issues });
+            return sendValidationError(reply, parsedBody.error.issues);
         }
         const { title, description, impactDirection, weight } = parsedBody.data; //destructure body from request body, and type it as an object with the required fields
         
@@ -84,9 +83,7 @@ export async function ruleRoutes(app: FastifyInstance) {
         const { ruleId } = request.params;
         const parsedBody = updateRuleWeightBodySchema.safeParse(request.body);
         if (!parsedBody.success) {
-            return reply.status(400).send({ 
-                error: "Invalid request body", 
-                details: parsedBody.error.issues });
+            return sendValidationError(reply, parsedBody.error.issues);
         }
         const { weight } = parsedBody.data;
         const rule = await prisma.rule.findUnique({
@@ -94,8 +91,7 @@ export async function ruleRoutes(app: FastifyInstance) {
         });
 
         if (!rule) {
-            reply.status(404);
-            return { error: "Rule not found" };
+            return sendNotFoundError(reply, "Rule not found");
         }
 
         const updatedRule = await prisma.rule.update({
