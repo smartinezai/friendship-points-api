@@ -2,7 +2,7 @@
 
 ## Non-technical introduction
 
-Friendship Points API is a backend app for tracking friendship-related events, rules, notes, and point changes over time.
+Friendship Points API is a backend app for tracking friendship-related events, rules, notes, predictions, and point changes over time.
 
 In plain language, the app lets you:
 
@@ -11,6 +11,7 @@ In plain language, the app lets you:
 - record things that happened
 - manually score how positive or negative an event was
 - ask an LLM to suggest an assessment
+- ask for predictions about hypothetical future actions
 - track a friendship balance
 - update friend information
 - append new notes without deleting older notes
@@ -29,38 +30,52 @@ Possible assessment:
 This may negatively affect the friendship because it violates a known preference.
 ```
 
-The project is primarily a learning project for practicing backend engineering, TypeScript, PostgreSQL, Prisma, Fastify, LangChain, structured LLM outputs, retrieval/RAG, testing, observability, security, deployment, and finally a simple responsive frontend.
+Prediction example:
 
-For the detailed 30-day roadmap and future backlog, see [`ROADMAP.md`](./ROADMAP.md).
+```txt
+Hypothetical action:
+I call Cole without warning tomorrow.
+
+Possible prediction:
+This would likely be negative because it conflicts with an active rule.
+```
+
+The project is primarily a learning project for practicing backend engineering, TypeScript, PostgreSQL, Prisma, Fastify, LangChain, structured LLM outputs, testing, error handling, local automation, retrieval/RAG, observability, security, deployment, and finally a simple responsive frontend.
+
+For the detailed 40-day roadmap and future backlog, see [`ROADMAP.md`](./ROADMAP.md).
 
 ---
 
 ## Technical overview
 
-A TypeScript backend API for tracking friendship-related events, rules, point changes, notes, and LLM-assisted friendship assessments.
+A TypeScript backend API for tracking friendship-related events, rules, point changes, notes, LLM-assisted friendship assessments, and hypothetical predictions.
 
 The project currently supports:
 
 - creating and searching friends
 - updating friend display names and notes
 - appending friend notes without replacing existing notes
-- creating mock predictions for hypothetical actions without saving events or assessments
-- creating real Mistral predictions for hypothetical actions without saving events or assessments
 - creating rules for friends
 - creating events for friends
 - manually assessing events
 - calculating friendship balances
-- validating route input with Zod
 - creating mock LLM assessments
 - creating real Mistral LLM assessments through LangChain
+- creating OpenAI/LangChain assessments, currently blocked by API quota
+- creating mock predictions for hypothetical actions
+- creating real Mistral predictions for hypothetical actions
+- validating route input with Zod
+- shared HTTP error helpers
+- Vitest tests for schemas and pure helper functions
+- pre-push automation with Husky to run tests and build checks
 - storing structured LLM assessment metadata
 - tracking prompt/model metadata for LLM assessments
 
 ---
 
-## Current Status
+## Current status
 
-Day 13 is complete.
+Day 15 is complete. Day 17 local test automation was moved earlier and is also complete.
 
 Implemented so far:
 
@@ -72,6 +87,8 @@ Implemented so far:
 - Mock LLM assessment endpoint
 - Mistral LLM assessment endpoint
 - OpenAI/LangChain assessment endpoint, currently blocked by API quota
+- Mock prediction endpoint
+- Mistral prediction endpoint
 - Zod validation for manual assessment, friend creation/update/note append, rule creation/weight update, event creation, and prediction requests
 - Shared LLM prompt builder
 - Shared LLM provider configuration
@@ -79,17 +96,26 @@ Implemented so far:
 - Assessment metadata fields: `modelName` and `promptVersion`
 - Prediction input builder for mock and Mistral predictions
 - Friend-with-active-rules lookup helper for predictions
+- Shared HTTP error helpers:
+  - `sendValidationError`
+  - `sendBadRequestError`
+  - `sendNotFoundError`
+  - `sendInternalServerError`
+- Vitest testing setup
+- Pre-push Husky hook that runs `npm test` and `npm run build`
 
 Not implemented yet:
 
 - friend soft delete
+- pronouns field
+- GitHub Actions CI
 - authentication/accounts
 - RAG/vector search
 - frontend
 
 ---
 
-## Tech Stack
+## Tech stack
 
 ### Current
 
@@ -104,26 +130,27 @@ Not implemented yet:
 - LangChain.js
 - Mistral via LangChain
 - OpenAI via LangChain, route exists but API quota is currently unavailable
-
-### Planned / Future Practice
-
 - Vitest
+- Husky
+
+### Planned / future practice
+
+- GitHub Actions CI
 - Docker
 - Supabase
 - pgvector or another vector database
-- GitHub Actions
 - Observability tooling
 - LLM tracing tooling
 - RAG and reranking tooling
 - DeepEval or LangSmith evaluations
 - German/EU data privacy compliance planning
-- Responsive frontend/GUI as the final task
+- Responsive frontend/GUI as the final roadmap task
 
 ---
 
-# Current API Endpoints
+# Current API endpoints
 
-## Health Check
+## Health check
 
 ### `GET /health`
 
@@ -148,6 +175,14 @@ Returns one friend by ID.
 ### `GET /friends/search?name=Cole`
 
 Searches friends by name.
+
+If `name` is missing, the API returns a bad request error:
+
+```json
+{
+  "error": "Name query parameter is required."
+}
+```
 
 ### `POST /friends`
 
@@ -410,6 +445,10 @@ Purpose:
 - Reuse the same LLM assessment input shape as real event assessment.
 - Keep hypothetical predictions separate from persisted event history.
 
+Important limitation:
+
+- The mock provider is structurally useful but semantically unreliable because it uses hardcoded output.
+
 ### `POST /friends/:friendId/predict/mistral`
 
 Creates a real Mistral prediction for a hypothetical action without saving an `Event` or `Assessment`.
@@ -438,7 +477,45 @@ Important behavior:
 
 ---
 
-# Database Models
+# Error response helpers
+
+The project now uses shared HTTP error helpers to keep route responses consistent.
+
+```txt
+sendValidationError
+→ 400 Invalid request body
+
+sendBadRequestError
+→ 400 general bad request, such as missing query parameter
+
+sendNotFoundError
+→ 404 missing resource
+
+sendInternalServerError
+→ 500 unexpected server/provider failure
+```
+
+Important distinction:
+
+```txt
+Invalid JSON body / Zod body validation failed
+→ sendValidationError(...)
+
+Missing query parameter / general bad request
+→ sendBadRequestError(...)
+
+Missing friend/rule/event in database
+→ sendNotFoundError(...)
+
+Unexpected server/provider failure
+→ sendInternalServerError(...)
+```
+
+`409 Conflict` for duplicate friend names remains a custom route response.
+
+---
+
+# Database models
 
 ## Friend
 
@@ -484,6 +561,10 @@ model Rule {
 }
 ```
 
+Future improvement:
+
+- Convert `impactDirection` and `weight` from plain strings to Prisma enums.
+
 ## Event
 
 ```prisma
@@ -522,7 +603,7 @@ model Assessment {
 
 ---
 
-# Project Structure
+# Project structure
 
 ```txt
 src/
@@ -553,15 +634,24 @@ src/
     mockAssessment.service.ts
     langchainAssessment.service.ts
     mistralAssessment.service.ts
+    openAiAssessment.service.ts
     prompts/
       friendshipAssessment.prompt.ts
-  types/
+  tests/
+    basic.test.ts
+    predictions.service.test.ts
+    predictions.schema.test.ts
+    assessments.schema.test.ts
+    friends.schema.test.ts
+    rules.schema.test.ts
+    events.schema.test.ts
   utils/
+    httpErrors.ts
 ```
 
 ---
 
-# Getting Started
+# Getting started
 
 ## 1. Install dependencies
 
@@ -632,17 +722,88 @@ http://localhost:5555
 
 ---
 
-# Available Scripts
+# Available scripts
 
 ```bash
 npm run dev
 npm run build
 npm start
+npm test
+```
+
+What they do:
+
+```txt
+npm run dev
+→ starts the development server with tsx watch
+
+npm run build
+→ runs the TypeScript compiler
+
+npm start
+→ runs the compiled JavaScript from dist
+
+npm test
+→ runs Vitest
 ```
 
 ---
 
-# Development Workflow
+# Testing and quality checks
+
+## Manual checks
+
+Run:
+
+```bash
+npm test
+npm run build
+```
+
+## Automated pre-push checks
+
+The project uses Husky to run checks before pushing to GitHub.
+
+Current pre-push hook:
+
+```bash
+echo "Running pre-push hook..."
+npm test
+npm run build
+```
+
+This means:
+
+```txt
+git push
+→ run tests
+→ run TypeScript build
+→ push only if checks pass
+```
+
+This is local automation, not CI.
+
+Planned CI:
+
+```txt
+GitHub Actions
+→ run npm ci
+→ run npm test
+→ run npm run build
+→ trigger on push and pull request
+```
+
+Important distinction:
+
+```txt
+Husky = local checks before push
+GitHub Actions = remote CI after push / on pull requests
+CD = deployment automation later
+```
+
+---
+
+# Development workflow
 
 Use small commits.
 
@@ -652,22 +813,39 @@ Preferred pattern:
 one logical change = one commit
 ```
 
-Examples:
+Preferred commit-message style:
 
 ```bash
-git commit -m "Validate event creation requests with Zod"
-git commit -m "Add friend update endpoint"
-git commit -m "Add friend note append endpoint"
-git commit -m "Add mock prediction endpoint"
-git commit -m "Add Mistral prediction endpoint"
-git commit -m "Document soft delete plan"
+git commit -m "Add test for prediction input builder"
+git commit -m "Add bad request helper for query errors"
+git commit -m "Use shared error helpers in event routes"
+git commit -m "Document testing foundation"
+```
+
+Avoid vague commit messages like:
+
+```bash
+git commit -m "Test prediction input builder"
 ```
 
 ---
 
 # Roadmap
 
-The detailed project roadmap has been moved to [`ROADMAP.md`](./ROADMAP.md).
+The detailed 40-day project roadmap is in [`ROADMAP.md`](./ROADMAP.md).
+
+Current near-term roadmap:
+
+```txt
+Day 15: Error Handling and Response Consistency ✅
+Day 16: Safe Internal Logging
+Day 17: Local Test Automation with Husky ✅
+Day 18: GitHub Actions CI
+Day 19: Friend Soft Delete
+Day 20: Optional Pronouns Field
+```
+
+The responsive GUI/frontend is intentionally kept as the final roadmap task because frontend is not the main focus of this project.
 
 ---
 
@@ -675,4 +853,4 @@ The detailed project roadmap has been moved to [`ROADMAP.md`](./ROADMAP.md).
 
 This is a private learning project meant to be social commentary on government surveillance and the social credit score system imposed by the CCP.
 
-The LLM will be used as an assistant for generating structured suggestions, but the backend will remain responsible for validation, storage, and final business logic.
+The LLM will be used as an assistant for generating structured suggestions, but the backend will remain responsible for validation, storage, final business logic, and safe error handling.
