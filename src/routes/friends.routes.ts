@@ -5,6 +5,8 @@ import { createFriendBodySchema,
     updateFriendBodySchema, 
     appendFriendNoteBodySchema,
 } from "../schemas/friends.schema.js";
+import { sendNotFoundError, sendValidationError } from "../utils/httpErrors.js";
+
 
 export async function friendRoutes(app: FastifyInstance) {
 
@@ -14,7 +16,7 @@ export async function friendRoutes(app: FastifyInstance) {
 
         if (!name) {
             reply.status(400);
-            return { error: "Name query parameter is required." };
+            return { message: "Name query parameter is required." };
         }
         const friends = await prisma.friend.findMany({
             where: {
@@ -62,10 +64,7 @@ export async function friendRoutes(app: FastifyInstance) {
         const parsedBody = createFriendBodySchema.safeParse(request.body);
 
         if (!parsedBody.success) {
-            return reply.status(400).send({
-                error: "Invalid request body",
-                details: parsedBody.error.issues
-            });
+            return sendValidationError(reply, parsedBody.error.issues);
         }
 
         const { displayName, notes, allowDuplicate } = parsedBody.data;
@@ -102,10 +101,7 @@ export async function friendRoutes(app: FastifyInstance) {
         const parsedBody = updateFriendBodySchema.safeParse(request.body);
 
         if (!parsedBody.success) {
-            return reply.status(400).send({
-                error: "Invalid request body",
-                details: parsedBody.error.issues,
-            });
+            return sendValidationError(reply, parsedBody.error.issues);
         }
 
         const existingFriend = await prisma.friend.findUnique({
@@ -113,7 +109,7 @@ export async function friendRoutes(app: FastifyInstance) {
         });
 
         if (!existingFriend) {
-            return reply.status(404).send({ error: "Friend not found" });
+            return sendNotFoundError(reply, "Friend not found");
         }
 
         const updateData: {
@@ -151,10 +147,7 @@ export async function friendRoutes(app: FastifyInstance) {
         const parsedBody = appendFriendNoteBodySchema.safeParse(request.body);
 
         if (!parsedBody.success) {
-            return reply.status(400).send({
-                error: "Invalid request body",
-                details: parsedBody.error.issues,
-            });
+            return sendValidationError(reply, parsedBody.error.issues);
         }
 
         const existingFriend = await prisma.friend.findUnique({
@@ -162,7 +155,7 @@ export async function friendRoutes(app: FastifyInstance) {
         });
 
         if (!existingFriend) {
-            return reply.status(404).send({ error: "Friend not found" });
+            return sendNotFoundError(reply, "Friend not found");
         }
 
         const { note } = parsedBody.data;
