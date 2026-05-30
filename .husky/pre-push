@@ -1,3 +1,2 @@
 echo "Running pre-push hook..."
-npm test
-npm run build
+exit 1
