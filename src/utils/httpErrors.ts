@@ -15,3 +15,12 @@ export function sendNotFoundError(reply: FastifyReply, message: string) {
         error: message,
     });
 }
+
+export function sendInternalServerError(
+    reply: FastifyReply,
+    message: string = "An internal server error occurred."
+) {
+    return reply.status(500).send({
+        error: message,
+    }); 
+}

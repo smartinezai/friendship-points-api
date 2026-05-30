@@ -7,7 +7,7 @@ import { mistralAssessEvent } from "../ai/mistralAssessment.service.js";
 import { LLM_MODELS, PROMPT_VERSION } from '../ai/providers.js';
 import { assessEventWithProvider } from '../services/assessments.service.js';
 import { manualAssessmentBodySchema } from '../schemas/assessments.schema.js';
-import { sendNotFoundError, sendValidationError } from '../utils/httpErrors.js';
+import { sendNotFoundError, sendValidationError, sendInternalServerError } from '../utils/httpErrors.js';
 
 export async function assessmentRoutes(app: FastifyInstance) {
     app.post<{
@@ -97,9 +97,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
         } catch (error) {
             console.error("Error during mock assessment:", error);
 
-            return reply.status(500).send({
-                error: "An error occurred during the mock assessment.",
-            });
+            return sendInternalServerError(reply, "An error occurred during the mock assessment.");
         }
     });
 
@@ -132,9 +130,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
                 console.error("Error stack:", error.stack);
             }
 
-            return reply.status(500).send({
-                error: "An error occurred during the Mistral assessment.",
-            });
+            return sendInternalServerError(reply, "An error occurred during the Mistral assessment.");
         }
     });
 
@@ -168,9 +164,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
                 console.error("Error stack:", error.stack);
             }
 
-            return reply.status(500).send({
-                error: "An error occurred during the OpenAI assessment.",
-            });
+            return sendInternalServerError(reply, "An error occurred during the OpenAI assessment.");
         }
     });
 }
