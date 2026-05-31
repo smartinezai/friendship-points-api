@@ -8,6 +8,8 @@ import { LLM_MODELS, PROMPT_VERSION } from '../ai/providers.js';
 import { assessEventWithProvider } from '../services/assessments.service.js';
 import { manualAssessmentBodySchema } from '../schemas/assessments.schema.js';
 import { sendNotFoundError, sendValidationError, sendInternalServerError } from '../utils/httpErrors.js';
+import { logError } from '../utils/logging.js';
+
 
 export async function assessmentRoutes(app: FastifyInstance) {
     app.post<{
@@ -95,7 +97,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
 
             return reply.status(201).send(result);
         } catch (error) {
-            console.error("Error during mock assessment:", error);
+            logError("Error during mock assessment", error);
 
             return sendInternalServerError(reply, "An error occurred during the mock assessment.");
         }
@@ -123,12 +125,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
 
             return reply.status(201).send(result);
         } catch (error) {
-            console.error("Error during Mistral assessment:", error);
-
-            if (error instanceof Error) {
-                console.error("Error message:", error.message);
-                console.error("Error stack:", error.stack);
-            }
+            logError("Error during Mistral assessment", error);
 
             return sendInternalServerError(reply, "An error occurred during the Mistral assessment.");
         }
@@ -157,12 +154,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
 
             return reply.status(201).send(result);
         } catch (error) {
-            console.error("Error during OpenAI assessment:", error);
-
-            if (error instanceof Error) {
-                console.error("Error message:", error.message);
-                console.error("Error stack:", error.stack);
-            }
+            logError("Error during OpenAI assessment", error);
 
             return sendInternalServerError(reply, "An error occurred during the OpenAI assessment.");
         }
