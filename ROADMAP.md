@@ -499,16 +499,16 @@ Learning focus:
 
 ## Day 16: Safe Internal Logging
 
-Status: Planned.
+Status: Done.
 
-Goals:
+Implemented:
 
-- Make internal error logging consistent across routes
-- Log detailed internal errors in server logs
-- Return generic client-facing errors
-- Avoid exposing stack traces to API clients
-- Reduce noisy repeated `console.error` blocks
-- Prepare for structured logging later
+- Added shared `logError(context, error)` helper
+- Used `unknown` for caught errors
+- Centralized `instanceof Error` checking
+- Logged error messages and stack traces internally
+- Replaced direct route/server `console.error` calls with `logError`
+- Kept client-facing 500 responses generic and safe
 
 Possible future tools:
 
