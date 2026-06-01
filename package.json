@@ -8,7 +8,8 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint": "eslint src/"
   },
   "keywords": [],
   "author": "",
@@ -27,11 +28,14 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^25.8.0",
     "@types/pg": "^8.20.0",
+    "eslint": "^10.4.1",
     "husky": "^9.1.7",
     "tsx": "^4.22.0",
     "typescript": "^6.0.3",
+    "typescript-eslint": "^8.60.0",
     "vitest": "^4.1.7"
   }
 }

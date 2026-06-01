@@ -22,7 +22,10 @@ jobs:
         env:
             DATABASE_URL: postgresql://user:password@localhost:5432/testdb
         
+      - name: Run lint #run linter
+        run: npm run lint # execute the shell command "npm run lint" to run the linter inside the github runner  
       - name: Run tests #run tests
         run: npm test # execute the shell command "npm test" to run tests inside the
+      
       - name: Run build #run build
         run: npm run build # execute the shell command "npm run build" to build the project inside the github runner
