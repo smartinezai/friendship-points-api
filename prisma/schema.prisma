@@ -19,6 +19,7 @@ model Friend {
   updatedAt   DateTime @updatedAt
   rules       Rule[]
   events      Event[]
+  deletedAt   DateTime?
 }
 
 model Rule {

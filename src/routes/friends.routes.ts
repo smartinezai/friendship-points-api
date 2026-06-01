@@ -1,14 +1,16 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../db/prisma.js";
 import { getFriendById } from "../services/friends.service.js";
-import { createFriendBodySchema, 
-    updateFriendBodySchema, 
+import {
+    createFriendBodySchema,
+    updateFriendBodySchema,
     appendFriendNoteBodySchema,
 } from "../schemas/friends.schema.js";
-import { sendNotFoundError, 
+import {
+    sendNotFoundError,
     sendValidationError,
     sendBadRequestError,
- } from "../utils/httpErrors.js";
+} from "../utils/httpErrors.js";
 
 
 export async function friendRoutes(app: FastifyInstance) {
@@ -18,10 +20,11 @@ export async function friendRoutes(app: FastifyInstance) {
         const { name } = request.query;
 
         if (!name) {
-           return sendBadRequestError(reply, "Name query parameter is required.");
+            return sendBadRequestError(reply, "Name query parameter is required.");
         }
         const friends = await prisma.friend.findMany({
             where: {
+                deletedAt: null, //only search friends that have not been soft deleted
                 displayName: {
                     contains: name,
                     mode: "insensitive",
@@ -31,7 +34,6 @@ export async function friendRoutes(app: FastifyInstance) {
         return { friends };
 
     });
-
 
 
     app.get<{ Params: { id: string } }>("/friends/:id", async (request, reply) => {
@@ -47,10 +49,13 @@ export async function friendRoutes(app: FastifyInstance) {
     });
 
 
-
     app.get("/friends", async () => {
         // get all friends
-        const friends = await prisma.friend.findMany();
+        const friends = await prisma.friend.findMany({
+                where: {
+                    deletedAt: null, //only return friends that have not been soft deleted
+                },
+            });
 
         return { friends };
     });
@@ -71,7 +76,7 @@ export async function friendRoutes(app: FastifyInstance) {
         const { displayName, notes, allowDuplicate } = parsedBody.data;
 
         const existingFriend = await prisma.friend.findFirst({
-            where: { displayName }
+            where: { displayName, deletedAt: null }
         });
 
         if (existingFriend && !allowDuplicate) {
@@ -105,9 +110,7 @@ export async function friendRoutes(app: FastifyInstance) {
             return sendValidationError(reply, parsedBody.error.issues);
         }
 
-        const existingFriend = await prisma.friend.findUnique({
-            where: { id },
-        });
+        const existingFriend = await getFriendById(id);
 
         if (!existingFriend) {
             return sendNotFoundError(reply, "Friend not found");
@@ -141,8 +144,8 @@ export async function friendRoutes(app: FastifyInstance) {
             takes a path and an async function that takes a request and a reply
      */
     app.post<{
-        Params: { id: string};
-    }>("/friends/:id/notes/append", async (request, reply) => { 
+        Params: { id: string };
+    }>("/friends/:id/notes/append", async (request, reply) => {
         const { id } = request.params;
 
         const parsedBody = appendFriendNoteBodySchema.safeParse(request.body);
@@ -151,16 +154,14 @@ export async function friendRoutes(app: FastifyInstance) {
             return sendValidationError(reply, parsedBody.error.issues);
         }
 
-        const existingFriend = await prisma.friend.findUnique({
-            where: { id },
-        });
+        const existingFriend = await getFriendById(id);
 
         if (!existingFriend) {
             return sendNotFoundError(reply, "Friend not found");
         }
 
         const { note } = parsedBody.data;
-        
+
         /**
          * here we use a ternary operator
          * if existingFriend.notes already has something
@@ -177,5 +178,27 @@ export async function friendRoutes(app: FastifyInstance) {
         });
 
         return reply.send({ friend: updatedFriend });
-    });     
+    });
+
+    app.delete<{
+        Params: { id: string };
+    }>("/friends/:id", async (request, reply) => {
+        const { id } = request.params;
+
+        const existingFriend = await getFriendById(id);
+
+        if (!existingFriend) {
+            return sendNotFoundError(reply, "Friend not found");
+        }
+
+        //soft delete the friend by setting deletedAt to the current date and time
+        await prisma.friend.update({
+            where: { id },
+            data: { deletedAt: new Date() },
+        });
+
+        return reply.status(200).send({
+            message: "Friend deleted successfully",
+        });
+    });
 }
