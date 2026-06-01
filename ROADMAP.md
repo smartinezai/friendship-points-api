@@ -567,39 +567,28 @@ Learning focus:
 
 ## Day 18: GitHub Actions CI
 
-Status: Planned.
+Status: Done.
 
-Goals:
+Implemented:
 
-- Add GitHub Actions workflow
-- Run `npm ci`
-- Run `npm test`
-- Run `npm run build`
-- Trigger on push and pull request
-- Keep CD/deployment automation separate for later
+- Added GitHub Actions workflow
+- Runs on push
+- Runs on pull_request
+- Uses Ubuntu runner
+- Installs Node.js
+- Runs npm ci
+- Generates Prisma client
+- Runs npm test
+- Runs npm run build
+- Fixed CI-specific Prisma DATABASE_URL issue
 
-This is CI:
-
-```txt
-push or PR
-→ install dependencies
-→ run tests
-→ run build
-→ report pass/fail
-```
-
-Why this comes soon:
-
-- Local hooks are helpful but can be skipped or misconfigured.
-- GitHub Actions provides a stronger remote safety net.
-- CI is valuable now because tests already exist.
 
 Learning focus:
 
 - Continuous Integration
+- clean build environments
+- reproducible builds
 - automated quality checks
-- GitHub Actions basics
-- portfolio-ready DevOps workflow
 
 ---
 
