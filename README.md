@@ -832,7 +832,7 @@ git commit -m "Test prediction input builder"
 
 # Roadmap
 
-The detailed 40-day project roadmap is in [`ROADMAP.md`](./ROADMAP.md).
+The detailed 45-day project roadmap is in [`ROADMAP.md`](./ROADMAP.md).
 
 Current near-term roadmap:
 
