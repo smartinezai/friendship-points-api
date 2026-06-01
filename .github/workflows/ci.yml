@@ -17,6 +17,8 @@ jobs:
           cache: npm #cache npm dependencies to speed up future runs
       - name: Install dependencies #install npm dependencies
         run: npm ci # execute the shell command "npm ci" to install dependencies inside the github runner
+      - name: Generate Prisma client #generate the Prisma client
+        run: npx prisma generate # execute the shell command "npx prisma generate" to generate the Prisma client inside the github runner
       - name: Run tests #run tests
         run: npm test # execute the shell command "npm test" to run tests inside the
       - name: Run build #run build

@@ -1,8 +1,18 @@
 import { prisma } from "../db/prisma.js";
 import type { LlmAssessmentInput } from "../ai/assessment.types.js";
-import { fr } from "zod/locales";
 import type { LlmAssessmentResult } from "../ai/assessment.schema.js";
+import type { Prisma } from "../generated/prisma/client.js"
 
+
+type EventWithFriendAndActiveRules = Prisma.EventGetPayload<{ //use Prisma's type system to define the type of the event with friend and active rules, this will help with type checking and autocompletion in the rest of the code where we use this data. We specify that we want to include the friend relation, and within that, we want to include the rules relation but only where the rules are active.
+  include: {
+    friend: {
+      include: {
+        rules: true;
+      };
+    };
+  };
+}>;
 export async function getEventWithFriendAndActiveRules(eventId: string) {
   return prisma.event.findUnique({
     where: { id: eventId },
@@ -21,7 +31,7 @@ export async function getEventWithFriendAndActiveRules(eventId: string) {
 }
 
 export function buildLlmAssessmentInput(
-  event: NonNullable<Awaited<ReturnType<typeof getEventWithFriendAndActiveRules>>> //use the return type of getEventWithFriendAndActiveRules, wait for the async result, and remove null from the possible values.
+  event: EventWithFriendAndActiveRules // the type of event is the one we defined above, which includes the friend and active rules
 ): LlmAssessmentInput {
   const friend = event.friend;
   const rules = friend.rules;
