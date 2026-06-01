@@ -488,23 +488,16 @@ Still planned:
 
 ## Day 20: Friend Soft Delete
 
-Status: Planned.
+Status: Done.
 
-Goals:
+Implemented:
 
-- Add `deletedAt DateTime?` to `Friend`
-- Add Prisma migration
-- Implement `DELETE /friends/:id` as soft delete
-- Filter soft-deleted friends out of list/search results
-- Decide behavior for `GET /friends/:id` on deleted friends
-- Consider restore endpoint
-
-Possible endpoints:
-
-```http
-DELETE /friends/:id
-POST /friends/:id/restore
-```
+- Added `deletedAt DateTime?` to `Friend`
+- Added Prisma migration
+- Updated friend list/search/detail routes to exclude soft-deleted friends
+- Added `DELETE /friends/:id`
+- Delete sets `deletedAt` instead of removing the row
+- Already-deleted friends return `404`
 
 ---
 
