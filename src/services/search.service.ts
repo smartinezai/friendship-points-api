@@ -1,6 +1,6 @@
 import { prisma } from "../db/prisma.js";
 
-export type SearchResult = {
+export type RetrievedContextItem = {
     sourceType: "friend_note" | "rule" | "event";
     sourceId: string;
     friendId: string;
@@ -42,7 +42,7 @@ export function calculateKeywordScore(query: string, text: string): number {
 export async function searchFriendContext(
     friendId: string,
     query: string,
-): Promise<SearchResult[]> {
+): Promise<RetrievedContextItem[]> {
     const friend = await prisma.friend.findFirst({
         where: {
             id: friendId,
@@ -58,7 +58,7 @@ export async function searchFriendContext(
     if (!friend) {
         return [];
     }
-    const results: SearchResult[] = [];
+    const results: RetrievedContextItem[] = [];
 
     if (friend.notes) {
         const score = calculateKeywordScore(query, friend.notes);
