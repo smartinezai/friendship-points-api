@@ -2,7 +2,7 @@
 
 Friendship Points API is a TypeScript/Fastify backend for modelling relationship events, contextual rules, notes, predictions and score-based assessments over time.
 
-The system maintains a running point balance per friendship. Events can increase or decrease that balance through manual or LLM-asissted assessments. An assessment records a score delta, reasoning summary, impact direction, confidence, matched contextual rules and bias notes. The balance endpoint derives the current score by summing the deltas across a friend's event history.
+The system maintains a running point balance per friendship. Events can increase or decrease that balance through manual or LLM-assissted assessments. An assessment records a score delta, reasoning summary, impact direction, confidence, matched contextual rules and bias notes. The balance endpoint derives the current score by summing the deltas across a friend's event history.
 
 Predictions provide a separate hypothetical workflow. They evaluate a proposed future action against the relevant friend context without creating a persisted event or assessment. This keeps speculative analysis separate from recorded history.
 
@@ -78,7 +78,7 @@ Near-term roadmap:
 
 ```txt
 Retrieval Service Refactor
-DEmbeddings and Vector Storage
+Embeddings and Vector Storage
 Semantic Retrieval
 Reranking
 Function Calling Search Tool
@@ -86,6 +86,7 @@ Agentic Retrieval Loop
 Retrieval Evaluation
 Golden Examples and Regression Tests
 Agentic RAG Evaluation
+```
 
 ## Documentation
 
