@@ -1068,6 +1068,24 @@ Goals:
 - Support persisted assessments and hypothetical predictions
 - Separate model-generated judgement from human-verified judgement
 - Store optional correction/explanation
+- Use verified assessments as trusted future context for assessments and predictions
+- Store whether the friend/user agreed with the LLM reasoning, score, impact direction, and matched rules
+- Ingest verified assessments into searchable context
+- Treat verified feedback as stronger evidence than unverified LLM output
+- Use verified examples to improve future retrieval, prompts, and evaluation
+
+model AssessmentVerification {
+  id                 String   @id @default(uuid())
+  assessmentId       String
+  verifiedByFriendId String?
+  agreesWithScore    Boolean
+  agreesWithReasoning Boolean
+  correctedScoreDelta Float?
+  correctionNotes    String?
+  createdAt          DateTime @default(now())
+}
+
+verified human feedback > unverified LLM judgement
 
 Possible statuses:
 
