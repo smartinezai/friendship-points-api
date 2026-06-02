@@ -12,7 +12,7 @@ import {
     sendBadRequestError,
 } from "../utils/httpErrors.js";
 import { searchFriendContext } from "../services/search.service.js";
-
+import { rebuildSearchableDocumentsForFriend } from "../services/searchIngestion.service.js";
 
 export async function friendRoutes(app: FastifyInstance) {
 
@@ -49,6 +49,22 @@ export async function friendRoutes(app: FastifyInstance) {
         const results = await searchFriendContext(id, query);
 
         return { results };
+    });
+
+    app.post<{
+        Params: { id: string };
+    }>("/friends/:id/rebuild-search-index", async (request, reply) => {
+        const { id } = request.params;
+        const result = await rebuildSearchableDocumentsForFriend(id);
+
+        if (!result) {
+            return sendNotFoundError(reply, "Friend not found");
+        }
+
+        return reply.send({ 
+            message: "Search index rebuilt successfully",
+            createdDocCount: result.createdDocCount,
+        });
     });
 
     app.get<{ Params: { id: string } }>("/friends/:id", async (request, reply) => {

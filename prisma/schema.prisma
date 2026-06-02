@@ -20,6 +20,7 @@ model Friend {
   rules       Rule[]
   events      Event[]
   deletedAt   DateTime?
+  searchableDocuments SearchableDocument[]
 }
 
 model Rule {
@@ -61,4 +62,15 @@ model Assessment {
   updatedAt       DateTime @updatedAt
   modelName       String?
   promptVersion   String?
+}
+
+model SearchableDocument {
+  id         String   @id @default(uuid())
+  friendId   String
+  friend     Friend   @relation(fields: [friendId], references: [id])
+  sourceType String
+  sourceId   String
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
