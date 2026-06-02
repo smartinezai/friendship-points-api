@@ -607,18 +607,16 @@ Learning focus:
 
 ## Day 23: Basic RAG Pipeline
 
-Status: Planned.
+Status: Done.
 
-Goals:
+Implemented:
 
-- Build a fixed RAG pipeline:
-  - receive event or hypothetical action
-  - retrieve relevant context
-  - build prompt with retrieved context
-  - call LLM
-  - return structured assessment or prediction
-- Compare against the current direct active-rules approach
-- Make no-context behaviour explicit
+- Added retrieved context support to LLM assessment inputs
+- Added retrieved context to the prompt
+- Used `SearchableDocument` retrieval for predictions
+- Returned retrieved context in prediction responses
+- Used `SearchableDocument` retrieval for event assessments
+- Returned retrieved context in assessment responses
 
 Learning focus:
 
@@ -642,6 +640,9 @@ Goals:
 - Reuse the RAG flow for assessments and predictions
 - Add OpenAI prediction flow using the shared RAG/retrieval pipeline
 - Keep provider-specific logic behind a common prediction interface
+- Exclude the current event from retrieved context when assessing an existing event
+- Prevent duplicated context where the event being assessed is retrieved again from `SearchableDocument`
+- Keep historical events available for retrieval, but exclude the current event by `sourceType` and `sourceId`
 
 Learning focus:
 
