@@ -11,11 +11,11 @@ import {
     sendValidationError,
     sendBadRequestError,
 } from "../utils/httpErrors.js";
+import { searchFriendContext } from "../services/search.service.js";
 
 
 export async function friendRoutes(app: FastifyInstance) {
 
-    //this route must go before the /friends/:id route, otherwise it will be treated as a request for a friend with the id of "search"
     app.get<{ Querystring: { name?: string } }>("/friends/search", async (request, reply) => {
         const { name } = request.query;
 
@@ -35,6 +35,21 @@ export async function friendRoutes(app: FastifyInstance) {
 
     });
 
+    app.get<{
+        Params: { id: string };
+        Querystring: { query?: string };
+    }>("/friends/:id/search-context", async (request, reply) => {
+        const { id } = request.params;
+        const { query } = request.query;
+
+        if (!query) {
+            return sendBadRequestError(reply, "Query parameter is required.");
+        }
+
+        const results = await searchFriendContext(id, query);
+
+        return { results };
+    });
 
     app.get<{ Params: { id: string } }>("/friends/:id", async (request, reply) => {
         const { id } = request.params; //destructure id from request params, and type it as a string
@@ -52,10 +67,10 @@ export async function friendRoutes(app: FastifyInstance) {
     app.get("/friends", async () => {
         // get all friends
         const friends = await prisma.friend.findMany({
-                where: {
-                    deletedAt: null, //only return friends that have not been soft deleted
-                },
-            });
+            where: {
+                deletedAt: null, //only return friends that have not been soft deleted
+            },
+        });
 
         return { friends };
     });
@@ -201,4 +216,6 @@ export async function friendRoutes(app: FastifyInstance) {
             message: "Friend deleted successfully",
         });
     });
+
+
 }
