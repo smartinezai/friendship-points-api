@@ -561,17 +561,18 @@ This phase is prioritised so the project becomes a complete LLM Zoomcamp-style R
 
 ## Day 21: Keyword Search over Rules, Notes, and Events
 
-Status: Planned.
+Status: Done.
 
-Goals:
+Implemented:
 
-- Build a simple keyword search layer first
-- Search friendship rules
-- Search friend notes
-- Search past event text
-- Return ranked search results
-- Use simple lexical scoring before vector search
-- Add unit tests for tokenisation and keyword scoring
+- Added keyword tokenisation
+- Added keyword scoring with unique query tokens
+- Added unit tests for tokenisation and keyword scoring
+- Searched friendship rules
+- Searched friend notes
+- Searched past event text
+- Returned ranked search results
+- Added `/friends/:id/search-context?query=...` for manual testing
 
 Learning focus:
 
@@ -584,18 +585,16 @@ Learning focus:
 
 ## Day 22: Search Ingestion Layer
 
-Status: Planned.
+Status: Done.
 
-Goals:
+Implemented:
 
-- Create searchable records from existing database data
-- Store metadata for each searchable item
-- Include source type, friend ID, rule ID, event ID, and timestamps where relevant
-- Keep searchable data in sync with source data
-- Decide whether to build the first version in-memory or persist it
-- Consider refactoring `Friend.notes` into a separate `FriendNote` model
-- Give each note its own ID, timestamp, and metadata
-- Decide whether search ingestion should index `Friend.notes` directly or migrate to `FriendNote`
+- Added `SearchableDocument` model
+- Added relation from `Friend` to searchable documents
+- Added ingestion service for notes, active rules, and events
+- Added rebuild logic that clears old search documents and recreates current ones
+- Added manual rebuild route
+- Returned created document count from rebuild route
 
 Learning focus:
 
@@ -984,6 +983,9 @@ Goals:
 - Update route validation
 - Add optional `pronouns` field to `Friend`
 - Consider whether pronouns later belong on a generalised `Person` model
+- Consider human-readable slugs as an optional alternative to UUIDs for development and URLs
+- Decide whether slugs should be unique globally or only per user/account
+- Keep UUIDs as primary database identifiers
 
 Possible Prisma additions:
 
