@@ -957,6 +957,11 @@ Goals:
 - Verify a second delete returns `404`
 - Decide database testing strategy for Prisma-backed routes
 - Keep tests fast and reliable
+- Add route tests for `/friends/:id/search-context`
+- Add service tests for `searchFriendContext`
+- Add ranking/sorting tests for search results
+- Add edge-case tests for empty query, missing friend, deleted friend, no matches
+- Add test fixtures or factories for friends, rules, events, and assessments
 
 Learning focus:
 
@@ -1033,6 +1038,11 @@ Goals:
 - Remove noisy beginner comments that restate obvious syntax
 - Keep useful explanatory comments for complex TypeScript, Prisma, RAG, and LLM logic
 - Ensure documentation improves readability without cluttering the code
+- Document all exported services and helpers
+- Remove noisy beginner comments
+- Add architecture diagrams
+- Add API examples for all implemented endpoints
+- Document known limitations and production risks
 
 Learning focus:
 
@@ -1203,6 +1213,14 @@ Goals:
 - Add safe LLM usage patterns
 - Add security checks in CI
 - Consider least-privilege database access
+- Add authentication
+- Add authorisation checks per user/resource
+- Add rate limiting
+- Add request size limits
+- Add input sanitisation review
+- Add prompt-injection protection for RAG inputs
+- Add secret rotation plan
+- Add dependency vulnerability checks in CI
 
 Learning focus:
 
@@ -1235,6 +1253,14 @@ Goals:
 - Define retention and deletion policies
 - Secure sensitive relationship/event/claim data
 - Add audit logs and visibility controls
+- Add structured request logging
+- Add error tracking
+- Add latency metrics
+- Add LLM cost/token tracking
+- Add audit logs for sensitive actions
+- Add retention/deletion policy
+- Add real GDPR erasure flow separate from soft delete
+- Add backup and restore plan
 
 Critical design note:
 
@@ -1340,6 +1366,28 @@ Goals:
 Critical design note:
 
 A checkbox alone does not prove absence of coercion. This feature needs privacy, revocation, dispute handling, and careful visibility controls.
+
+---
+
+## Production Readiness Checklist
+
+- Authentication and authorisation
+- Environment-specific config
+- Database backup/restore strategy
+- Migrations strategy for production
+- Structured logging
+- Metrics and tracing
+- Error monitoring
+- Rate limiting
+- Security headers
+- Input validation and request limits
+- Prompt-injection safeguards
+- Dependency scanning
+- CI checks for lint, tests, build, and security
+- API documentation
+- GDPR deletion/export/correction flows
+- Load/performance testing
+- Deployment rollback plan
 
 ---
 
