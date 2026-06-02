@@ -1028,6 +1028,11 @@ Goals:
 - Document RAG architecture
 - Document evaluation results
 - Keep project portfolio-readable
+- Review the full codebase and add concise professional documentation comments
+- Document exported services, helpers, route groups, and non-obvious business logic
+- Remove noisy beginner comments that restate obvious syntax
+- Keep useful explanatory comments for complex TypeScript, Prisma, RAG, and LLM logic
+- Ensure documentation improves readability without cluttering the code
 
 Learning focus:
 
