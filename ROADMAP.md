@@ -45,6 +45,7 @@ Goals:
 - Add `/health`
 - Set up GitHub repository
 
+
 Learning focus:
 
 - TypeScript project structure
@@ -570,6 +571,7 @@ Goals:
 - Search past event text
 - Return ranked search results
 - Use simple lexical scoring before vector search
+- Add unit tests for tokenisation and keyword scoring
 
 Learning focus:
 
