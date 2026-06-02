@@ -640,6 +640,8 @@ Goals:
 - Create reusable retrieval/RAG service functions
 - Add typed search result and context item objects
 - Reuse the RAG flow for assessments and predictions
+- Add OpenAI prediction flow using the shared RAG/retrieval pipeline
+- Keep provider-specific logic behind a common prediction interface
 
 Learning focus:
 

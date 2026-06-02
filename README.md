@@ -2,7 +2,7 @@
 
 Friendship Points API is a TypeScript/Fastify backend for modelling relationship events, contextual rules, notes, predictions and score-based assessments over time.
 
-The system maintains a running point balance per friendship. Events can increase or decrease that balance through manual or LLM-assissted assessments. An assessment records a score delta, reasoning summary, impact direction, confidence, matched contextual rules and bias notes. The balance endpoint derives the current score by summing the deltas across a friend's event history.
+The system maintains a running point balance per friendship. Events can increase or decrease that balance through manual or LLM-assisted assessments. An assessment records a score delta, reasoning summary, impact direction, confidence, matched contextual rules and bias notes. The balance endpoint derives the current score by summing the deltas across a friend's event history.
 
 Predictions provide a separate hypothetical workflow. They evaluate a proposed future action against the relevant friend context without creating a persisted event or assessment. This keeps speculative analysis separate from recorded history.
 
@@ -35,11 +35,9 @@ Event:
 I called Cole without warning.
 
 Assessment:
-
 This may negatively affect the friendship because it violates a known preference.
 
 Score delta:
-
 -3
 ```
 
@@ -49,7 +47,7 @@ Implemented:
 
 - Fastify API server
 - PostgreSQL persistence through Prisma
-- Friend, Rule, Event, Assessment, and SearchableDocument models
+- `Friend`, `Rule`, `Event`, `Assessment`, and `SearchableDocument` models
 - friend, rule, event, assessment, prediction, search, and ingestion endpoints
 - manual assessment and friendship balance calculation
 - mock LLM assessment flow
@@ -57,7 +55,7 @@ Implemented:
 - OpenAI/LangChain assessment route, currently blocked by API quota
 - structured LLM output validation
 - prompt version and model metadata tracking
-- friend soft delete with deletedAt
+- friend soft delete with `deletedAt`
 - keyword search over notes, active rules, and events
 - searchable document ingestion for friend context
 - Zod request validation
@@ -115,7 +113,7 @@ Current:
 
 Planned/future:
 
-- keyword search RAG
+- full search RAG
 - agentic RAG
 - vector database / pgvector / Supabase Vector
 - reranking
