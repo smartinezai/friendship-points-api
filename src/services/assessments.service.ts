@@ -1,18 +1,10 @@
 import { prisma } from "../db/prisma.js";
 import type { LlmAssessmentInput } from "../ai/assessment.types.js";
 import type { LlmAssessmentResult } from "../ai/assessment.schema.js";
-import type { Prisma } from "../generated/prisma/client.js"
+import { retrieveFriendContext } from "./search.service.js";
 
 
-type EventWithFriendAndActiveRules = Prisma.EventGetPayload<{ //use Prisma's type system to define the type of the event with friend and active rules, this will help with type checking and autocompletion in the rest of the code where we use this data. We specify that we want to include the friend relation, and within that, we want to include the rules relation but only where the rules are active.
-  include: {
-    friend: {
-      include: {
-        rules: true;
-      };
-    };
-  };
-}>;
+
 export async function getEventWithFriendAndActiveRules(eventId: string) {
   return prisma.event.findUnique({
     where: { id: eventId },
@@ -31,7 +23,8 @@ export async function getEventWithFriendAndActiveRules(eventId: string) {
 }
 
 export function buildLlmAssessmentInput(
-  event: EventWithFriendAndActiveRules // the type of event is the one we defined above, which includes the friend and active rules
+  event: NonNullable<Awaited<ReturnType<typeof getEventWithFriendAndActiveRules>>>,
+  retrievedContext: LlmAssessmentInput["retrievedContext"] = [],
 ): LlmAssessmentInput {
   const friend = event.friend;
   const rules = friend.rules;
@@ -54,8 +47,9 @@ export function buildLlmAssessmentInput(
       impactDirection: rule.impactDirection,
       weight: rule.weight,
     })),
+    retrievedContext,
   }
-}
+};
 
 
 export async function saveLlmAssessment(
@@ -104,8 +98,11 @@ export async function assessEventWithProvider(
   if (!event) {
     return null;
   }
-
-  const llmInput = buildLlmAssessmentInput(event);
+  const retrievedContext = await retrieveFriendContext(
+    event.friendId,
+    event.eventText,
+  );
+  const llmInput = buildLlmAssessmentInput(event, retrievedContext);
   const llmResult = await assessFn(llmInput);
   const assessment = await saveLlmAssessment(
     eventId,
@@ -117,5 +114,7 @@ export async function assessEventWithProvider(
   return {
     assessment,
     llmResult,
+    retrievedContext,
   };
-}
+
+};
