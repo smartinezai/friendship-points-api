@@ -751,7 +751,27 @@ Goals:
   - call another tool if needed
   - stop and produce a final structured answer
 - Add max-iteration safeguards
-- Add fallback behaviour when no relevant context is found
+- Add fallback behaviour when no relevant context is found.
+Additional goals:
+
+- Let the agent inspect recent event history for a friend
+- Detect repeated patterns, such as many negative events about the same person
+- Generate bias/pattern notes when history suggests possible narrator bias
+- Log pattern observations separately from individual event assessments
+- Treat pattern observations as signals or hypotheses, not proof
+- Use pattern notes as context in future assessments
+- Detect behaviour trends over time, not just repeated patterns
+- Compare older events with newer events for the same friend
+- Identify possible improvement, deterioration, or inconsistency
+- Log trend observations separately from individual assessments
+- Treat trends as tentative signals, not definitive character judgements
+Example:
+
+If most recent events about Cole are negative, the agent may log a pattern signal:
+
+"Recent event history about Cole is strongly negative. This may indicate genuine repeated conflict, selective event logging, temporary frustration, or narrator bias. Future assessments should account for this uncertainty."
+
+This should reduce overconfidence, not automatically invalidate the events.
 
 Learning focus:
 
