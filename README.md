@@ -6,7 +6,7 @@ The system maintains a running point balance per friendship. Events can increase
 
 Predictions provide a separate hypothetical workflow. They evaluate a proposed future action against the relevant friend context without creating a persisted event or assessment. This keeps speculative analysis separate from recorded history.
 
-The project uses structured LLM outputs, explicit validation boundaries, versioned prompts, provider metadata, shared error handling, test automation, CI and an evolving retrieval/RAG architecture. The current roadmap is split into multiple phases.
+The project uses structured LLM outputs, explicit validation boundaries, versioned prompts, provider metadata, shared error handling, test automation, CI and an evolving retrieval/RAG architecture. The current roadmap is split into multiple phases and prioritises a complete RAG pipeline before broader production hardening, deployment, security and frontend work.
 
 The project is meant to be social commentary on the social credit score imposed by the CCP.
 
