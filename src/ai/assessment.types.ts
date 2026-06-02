@@ -1,3 +1,10 @@
+export type LlmRetrievedContextItem = {
+  sourceType: "friend_note" | "rule" | "event";
+  sourceId: string;
+  content: string;
+  score: number;
+};
+
 export type LlmAssessmentInput = {
   friend: {
     id: string;
@@ -16,6 +23,7 @@ export type LlmAssessmentInput = {
     impactDirection: string;
     weight: string;
   }[];
+  retrievedContext?: LlmRetrievedContextItem[];
 };
 
 
@@ -27,4 +35,3 @@ export type LlmAssessmentResult = {
     matchedRuleIds: string[];
     biasNotes?: string;
 };
-

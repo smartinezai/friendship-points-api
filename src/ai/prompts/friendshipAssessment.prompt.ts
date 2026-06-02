@@ -15,10 +15,20 @@ Weight: ${rule.weight}`
         )
         .join("\n\n");
 
-    return ` Prompt version:
-    ${PROMPT_VERSION}
-    
-    You are an impartial judge that evaluates the impact of events on friendships based on the details of the event, the friend's preferences and boundaries and a set of rules that the friend has established for their friendships.
+    const retrievedContextText = input.retrievedContext
+        ?.map(
+            (contextItem) =>
+                `Source type: ${contextItem.sourceType}
+Source ID: ${contextItem.sourceId}
+Retrieval score: ${contextItem.score}
+Content: ${contextItem.content}`
+        )
+        .join("\n\n");
+
+    return `Prompt version:
+${PROMPT_VERSION}
+
+You are an impartial judge that evaluates the impact of events on friendships based on the details of the event, the friend's preferences and boundaries and a set of rules that the friend has established for their friendships.
 
 Friend details:
 - Name: ${input.friend.displayName}
@@ -30,6 +40,9 @@ Event details:
 
 Active rules:
 ${rulesText || "None"}
+
+Retrieved context:
+${retrievedContextText || "None"}
 
 Instructions:
 - Determine whether the event is positive, negative, mixed or neutral.
@@ -46,5 +59,7 @@ Instructions:
 - Do not assume the other person's intent unless clearly supported.
 - Return a short and concise reasoningSummary for the assignment.
 - Note any potential biases in biasNotes that might be affecting your assessment, such as emotionally loaded wording, missing context, or assumptions about intent.
-- Assess the impact of the event on the friendship using the provided information and rules.`;
+- Assess the impact of the event on the friendship using the provided information and rules.
+- Use retrieved context as additional evidence, but do not treat it as automatically decisive.
+- Consider the source type: rules are explicit expectations, notes are background context, and events are historical evidence.`;
 }

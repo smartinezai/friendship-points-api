@@ -4,6 +4,7 @@ import { mockLlmAssessment } from "../ai/mockAssessment.service.js";
 import { buildPredictionInput, getFriendWithActiveRules } from "../services/predictions.service.js";
 import { mistralAssessEvent } from "../ai/mistralAssessment.service.js";
 import { sendNotFoundError, sendValidationError } from "../utils/httpErrors.js";
+import { retrieveFriendContext } from "../services/search.service.js";
 /**
  * 
  * import type -> for typescript types only
@@ -29,9 +30,15 @@ export async function predictionRoutes(app: FastifyInstance) {
             return sendNotFoundError(reply, "Friend not found");
         }
 
+        const retrievedContext = await retrieveFriendContext(
+            friendId,
+            parsedBody.data.hypotheticalAction,
+        );
+
         const predictionInput = buildPredictionInput(
-            friend, 
-            parsedBody.data.hypotheticalAction
+            friend,
+            parsedBody.data.hypotheticalAction,
+            retrievedContext,
         );
 
 
@@ -39,6 +46,7 @@ export async function predictionRoutes(app: FastifyInstance) {
 
         return reply.send({
             prediction,
+            retrievedContext,
             saved: false,
         });
     });
@@ -60,15 +68,22 @@ export async function predictionRoutes(app: FastifyInstance) {
             return sendNotFoundError(reply, "Friend not found");
         }
 
+        const retrievedContext = await retrieveFriendContext(
+            friendId,
+            parsedBody.data.hypotheticalAction,
+        );
+
         const predictionInput = buildPredictionInput(
-            friend, 
-            parsedBody.data.hypotheticalAction
+            friend,
+            parsedBody.data.hypotheticalAction,
+            retrievedContext,
         );
 
         const prediction = await mistralAssessEvent(predictionInput);
 
         return reply.send({
             prediction,
+            retrievedContext,
             saved: false,
             source: "mistral",
         });
