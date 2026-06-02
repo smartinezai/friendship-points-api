@@ -593,6 +593,9 @@ Goals:
 - Include source type, friend ID, rule ID, event ID, and timestamps where relevant
 - Keep searchable data in sync with source data
 - Decide whether to build the first version in-memory or persist it
+- Consider refactoring `Friend.notes` into a separate `FriendNote` model
+- Give each note its own ID, timestamp, and metadata
+- Decide whether search ingestion should index `Friend.notes` directly or migrate to `FriendNote`
 
 Learning focus:
 
