@@ -11,7 +11,7 @@ import {
     sendValidationError,
     sendBadRequestError,
 } from "../utils/httpErrors.js";
-import { searchFriendContext } from "../services/search.service.js";
+import { retrieveFriendContext } from "../services/search.service.js";
 import { rebuildSearchableDocumentsForFriend } from "../services/searchIngestion.service.js";
 
 export async function friendRoutes(app: FastifyInstance) {
@@ -46,7 +46,7 @@ export async function friendRoutes(app: FastifyInstance) {
             return sendBadRequestError(reply, "Query parameter is required.");
         }
 
-        const results = await searchFriendContext(id, query);
+        const results = await retrieveFriendContext(id, query);
 
         return { results };
     });

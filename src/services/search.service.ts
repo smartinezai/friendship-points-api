@@ -105,4 +105,43 @@ export async function searchFriendContext(
     }
     results.sort((a, b) => b.score - a.score);   //a-b for ascending, b-a for descending order sorting
     return results;
-}    
+}
+
+function isSearchableSourceType(
+    sourceType: string,
+): sourceType is RetrievedContextItem["sourceType"] {
+    return ["friend_note", "rule", "event"].includes(sourceType);
+}
+
+export async function retrieveFriendContext(
+    friendId: string,
+    query: string,
+): Promise<RetrievedContextItem[]> {
+    const documents = await prisma.searchableDocument.findMany({
+        where: { friendId },
+    });
+
+    const results: RetrievedContextItem[] = [];
+
+    for (const doc of documents) {
+        if (!isSearchableSourceType(doc.sourceType)) {
+            continue;
+        }
+
+        const score = calculateKeywordScore(query, doc.content);
+
+        if (score > 0) {
+            results.push({
+                sourceType: doc.sourceType,
+                sourceId: doc.sourceId,
+                friendId: doc.friendId,
+                content: doc.content,
+                score,
+            });
+        }
+    }
+
+    results.sort((a, b) => b.score - a.score);
+
+    return results;
+}
