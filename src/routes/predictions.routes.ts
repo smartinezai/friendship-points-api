@@ -1,10 +1,9 @@
 import type { FastifyInstance } from "fastify";
 import { predictFriendActionBodySchema } from "../schemas/predictions.schema.js";
 import { mockLlmAssessment } from "../ai/mockAssessment.service.js";
-import { buildPredictionInput, getFriendWithActiveRules } from "../services/predictions.service.js";
+import { predictFriendActionWithProvider } from "../services/predictions.service.js";
 import { mistralAssessEvent } from "../ai/mistralAssessment.service.js";
 import { sendNotFoundError, sendValidationError } from "../utils/httpErrors.js";
-import { retrieveFriendContext } from "../services/search.service.js";
 /**
  * 
  * import type -> for typescript types only
@@ -24,31 +23,17 @@ export async function predictionRoutes(app: FastifyInstance) {
             return sendValidationError(reply, parsedBody.error.issues);
         }
 
-        const friend = await getFriendWithActiveRules(friendId);
+        const predictionResult = await predictFriendActionWithProvider(
+            friendId,
+            parsedBody.data.hypotheticalAction,
+            mockLlmAssessment,
+        );
 
-        if (!friend) {
+        if (!predictionResult) {
             return sendNotFoundError(reply, "Friend not found");
         }
 
-        const retrievedContext = await retrieveFriendContext(
-            friendId,
-            parsedBody.data.hypotheticalAction,
-        );
-
-        const predictionInput = buildPredictionInput(
-            friend,
-            parsedBody.data.hypotheticalAction,
-            retrievedContext,
-        );
-
-
-        const prediction = await mockLlmAssessment(predictionInput);
-
-        return reply.send({
-            prediction,
-            retrievedContext,
-            saved: false,
-        });
+        return reply.send(predictionResult);
     });
 
     app.post<{
@@ -62,30 +47,18 @@ export async function predictionRoutes(app: FastifyInstance) {
             return sendValidationError(reply, parsedBody.error.issues);
         }
 
-        const friend = await getFriendWithActiveRules(friendId);
+        const predictionResult = await predictFriendActionWithProvider(
+            friendId,
+            parsedBody.data.hypotheticalAction,
+            mistralAssessEvent,
+        );
 
-        if (!friend) {
+        if (!predictionResult) {
             return sendNotFoundError(reply, "Friend not found");
         }
 
-        const retrievedContext = await retrieveFriendContext(
-            friendId,
-            parsedBody.data.hypotheticalAction,
-            { limit: 5 }
-        );
-
-        const predictionInput = buildPredictionInput(
-            friend,
-            parsedBody.data.hypotheticalAction,
-            retrievedContext,
-        );
-
-        const prediction = await mistralAssessEvent(predictionInput);
-
         return reply.send({
-            prediction,
-            retrievedContext,
-            saved: false,
+            ...predictionResult,
             source: "mistral",
         });
     });
