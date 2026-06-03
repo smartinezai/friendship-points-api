@@ -104,6 +104,7 @@ export async function assessEventWithProvider(
     {//retrieve relevant context for this event but not the event itself (otherwise we get redundant data)
       excludeSourceType: "event",
       excludeSourceId: event.id,
+      limit: 5,
     }
   );
   const llmInput = buildLlmAssessmentInput(event, retrievedContext);

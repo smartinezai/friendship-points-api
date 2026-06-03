@@ -964,6 +964,7 @@ Goals:
 - Add ranking/sorting tests for search results
 - Add edge-case tests for empty query, missing friend, deleted friend, no matches
 - Add test fixtures or factories for friends, rules, events, and assessments
+- Add UUID validation for route parameters such as `friendId`, `eventId`, and `ruleId`
 
 Learning focus:
 

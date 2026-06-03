@@ -71,6 +71,7 @@ export async function predictionRoutes(app: FastifyInstance) {
         const retrievedContext = await retrieveFriendContext(
             friendId,
             parsedBody.data.hypotheticalAction,
+            { limit: 5 }
         );
 
         const predictionInput = buildPredictionInput(
