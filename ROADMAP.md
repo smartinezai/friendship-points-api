@@ -20,13 +20,13 @@ The main project README is in [`README.md`](./README.md).
 Completed:
 
 ```txt
-Day 1–20: Backend foundation, LLM assessment flow, validation, tests, linting, CI, and soft delete
+Day 1–24: Backend foundation, validation, CI, soft delete, keyword search, ingestion, RAG, and retrieval refactor
 ```
 
 Next:
 
 ```txt
-Day 21: Keyword Search over Rules, Notes, and Events
+Day 25: Embeddings and Vector Storage
 ```
 
 ---
@@ -629,20 +629,20 @@ Learning focus:
 
 ## Day 24: Retrieval Service Refactor
 
-Status: Planned.
+Status: Done.
 
-Goals:
+Implemented:
 
 - Separate retrieval from prompt building
 - Separate prompt building from model calling
 - Create reusable retrieval/RAG service functions
 - Add typed search result and context item objects
 - Reuse the RAG flow for assessments and predictions
-- Add OpenAI prediction flow using the shared RAG/retrieval pipeline
 - Keep provider-specific logic behind a common prediction interface
 - Exclude the current event from retrieved context when assessing an existing event
 - Prevent duplicated context where the event being assessed is retrieved again from `SearchableDocument`
 - Keep historical events available for retrieval, but exclude the current event by `sourceType` and `sourceId`
+- Marked live-table keyword search as legacy/comparison-only
 
 Learning focus:
 
@@ -960,7 +960,7 @@ Goals:
 - Decide database testing strategy for Prisma-backed routes
 - Keep tests fast and reliable
 - Add route tests for `/friends/:id/search-context`
-- Add service tests for `searchFriendContext`
+- Add service tests for `retrieveFriendContext`
 - Add ranking/sorting tests for search results
 - Add edge-case tests for empty query, missing friend, deleted friend, no matches
 - Add test fixtures or factories for friends, rules, events, and assessments

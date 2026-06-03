@@ -17,11 +17,11 @@ The project is meant to be social commentary on the social credit score imposed 
 - record friendship-related events
 - manually assess events with point changes
 - generate mock and real LLM assessments
-- generate mock and real Mistral/OpenAI predictions for hypothetical actions
+- generate mock and Mistral predictions for hypothetical actions
 - track friendship point balances from stored assessments
 - append notes without overwriting existing context
 - build searchable relationship context from notes, rules, and events
-- expose keyword-based retrieval as an early RAG foundation
+- retrieve keyword-ranked context from ingested searchable documents
 - validate request payloads with Zod
 - run linting, tests, builds, pre-push checks, and GitHub Actions CI
 
@@ -58,6 +58,7 @@ Implemented:
 - friend soft delete with `deletedAt`
 - keyword search over notes, active rules, and events
 - searchable document ingestion for friend context
+- reusable retrieval/RAG service flow for assessments and predictions
 - Zod request validation
 - shared HTTP error helpers
 - internal logging helper
@@ -69,13 +70,12 @@ Implemented:
 Current focus:
 
 ```txt
-Basic RAG pipeline
+Embeddings and Vector Storage
 ```
 
 Near-term roadmap:
 
 ```txt
-Retrieval Service Refactor
 Embeddings and Vector Storage
 Semantic Retrieval
 Reranking
@@ -113,7 +113,7 @@ Current:
 
 Planned/future:
 
-- full search RAG
+- embeddings and semantic retrieval
 - agentic RAG
 - vector database / pgvector / Supabase Vector
 - reranking

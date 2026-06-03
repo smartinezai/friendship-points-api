@@ -52,7 +52,7 @@ export function calculateKeywordScore(query: string, text: string): number {
 
 
 /**
- * Legacy live-table keyword search used for comparison/manual testing.
+ * Legacy live-table keyword search used for comparison-only manual testing.
  * Main RAG flows should use retrieveFriendContext, which searches ingested
  * SearchableDocument records.
  *
@@ -60,7 +60,7 @@ export function calculateKeywordScore(query: string, text: string): number {
  * @param query - Keyword query used to rank matching records.
  * @returns Ranked live-table matches, or an empty array for missing friends.
  */
-export async function searchFriendContext(
+export async function legacySearchFriendContext(
     friendId: string,
     query: string,
 ): Promise<RetrievedContextItem[]> {
