@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+/** Allowed rule weights from least to greatest impact. */
 export const ruleWeightSchema = z.enum([
   "minimal", 
   "low", 
@@ -9,6 +10,7 @@ export const ruleWeightSchema = z.enum([
   "extreme"
 ]);
 
+/** Direction a rule says an event should move the friendship score. */
 export const impactDirectionSchema = z.enum([
   "positive", 
   "negative", 
@@ -16,6 +18,7 @@ export const impactDirectionSchema = z.enum([
   "mixed"
 ]);
 
+/** Validates POST /friends/:friendId/rules request bodies. */
 export const createRuleBodySchema = z.object({
   title: z.string()
     .trim()
@@ -29,6 +32,7 @@ export const createRuleBodySchema = z.object({
   weight: ruleWeightSchema,
 });
 
+/** Validates PATCH /rules/:ruleId/weight request bodies. */
 export const updateRuleWeightBodySchema = z.object({
   weight: ruleWeightSchema,
 });

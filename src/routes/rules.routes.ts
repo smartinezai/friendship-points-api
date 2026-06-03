@@ -4,12 +4,13 @@ import { getFriendById } from "../services/friends.service.js";
 import { createRuleBodySchema, updateRuleWeightBodySchema } from "../schemas/rules.schema.js";
 import { sendNotFoundError, sendValidationError } from "../utils/httpErrors.js";
 
+/** Registers friendship-rule routes for creation, listing, and weight updates. */
 export async function ruleRoutes(app: FastifyInstance) {
 
     app.get<{ Params: { friendId: string } }>("/friends/:friendId/rules", async (request, reply) => {
-        const { friendId } = request.params; //destructure friendId from request params, and type it as a string
+        const { friendId } = request.params;
 
-        const friend = await getFriendById(friendId); //first check if the friend exists
+        const friend = await getFriendById(friendId);
 
         if (!friend) {
             return sendNotFoundError(reply, "Friend not found");
@@ -32,8 +33,8 @@ export async function ruleRoutes(app: FastifyInstance) {
             weight: string;
         };
     }>("/friends/:friendId/rules", async (request, reply) => {
-        const { friendId } = request.params; //destructure friendId from request params, and type it as a string
-        const friend = await getFriendById(friendId); //first check if the friend exists
+        const { friendId } = request.params;
+        const friend = await getFriendById(friendId);
 
         if (!friend) {
             return sendNotFoundError(reply, "Friend not found");
@@ -43,7 +44,7 @@ export async function ruleRoutes(app: FastifyInstance) {
         if (!parsedBody.success) {
             return sendValidationError(reply, parsedBody.error.issues);
         }
-        const { title, description, impactDirection, weight } = parsedBody.data; //destructure body from request body, and type it as an object with the required fields
+        const { title, description, impactDirection, weight } = parsedBody.data;
 
         const rule = await prisma.rule.create({
             data: {

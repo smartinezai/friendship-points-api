@@ -2,8 +2,9 @@ import "dotenv/config";
 import app from "./app.js";
 import { logError } from "./utils/logging.js";
 
-const port = Number(process.env.PORT) || 3000; // if for some reason the port is missing from .env, default to 3000
+const port = Number(process.env.PORT) || 3000;
 
+/** Starts the HTTP server and logs startup failures before exiting. */
 async function start() {
     try{
         await app.listen({

@@ -3,7 +3,8 @@ import { prisma } from "../db/prisma.js";
 export type RetrieveFriendContextOptions = {
     excludeSourceType?: "friend_note" | "rule" | "event";
     excludeSourceId?: string;
-    limit?: number; //optionally limit the number of retrieved context items, e.g. to control token count when passing to LLM
+    /** Maximum number of context items to return. Keeps LLM prompts bounded. */
+    limit?: number;
 };
 
 export type RetrievedContextItem = {
@@ -14,6 +15,12 @@ export type RetrievedContextItem = {
     score: number;
 };
 
+/**
+ * Splits free text into lowercase keyword tokens.
+ *
+ * @param text - User or stored text to search.
+ * @returns Non-empty tokens suitable for simple keyword matching.
+ */
 export function tokenise(text: string): string[] {
     return text
         .toLowerCase()
@@ -21,6 +28,13 @@ export function tokenise(text: string): string[] {
         .filter(Boolean);
 }
 
+/**
+ * Scores a text by counting unique query tokens that also appear in the text.
+ *
+ * @param query - Search query provided by the caller.
+ * @param text - Candidate text being ranked.
+ * @returns Number of unique matching tokens. Higher means more relevant.
+ */
 export function calculateKeywordScore(query: string, text: string): number {
     const queryTokens = new Set(tokenise(query));
     const textTokens = new Set(tokenise(text));
@@ -39,8 +53,12 @@ export function calculateKeywordScore(query: string, text: string): number {
 
 /**
  * Legacy live-table keyword search used for comparison/manual testing.
- * Main RAG flows should use retrieveFriendContext, which searches
- * ingested SearchableDocument records.
+ * Main RAG flows should use retrieveFriendContext, which searches ingested
+ * SearchableDocument records.
+ *
+ * @param friendId - Friend whose notes, rules, and events should be searched.
+ * @param query - Keyword query used to rank matching records.
+ * @returns Ranked live-table matches, or an empty array for missing friends.
  */
 export async function searchFriendContext(
     friendId: string,
@@ -53,9 +71,9 @@ export async function searchFriendContext(
         },
         include: {
             rules: {
-                where: { active: true }, //retrieve active rules
+                where: { active: true },
             },
-            events: true, //also retrieve events
+            events: true,
         },
     });
     if (!friend) {
@@ -106,7 +124,7 @@ export async function searchFriendContext(
             });
         }
     }
-    results.sort((a, b) => b.score - a.score);   //a-b for ascending, b-a for descending order sorting
+    results.sort((a, b) => b.score - a.score);
     return results;
 }
 
@@ -119,11 +137,16 @@ function isSearchableSourceType(
 /**
  * Retrieves relevant ingested context for a friend using keyword scoring.
  * Supports excluding a specific source, such as the event currently being assessed.
+ *
+ * @param friendId - Friend whose searchable documents should be queried.
+ * @param query - Event text or hypothetical action to retrieve context for.
+ * @param options - Optional limit and source exclusion controls.
+ * @returns Ranked context items from SearchableDocument.
  */
 export async function retrieveFriendContext(
     friendId: string,
     query: string,
-    options: RetrieveFriendContextOptions = {}, //allow excluding certain source types or specific records from the retrieved context
+    options: RetrieveFriendContextOptions = {},
 ): Promise<RetrievedContextItem[]> {
     const documents = await prisma.searchableDocument.findMany({
         where: { friendId },
@@ -140,7 +163,8 @@ export async function retrieveFriendContext(
             options.excludeSourceType === doc.sourceType &&
             options.excludeSourceId === doc.sourceId
         ) {
-            continue; //skip this document if it matches the exclusion criteria
+            // Avoid retrieving the same event that is currently being assessed.
+            continue;
         }
 
         const score = calculateKeywordScore(query, doc.content);
@@ -157,6 +181,6 @@ export async function retrieveFriendContext(
     }
 
     results.sort((a, b) => b.score - a.score);
-    const limit = options.limit ?? 5; //default limit to 5 if not specified
+    const limit = options.limit ?? 5;
     return results.slice(0, limit);
 }

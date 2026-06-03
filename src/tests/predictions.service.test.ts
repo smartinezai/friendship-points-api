@@ -43,6 +43,7 @@ describe("buildPredictionInput", () => {
           weight: "high",
         },
       ],
+      retrievedContext: [],
     });
   });
 });

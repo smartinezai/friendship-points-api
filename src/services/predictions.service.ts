@@ -19,13 +19,22 @@ type FriendWithActiveRules = {
   }[];
 };
 
-type PredictionProvider = ( //define a function type where the input is an LlmAssessmentInput and the output is a Promise that resolves to an LlmAssessmentResult. This will allow us to pass in different assessment functions, such as one for Mistral
+type PredictionProvider = (
   input: LlmAssessmentInput,
 ) => Promise<LlmAssessmentResult>;
 
+/**
+ * Loads the active friend data needed to predict a hypothetical action.
+ *
+ * @param friendId - Friend id from the prediction route.
+ * @returns Friend with active rules, or null when missing/deleted.
+ */
 export async function getFriendWithActiveRules(friendId: string) {
-  return prisma.friend.findUnique({
-    where: { id: friendId },
+  return prisma.friend.findFirst({
+    where: {
+      id: friendId,
+      deletedAt: null,
+    },
     include: {
       rules: {
         where: { active: true },
@@ -34,13 +43,19 @@ export async function getFriendWithActiveRules(friendId: string) {
   });
 }
 
-
+/**
+ * Builds LLM input for a hypothetical, unsaved event.
+ *
+ * @param friend - Friend with active rules already loaded.
+ * @param hypotheticalAction - User-provided action to predict.
+ * @param retrievedContext - Optional RAG context relevant to the action.
+ * @returns Provider-agnostic LLM input using a synthetic event id.
+ */
 export function buildPredictionInput(
   friend: FriendWithActiveRules,
   hypotheticalAction: string,
   retrievedContext: LlmRetrievedContextItem[] = [],
 ): LlmAssessmentInput {
-  //build the input for the LLM assessment based on the friend data and the hypothetical action. The input should include the friend's id, display name, and notes, as well as the hypothetical action and the friend's active rules. For the rules, we want to include the rule's id, title, description, impact direction, and weight. We will return an object that matches the LlmAssessmentInput type.
   return {
     friend: {
       id: friend.id,
@@ -64,13 +79,13 @@ export function buildPredictionInput(
 }
 
 /**
- * Runs a prediction flow for a hypothetical friend action using the provided
- * assessment provider.
+ * Runs the full prediction flow without creating an Event or Assessment.
  *
- * The flow loads the friend, retrieves relevant RAG context, builds the LLM
- * input, calls the provider, and returns an unsaved prediction result.
+ * @param friendId - Friend the hypothetical action is about.
+ * @param hypotheticalAction - Action text to assess as a hypothetical event.
+ * @param provider - LLM provider implementation used to score the action.
+ * @returns Prediction result with retrieved context, or null if friend is missing.
  */
-
 export async function predictFriendActionWithProvider(
   friendId: string,
   hypotheticalAction: string,

@@ -1,6 +1,12 @@
 import type { LlmAssessmentInput } from "../assessment.types.js";
 import { PROMPT_VERSION } from "../providers.js";
 
+/**
+ * Builds the prompt shared by assessment and prediction providers.
+ *
+ * @param input - Friend, event, rules, and optional retrieved context.
+ * @returns Prompt text sent to the selected LLM provider.
+ */
 export function buildFriendshipAssessmentPrompt(
     input: LlmAssessmentInput
 ): string {

@@ -4,12 +4,13 @@ import { getFriendById } from "../services/friends.service.js";
 import { createEventBodySchema } from "../schemas/events.schema.js";
 import { sendNotFoundError, sendValidationError } from "../utils/httpErrors.js";
 
+/** Registers event creation and lookup routes. */
 export async function eventRoutes(app: FastifyInstance) {
 
     app.get<{ Params: { friendId: string } }>("/friends/:friendId/events", async (request, reply) => {
-        const { friendId } = request.params; //destructure friendId from request params, and type it as a string
+        const { friendId } = request.params;
 
-        const friend = await getFriendById(friendId); //first check if the friend exists
+        const friend = await getFriendById(friendId);
 
         if (!friend) {
             return sendNotFoundError(reply, "Friend not found");
@@ -44,8 +45,8 @@ export async function eventRoutes(app: FastifyInstance) {
 
         };
     }>("/friends/:friendId/events", async (request, reply) => {
-        const { friendId } = request.params; //destructure friendId from request params, and type it as a string
-        const friend = await getFriendById(friendId); //first check if the friend exists
+        const { friendId } = request.params;
+        const friend = await getFriendById(friendId);
 
         if (!friend) {
             return sendNotFoundError(reply, "Friend not found");
@@ -56,7 +57,7 @@ export async function eventRoutes(app: FastifyInstance) {
             return sendValidationError(reply, parsedBody.error.issues);
         }
 
-        const { eventText, happenedAt } = parsedBody.data; //destructure body from request body, and type it as an object with the required fields
+        const { eventText, happenedAt } = parsedBody.data;
 
         const event = await prisma.event.create({
             data: {

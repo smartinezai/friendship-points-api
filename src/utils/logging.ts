@@ -1,7 +1,13 @@
+/**
+ * Logs unexpected errors with a caller-provided context label.
+ *
+ * @param context - Short label describing where the error happened.
+ * @param error - Unknown caught value from a try/catch block.
+ */
 export function logError(context: string, error: unknown) {
   if (error instanceof Error) {
     console.error(`[${context}] ${error.message}`);
-    console.error(error.stack); //error.stack means the stack trace of the error, which provides information about where the error occurred in the code. It can be helpful for debugging purposes to understand the sequence of function calls that led to the error.
+    console.error(error.stack);
   } else {
     console.error(`[${context}] An unknown error occurred:`, error);
   }

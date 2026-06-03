@@ -14,6 +14,7 @@ import {
 import { retrieveFriendContext } from "../services/search.service.js";
 import { rebuildSearchableDocumentsForFriend } from "../services/searchIngestion.service.js";
 
+/** Registers friend CRUD, notes, search, and search-index maintenance routes. */
 export async function friendRoutes(app: FastifyInstance) {
 
     app.get<{ Querystring: { name?: string } }>("/friends/search", async (request, reply) => {
@@ -24,7 +25,7 @@ export async function friendRoutes(app: FastifyInstance) {
         }
         const friends = await prisma.friend.findMany({
             where: {
-                deletedAt: null, //only search friends that have not been soft deleted
+                deletedAt: null,
                 displayName: {
                     contains: name,
                     mode: "insensitive",
@@ -35,6 +36,7 @@ export async function friendRoutes(app: FastifyInstance) {
 
     });
 
+    /** Manual endpoint for inspecting retrieved RAG context during development. */
     app.get<{
         Params: { id: string };
         Querystring: { query?: string };
@@ -68,7 +70,7 @@ export async function friendRoutes(app: FastifyInstance) {
     });
 
     app.get<{ Params: { id: string } }>("/friends/:id", async (request, reply) => {
-        const { id } = request.params; //destructure id from request params, and type it as a string
+        const { id } = request.params;
 
         const friend = await getFriendById(id);
 
@@ -81,10 +83,9 @@ export async function friendRoutes(app: FastifyInstance) {
 
 
     app.get("/friends", async () => {
-        // get all friends
         const friends = await prisma.friend.findMany({
             where: {
-                deletedAt: null, //only return friends that have not been soft deleted
+                deletedAt: null,
             },
         });
 
@@ -111,7 +112,7 @@ export async function friendRoutes(app: FastifyInstance) {
         });
 
         if (existingFriend && !allowDuplicate) {
-            reply.status(409);// 409 Conflict status code indicates that the request could not be completed due to a conflict with the current state of the resource. In this case, it indicates that a friend with the same display name already exists and the client has not indicated that they want to allow duplicates.
+            reply.status(409);
             return {
                 error: "Friend with this display name already exists",
                 existingFriend,
@@ -122,7 +123,7 @@ export async function friendRoutes(app: FastifyInstance) {
         const friend = await prisma.friend.create({
             data: {
                 displayName,
-                notes: notes ?? null,  //use null if notes is undefined, since our schema expects a string or null
+                notes: notes ?? null,
             },
         });
 
@@ -168,12 +169,6 @@ export async function friendRoutes(app: FastifyInstance) {
         return reply.send({ friend: updatedFriend });
     });
 
-
-    /**
-     * //registering a post route that has type information
-        <{ Params: { id: string } }>
-            takes a path and an async function that takes a request and a reply
-     */
     app.post<{
         Params: { id: string };
     }>("/friends/:id/notes/append", async (request, reply) => {
@@ -193,12 +188,7 @@ export async function friendRoutes(app: FastifyInstance) {
 
         const { note } = parsedBody.data;
 
-        /**
-         * here we use a ternary operator
-         * if existingFriend.notes already has something
-         * then use old notes + blank line + new note
-         * otherwise just use the new note
-         */
+        // Preserve readable note history by separating appended notes.
         const updatedNotes = existingFriend.notes
             ? `${existingFriend.notes}\n\n${note}`
             : note;
@@ -222,7 +212,6 @@ export async function friendRoutes(app: FastifyInstance) {
             return sendNotFoundError(reply, "Friend not found");
         }
 
-        //soft delete the friend by setting deletedAt to the current date and time
         await prisma.friend.update({
             where: { id },
             data: { deletedAt: new Date() },

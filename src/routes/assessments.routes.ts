@@ -10,7 +10,7 @@ import { manualAssessmentBodySchema } from '../schemas/assessments.schema.js';
 import { sendNotFoundError, sendValidationError, sendInternalServerError } from '../utils/httpErrors.js';
 import { logError } from '../utils/logging.js';
 
-
+/** Registers manual, balance, and LLM-assisted assessment routes. */
 export async function assessmentRoutes(app: FastifyInstance) {
     app.post<{
         Params: { eventId: string },
@@ -20,7 +20,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
         };
     }>("/events/:eventId/manual-assessment", async (request, reply) => {
         const { eventId } = request.params;
-        const parsedBody = manualAssessmentBodySchema.safeParse(request.body);//use zod to validate the request body against the manualAssessmentBodySchema. safeParse will return an object with a success property indicating whether the validation passed or failed, and either a data property containing the parsed data (if validation succeeded) or an error property containing details about the validation errors (if validation failed).
+        const parsedBody = manualAssessmentBodySchema.safeParse(request.body);
 
         if (!parsedBody.success) {
             return sendValidationError(reply, parsedBody.error.issues);
@@ -28,7 +28,6 @@ export async function assessmentRoutes(app: FastifyInstance) {
 
         const { scoreDelta, reason } = parsedBody.data;
 
-        // Validate the event exists
         const event = await prisma.event.findUnique({
             where: { id: eventId }
         });
@@ -41,7 +40,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
             data: {
                 eventId,
                 scoreDelta,
-                reason: reason ?? null,  // Set to null if reason is undefined, otherwise use the provided reason. the double question mark operator (??) is used to provide a default value of null when reason is undefined. This ensures that the reason field in the database will be set to null if no reason is provided in the request body, rather than leaving it as undefined which may not be acceptable for the database schema.
+                reason: reason ?? null,
                 source: "manual",
             },
         });
@@ -65,8 +64,8 @@ export async function assessmentRoutes(app: FastifyInstance) {
                     friendId,
                 },
             },
-            _sum: { //_summ is the Prisma aggregate function that calculates the sum of the specified field (in this case, scoreDelta) for all records that match the given criteria. In this context, it is used to calculate the total scoreDelta for all assessments related to events associated with the specified friendId.
-                scoreDelta: true, // This line specifies that we want to calculate the sum of the scoreDelta field for all assessments that match the criteria defined in the where clause. By setting scoreDelta to true, we are indicating that we want to include this field in the aggregation result, allowing us to obtain the total scoreDelta for the specified friendId.q
+            _sum: {
+                scoreDelta: true,
             },
         });
         return reply.status(200).send({

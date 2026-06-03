@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+/** Validates prediction requests for hypothetical, unsaved events. */
 export const predictFriendActionBodySchema = z.object({
   hypotheticalAction: z
     .string()

@@ -13,11 +13,14 @@ type RebuildSearchIndexResult = {
 };
 
 /**
- * Function that rebuilds searchable documents for one active friend from their
- * notes, active rules and events
- * If a function uses await inside it, it muswt be async
- * If a function returns a promise, it can be async, but it doesn't have to be
- * if everything is synchronous, do not make it async
+ * Rebuilds all keyword-search documents for one active friend.
+ *
+ * The rebuild is destructive for that friend's existing searchable documents:
+ * it deletes old indexed rows, then recreates documents from current notes,
+ * active rules, and events.
+ *
+ * @param friendId - Friend whose searchable documents should be rebuilt.
+ * @returns Created document count, or null when the friend is missing/deleted.
  */
 export async function rebuildSearchableDocumentsForFriend(
     friendId: string,
@@ -29,9 +32,9 @@ export async function rebuildSearchableDocumentsForFriend(
         },
         include: {
             rules: {
-                where: { active: true }, //retrieve active rules
+                where: { active: true },
             },
-            events: true, //also retrieve events
+            events: true,
         },
     });
     if (!friend) {

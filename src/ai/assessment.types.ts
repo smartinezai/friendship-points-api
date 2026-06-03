@@ -1,3 +1,4 @@
+/** Context item retrieved from the search index for RAG prompts. */
 export type LlmRetrievedContextItem = {
   sourceType: "friend_note" | "rule" | "event";
   sourceId: string;
@@ -5,11 +6,12 @@ export type LlmRetrievedContextItem = {
   score: number;
 };
 
+/** Provider-agnostic input passed to mock, Mistral, and OpenAI assessment flows. */
 export type LlmAssessmentInput = {
   friend: {
     id: string;
     displayName: string;
-    notes: string | null; //either string or null because the Prisma schema allows for nullable strings
+    notes: string | null;
   };
   event: {
     id: string;
@@ -24,14 +26,4 @@ export type LlmAssessmentInput = {
     weight: string;
   }[];
   retrievedContext?: LlmRetrievedContextItem[];
-};
-
-
-export type LlmAssessmentResult = {
-    impactDirection: "positive" | "negative" | "neutral" | "mixed";
-    scoreDelta: number;
-    confidence: number;
-    reasoningSummary: string;
-    matchedRuleIds: string[];
-    biasNotes?: string;
 };

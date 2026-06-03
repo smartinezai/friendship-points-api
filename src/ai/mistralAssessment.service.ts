@@ -4,6 +4,12 @@ import { assessmentSchema, type LlmAssessmentResult } from "./assessment.schema.
 import { buildFriendshipAssessmentPrompt } from "./prompts/friendshipAssessment.prompt.js";
 import { LLM_MODELS, LLM_TEMPERATURE } from "./providers.js";
 
+/**
+ * Assesses an event or prediction with Mistral structured output.
+ *
+ * @param input - Provider-agnostic assessment input.
+ * @returns Validated LLM assessment result.
+ */
 export async function mistralAssessEvent(
   input: LlmAssessmentInput
 ): Promise<LlmAssessmentResult> {

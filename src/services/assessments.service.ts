@@ -4,7 +4,12 @@ import type { LlmAssessmentResult } from "../ai/assessment.schema.js";
 import { retrieveFriendContext } from "./search.service.js";
 
 
-
+/**
+ * Loads an event with the friend and active rules needed for LLM assessment.
+ *
+ * @param eventId - Event id being assessed.
+ * @returns Event graph for prompt building, or null when the event is missing.
+ */
 export async function getEventWithFriendAndActiveRules(eventId: string) {
   return prisma.event.findUnique({
     where: { id: eventId },
@@ -22,6 +27,13 @@ export async function getEventWithFriendAndActiveRules(eventId: string) {
   });
 }
 
+/**
+ * Builds the provider-agnostic LLM input for assessing an existing event.
+ *
+ * @param event - Event loaded with its friend and active rules.
+ * @param retrievedContext - Optional RAG context to include in the prompt.
+ * @returns Structured input consumed by mock, Mistral, and OpenAI providers.
+ */
 export function buildLlmAssessmentInput(
   event: NonNullable<Awaited<ReturnType<typeof getEventWithFriendAndActiveRules>>>,
   retrievedContext: LlmAssessmentInput["retrievedContext"] = [],
@@ -38,7 +50,7 @@ export function buildLlmAssessmentInput(
     event: {
       id: event.id,
       eventText: event.eventText,
-      happenedAt: event.happenedAt ? event.happenedAt.toISOString() : null, //convert happenedAt to ISO string if it exists, otherwise set it to null
+      happenedAt: event.happenedAt ? event.happenedAt.toISOString() : null,
     },
     rules: rules.map((rule) => ({
       id: rule.id,
@@ -51,7 +63,15 @@ export function buildLlmAssessmentInput(
   }
 };
 
-
+/**
+ * Persists a validated LLM assessment result.
+ *
+ * @param eventId - Event the assessment belongs to.
+ * @param llmResult - Structured provider output validated by assessmentSchema.
+ * @param source - Provider label, e.g. "mock", "mistral", or "openai".
+ * @param metadata - Optional model and prompt metadata for traceability.
+ * @returns The created Assessment record.
+ */
 export async function saveLlmAssessment(
   eventId: string,
   llmResult: LlmAssessmentResult,
@@ -77,7 +97,15 @@ export async function saveLlmAssessment(
   });
 }
 
-
+/**
+ * Runs the full event-assessment flow with the selected LLM provider.
+ *
+ * @param eventId - Event to assess.
+ * @param source - Source label stored on the Assessment row.
+ * @param assessFn - Provider function that accepts LlmAssessmentInput.
+ * @param metadata - Optional model and prompt metadata stored with the result.
+ * @returns Assessment, raw LLM result, and retrieved context, or null if missing.
+ */
 export async function assessEventWithProvider(
   eventId: string,
   source: string,
@@ -87,12 +115,6 @@ export async function assessEventWithProvider(
     promptVersion?: string;
   }
 ) {
-  /**
-   * from the event id, fetch event with friend and active rules
-   * then build the llm input from that data
-   * call the chosen assessment provider (for example mock or langchain)
-   * then save the assessment and return the assessment as well as the LLM output result
-   */
   const event = await getEventWithFriendAndActiveRules(eventId);
 
   if (!event) {
@@ -101,7 +123,8 @@ export async function assessEventWithProvider(
   const retrievedContext = await retrieveFriendContext(
     event.friendId,
     event.eventText,
-    {//retrieve relevant context for this event but not the event itself (otherwise we get redundant data)
+    {
+      // Exclude the current event so retrieval only contributes extra context.
       excludeSourceType: "event",
       excludeSourceId: event.id,
       limit: 5,
