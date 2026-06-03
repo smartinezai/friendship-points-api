@@ -1,5 +1,10 @@
 import { prisma } from "../db/prisma.js";
 
+export type RetrieveFriendContextOptions = {
+    excludeSourceType?: "friend_note" | "rule" | "event";
+    excludeSourceId?: string;
+};
+
 export type RetrievedContextItem = {
     sourceType: "friend_note" | "rule" | "event";
     sourceId: string;
@@ -116,6 +121,7 @@ function isSearchableSourceType(
 export async function retrieveFriendContext(
     friendId: string,
     query: string,
+    options: RetrieveFriendContextOptions = {}, //allow excluding certain source types or specific records from the retrieved context
 ): Promise<RetrievedContextItem[]> {
     const documents = await prisma.searchableDocument.findMany({
         where: { friendId },
@@ -126,6 +132,13 @@ export async function retrieveFriendContext(
     for (const doc of documents) {
         if (!isSearchableSourceType(doc.sourceType)) {
             continue;
+        }
+
+        if (
+            options.excludeSourceType === doc.sourceType &&
+            options.excludeSourceId === doc.sourceId
+        ) {
+            continue; //skip this document if it matches the exclusion criteria
         }
 
         const score = calculateKeywordScore(query, doc.content);

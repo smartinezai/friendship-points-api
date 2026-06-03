@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { calculateKeywordScore, tokenise } from "../services/search.service.js";
 
+
 describe("search service tests", () => {
     it("tokenise should split text into lowercase tokens", () => {
         const result = tokenise("Cole, called-without warning!");

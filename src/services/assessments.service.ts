@@ -101,6 +101,10 @@ export async function assessEventWithProvider(
   const retrievedContext = await retrieveFriendContext(
     event.friendId,
     event.eventText,
+    {//retrieve relevant context for this event but not the event itself (otherwise we get redundant data)
+      excludeSourceType: "event",
+      excludeSourceId: event.id,
+    }
   );
   const llmInput = buildLlmAssessmentInput(event, retrievedContext);
   const llmResult = await assessFn(llmInput);
