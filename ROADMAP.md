@@ -655,33 +655,18 @@ Learning focus:
 
 ## Day 25: Embeddings and Vector Storage
 
-Status: Planned.
+Status: Done.
 
-Goals:
+Implemented:
 
-- Generate embeddings for searchable records
-- Store vectors for rules, notes, and events
-- Compare vector storage options
-- Prefer PostgreSQL-compatible options where practical
-- Prepare for document chunk embeddings later
-
-Possible tools:
-
-```txt
-pgvector
-Supabase Vector
-Qdrant
-Chroma
-Weaviate
-Pinecone
-```
-
-Learning focus:
-
-- embeddings
-- vector storage
-- embedding metadata
-- database/tooling trade-offs
+- Upgraded local PostgreSQL from 16 to 17 for pgvector compatibility
+- Enabled the `vector` extension
+- Added raw SQL migration for `SearchableDocument.embedding vector(1024)`
+- Added Mistral embedding generation service
+- Added embedding dimension validation
+- Added raw SQL update for pgvector embeddings
+- Added batch embedding generation for searchable documents without embeddings
+- Added manual embedding generation route
 
 ---
 
