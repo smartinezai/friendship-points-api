@@ -11,7 +11,7 @@ import {
     sendValidationError,
     sendBadRequestError,
 } from "../utils/httpErrors.js";
-import { retrieveFriendContext } from "../services/search.service.js";
+import { retrieveFriendContext, retrieveFriendContextSemantically } from "../services/search.service.js";
 import { rebuildSearchableDocumentsForFriend } from "../services/searchIngestion.service.js";
 
 /** Registers friend CRUD, notes, search, and search-index maintenance routes. */
@@ -53,6 +53,25 @@ export async function friendRoutes(app: FastifyInstance) {
         return { results };
     });
 
+    /** Manual endpoint for inspecting semantic vector retrieval during development. */
+    app.get<{
+        Params: { id: string };
+        Querystring: { query?: string };
+    }>("/friends/:id/search-context/semantic", async (request, reply) => {
+        const { id } = request.params;
+        const { query } = request.query;
+
+        if (!query) {
+            return sendBadRequestError(reply, "Query parameter is required.");
+        }
+
+        const results = await retrieveFriendContextSemantically(id, query, {
+            limit: 5,
+        });
+
+        return { results };
+    });
+
     app.post<{
         Params: { id: string };
     }>("/friends/:id/rebuild-search-index", async (request, reply) => {
@@ -63,7 +82,7 @@ export async function friendRoutes(app: FastifyInstance) {
             return sendNotFoundError(reply, "Friend not found");
         }
 
-        return reply.send({ 
+        return reply.send({
             message: "Search index rebuilt successfully",
             createdDocCount: result.createdDocCount,
         });

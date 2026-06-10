@@ -2,7 +2,7 @@ import { prisma } from "../db/prisma.js";
 
 const MISTRAL_EMBEDDING_MODEL = "mistral-embed";
 
-function formatVectorForSql(embedding: number[]): string {
+export function formatVectorForSql(embedding: number[]): string {
     return `[${embedding.join(",")}]`;
 }
 

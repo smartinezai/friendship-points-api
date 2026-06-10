@@ -1,5 +1,11 @@
 import { prisma } from "../db/prisma.js";
+import { createEmbedding, formatVectorForSql } from "./embeddings.service.js";
 
+/**
+ * createEmbedding(query)       → turns query text into number[]
+formatVectorForSql(vector)   → turns number[] into pgvector SQL format
+
+ */
 export type RetrieveFriendContextOptions = {
     excludeSourceType?: "friend_note" | "rule" | "event";
     excludeSourceId?: string;
@@ -13,6 +19,10 @@ export type RetrievedContextItem = {
     friendId: string;
     content: string;
     score: number;
+};
+
+export type SemanticRetrievedContextItem = RetrievedContextItem & {
+    distance: number;
 };
 
 /**
@@ -183,4 +193,71 @@ export async function retrieveFriendContext(
     results.sort((a, b) => b.score - a.score);
     const limit = options.limit ?? 5;
     return results.slice(0, limit);
+}
+
+/**
+ * Retrieves relevant ingested context for a friend using embedding similarity.
+ * Lower distance means the stored context is more semantically similar to the query.
+ *
+ * @param friendId - Friend whose searchable documents should be queried.
+ * @param query - Event text or hypothetical action to retrieve context for.
+ * @param options - Optional limit and source exclusion controls.
+ * @returns Context items ranked by semantic similarity.
+ */
+export async function retrieveFriendContextSemantically(
+    friendId: string,
+    query: string,
+    options: RetrieveFriendContextOptions = {},
+): Promise<SemanticRetrievedContextItem[]> {
+    const queryEmbedding = await createEmbedding(query);
+    const queryVector = formatVectorForSql(queryEmbedding);
+    const limit = options.limit ?? 5;
+
+    const rows = await prisma.$queryRaw<
+        {
+            sourceType: string;
+            sourceId: string;
+            friendId: string;
+            content: string;
+            distance: number;
+        }[]
+    >`
+        SELECT
+            "sourceType",
+            "sourceId",
+            "friendId",
+            "content",
+            "embedding" <=> ${queryVector}::vector AS "distance"
+        FROM "SearchableDocument"
+        WHERE "friendId" = ${friendId}
+          AND "embedding" IS NOT NULL
+        ORDER BY "distance" ASC
+        LIMIT ${limit}
+    `;
+
+    const results: SemanticRetrievedContextItem[] = [];
+
+    for (const row of rows) {
+        if (!isSearchableSourceType(row.sourceType)) {
+            continue;
+        }
+
+        if (
+            options.excludeSourceType === row.sourceType &&
+            options.excludeSourceId === row.sourceId
+        ) {
+            continue;
+        }
+
+        results.push({
+            sourceType: row.sourceType,
+            sourceId: row.sourceId,
+            friendId: row.friendId,
+            content: row.content,
+            score: 0,
+            distance: row.distance,
+        });
+    }
+
+    return results;
 }
