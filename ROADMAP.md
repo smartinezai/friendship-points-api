@@ -672,14 +672,16 @@ Implemented:
 
 ## Day 26: Semantic Retrieval
 
-Status: Planned.
+Status: Done.
 
-Goals:
+Implemented:
 
-- Retrieve relevant records using embeddings
-- Compare semantic retrieval with keyword search
-- Add metadata filtering by friend/person and source type
-- Decide how many records to retrieve for the prompt
+- Added semantic retrieval using stored searchable document embeddings
+- Added query embedding generation for semantic search
+- Added pgvector cosine-distance search using `<=>`
+- Added friend-level metadata filtering
+- Added manual semantic search route for testing
+- Compared semantic retrieval output against keyword retrieval output
 
 Learning focus:
 
@@ -687,7 +689,6 @@ Learning focus:
 - similarity search
 - metadata filtering
 - keyword vs vector retrieval trade-offs
-
 ---
 
 ## Day 27: Reranking
