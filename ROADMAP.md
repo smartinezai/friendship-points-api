@@ -814,16 +814,16 @@ Learning focus:
 
 ## Day 27: Reranking
 
-Status: Planned.
+Status: Done.
 
-Goals:
+Implemented:
 
-- Add reranking after initial retrieval
-- Compare top-k before and after reranking
-- Prioritise context that is most relevant to the event/prediction
-- Avoid forcing irrelevant rule matches
-- Start with deterministic reranking for testability
-- Later compare deterministic reranking with LLM-based reranking
+- Added deterministic reranking for retrieved context
+- Added source-type boosts for rules, events, and friend notes
+- Added rerank scores and rerank reasons to retrieved context items
+- Added manual reranked search route for testing
+- Compared raw semantic retrieval output against reranked output
+- Verified reranking can correct weak ordering from short semantic matches
 
 Learning focus:
 
