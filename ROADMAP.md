@@ -1,19 +1,19 @@
 # Friendship Points API Roadmap
 
-This roadmap tracks the 45-day Friendship Points API learning project.
+This roadmap tracks the 50-day Friendship Points API learning project.
 
-The roadmap is now ordered around one primary milestone:
+Primary milestone:
 
 ```txt
 Reach a complete LLM Zoomcamp-compliant RAG project first.
-Do production hardening and extra product features afterwards.
+Do production hardening, multi-user modelling, and extra product features afterwards.
 ```
 
 The main project README is in [`README.md`](./README.md).
 
 ---
 
-# Detailed 45-Day Roadmap
+# Detailed 50-Day Roadmap
 
 ## Current Position
 
@@ -44,7 +44,6 @@ Goals:
 - Add `.env` support
 - Add `/health`
 - Set up GitHub repository
-
 
 Learning focus:
 
@@ -100,6 +99,14 @@ GET /friends/search?name=...
 POST /friends
 ```
 
+Learning focus:
+
+- Fastify route design
+- request parameters
+- query parameters
+- basic validation
+- CRUD endpoint structure
+
 ---
 
 ## Day 4: Friendship Rules
@@ -133,6 +140,13 @@ critical
 extreme
 ```
 
+Learning focus:
+
+- relational modelling
+- nested resources
+- route parameters
+- domain-specific validation
+
 ---
 
 ## Day 5: Friendship Events
@@ -154,6 +168,13 @@ GET /friends/:friendId/events
 POST /friends/:friendId/events
 GET /events/:eventId
 ```
+
+Learning focus:
+
+- event modelling
+- optional fields
+- timestamp handling
+- one-to-many relations
 
 ---
 
@@ -206,6 +227,13 @@ Duplicate behaviour:
 - exact duplicate `displayName` returns `409 Conflict`
 - duplicate creation requires `allowDuplicate: true`
 
+Learning focus:
+
+- service-layer extraction
+- avoiding route bloat
+- duplicate handling
+- explicit error behaviour
+
 ---
 
 # Phase 2: LangChain and LLM-Assisted Scoring
@@ -242,6 +270,13 @@ Bias handling requirements:
 - Distinguish observed facts from interpretation
 - Do not assume intent unless clearly supported
 
+Learning focus:
+
+- LLM workflow design
+- structured output
+- model/provider boundaries
+- bias-aware prompting
+
 ---
 
 ## Day 8.5: Mock LLM and Structured Assessment Storage
@@ -260,6 +295,13 @@ Endpoint:
 ```http
 POST /events/:eventId/mock-assessment
 ```
+
+Learning focus:
+
+- mock providers
+- schema-first LLM output
+- deterministic development before real API calls
+- separating testable logic from provider calls
 
 ---
 
@@ -292,6 +334,13 @@ mistral = working real LLM provider
 openai  = route exists, currently blocked by API quota
 ```
 
+Learning focus:
+
+- provider abstraction
+- real LLM API integration
+- shared provider interfaces
+- graceful provider limitations
+
 ---
 
 ## Day 10: Prompt Extraction, Provider Cleanup, and Metadata
@@ -312,6 +361,13 @@ src/ai/prompts/friendshipAssessment.prompt.ts
 src/ai/providers.ts
 ```
 
+Learning focus:
+
+- prompt maintainability
+- versioning prompts
+- provider config
+- metadata for traceability
+
 ---
 
 ## Day 11: Route and Request Validation
@@ -325,6 +381,13 @@ Goals:
 - Validate rule creation/weight update requests
 - Validate event creation requests
 - Use Zod for runtime request validation
+
+Learning focus:
+
+- Zod schemas
+- runtime validation
+- request boundary safety
+- validation error design
 
 ---
 
@@ -353,6 +416,13 @@ Still possible later:
 POST /friends/:id/restore
 ```
 
+Learning focus:
+
+- PATCH semantics
+- append vs replace behaviour
+- soft-delete preparation
+- route consistency
+
 ---
 
 ## Day 13: Prediction Endpoint
@@ -374,6 +444,13 @@ Implemented:
 - Prediction input builder
 - Friend-with-active-rules lookup helper
 - No `Event` or `Assessment` is created for predictions
+
+Learning focus:
+
+- hypothetical LLM workflows
+- read-only prediction flows
+- provider reuse
+- avoiding unwanted persistence
 
 ---
 
@@ -399,6 +476,13 @@ Checks:
 npm test
 npm run build
 ```
+
+Learning focus:
+
+- unit testing
+- validation tests
+- testable helper design
+- build/test separation
 
 ---
 
@@ -433,6 +517,13 @@ Unexpected server/provider failure
 → sendInternalServerError(...)
 ```
 
+Learning focus:
+
+- consistent API errors
+- reusable error helpers
+- predictable HTTP responses
+- separation between client errors and server errors
+
 ---
 
 ## Day 16: Safe Internal Logging
@@ -455,6 +546,13 @@ pino
 Sentry
 OpenTelemetry
 ```
+
+Learning focus:
+
+- safe logging
+- `unknown` error handling
+- internal vs external error detail
+- production-safe diagnostics
 
 ---
 
@@ -480,6 +578,13 @@ npm run lint
 npm test
 npm run build
 ```
+
+Learning focus:
+
+- Git hooks
+- local quality gates
+- preventing broken pushes
+- automation discipline
 
 ---
 
@@ -552,6 +657,13 @@ DELETE active friend → 200
 GET deleted friend → 404
 DELETE already deleted friend → 404
 ```
+
+Learning focus:
+
+- soft delete
+- filtering active records
+- deletion semantics
+- data retention trade-offs
 
 ---
 
@@ -668,6 +780,14 @@ Implemented:
 - Added batch embedding generation for searchable documents without embeddings
 - Added manual embedding generation route
 
+Learning focus:
+
+- embeddings
+- pgvector
+- vector columns
+- raw SQL where Prisma cannot model extension-specific types
+- embedding dimension validation
+
 ---
 
 ## Day 26: Semantic Retrieval
@@ -702,6 +822,8 @@ Goals:
 - Compare top-k before and after reranking
 - Prioritise context that is most relevant to the event/prediction
 - Avoid forcing irrelevant rule matches
+- Start with deterministic reranking for testability
+- Later compare deterministic reranking with LLM-based reranking
 
 Learning focus:
 
@@ -709,6 +831,7 @@ Learning focus:
 - retrieval quality improvement
 - context selection
 - precision vs recall
+- deterministic ranking before model-based ranking
 
 ---
 
@@ -739,35 +862,20 @@ Status: Planned.
 
 Goals:
 
-- Implement a loop where the LLM can:
-  - decide to call a search tool
-  - inspect returned context
-  - call another tool if needed
-  - stop and produce a final structured answer
+- Implement a loop where the LLM can decide to call a search tool, inspect returned context, call another tool if needed, and stop with a final structured answer
 - Add max-iteration safeguards
-- Add fallback behaviour when no relevant context is found.
-
-Additional goals:
-
+- Add fallback behaviour when no relevant context is found
 - Let the agent inspect recent event history for a friend
 - Detect repeated patterns, such as many negative events about the same person
 - Generate bias/pattern notes when history suggests possible narrator bias
-- Log pattern observations separately from individual event assessments
-- Treat pattern observations as signals or hypotheses, not proof
-- Use pattern notes as context in future assessments
 - Detect behaviour trends over time, not just repeated patterns
-- Compare older events with newer events for the same friend
-- Identify possible improvement, deterioration, or inconsistency
-- Log trend observations separately from individual assessments
-- Treat trends as tentative signals, not definitive character judgements
+- Treat patterns and trends as tentative signals, not definitive character judgements
 
-Example:
+Example pattern note:
 
-If most recent events about Cole are negative, the agent may log a pattern signal:
-
-"Recent event history about Cole is strongly negative. This may indicate genuine repeated conflict, selective event logging, temporary frustration, or narrator bias. Future assessments should account for this uncertainty."
-
-This should reduce overconfidence, not automatically invalidate the events.
+```txt
+Recent event history about Cole is strongly negative. This may indicate genuine repeated conflict, selective event logging, temporary frustration, or narrator bias. Future assessments should account for this uncertainty.
+```
 
 Learning focus:
 
@@ -775,6 +883,7 @@ Learning focus:
 - tool loop control
 - preventing infinite loops
 - deciding when retrieval is needed
+- pattern detection as a hypothesis rather than proof
 
 ---
 
@@ -863,7 +972,7 @@ This should satisfy the core requirements of the LLM Zoomcamp capstone project.
 
 ---
 
-# Phase 5: Extended AI Features
+# Phase 5: Extended AI and Knowledge Features
 
 ## Day 33: LLM Tracing and Prompt Analytics
 
@@ -930,9 +1039,104 @@ Learning focus:
 
 ---
 
-# Phase 6: Quality and Productisation
+## Day 35: Person Facts and Verification Status
 
-## Day 35: Route Tests
+Status: Planned.
+
+Goals:
+
+- Add a fact model linked to a person/friend
+- Allow users to add facts through the API first
+- Mark self-added facts about the current user as verified automatically once user identity exists
+- Mark facts about other people as unverified by default
+- Store source metadata, author, target person, verification status, and timestamp
+- Ingest verified and unverified facts into searchable/RAG context with different trust levels
+- Treat verified self-declared facts as stronger evidence than unverified third-party facts
+- Allow future correction, rejection, or verification by the target person
+
+Possible model idea:
+
+```txt
+PersonFact
+- id
+- personId
+- authorPersonId
+- content
+- verificationStatus
+- createdAt
+- updatedAt
+```
+
+Possible statuses:
+
+```txt
+verified_self_declared
+unverified_third_party
+verified_by_target
+rejected_by_target
+corrected
+```
+
+Learning focus:
+
+- fact modelling
+- verification workflows
+- trust levels in RAG context
+- multi-user identity design
+- human-in-the-loop knowledge management
+
+---
+
+## Day 36: Person Knowledge Intake Forms
+
+Status: Planned.
+
+Goals:
+
+- Create a Google Form or app-generated form that can be sent to a person
+- Ideally send the form through the app once messaging/email integration exists
+- Collect structured information about the person, such as work, hobbies, likes/dislikes, values, principles, habits, routines, communication preferences, boundaries, goals, and recurring activities
+- Link each form submission to the person who filled it out
+- Import submitted answers into the app
+- Convert form answers into searchable person facts or knowledge entries
+- Mark self-submitted form answers as verified or self-declared
+- Store form source metadata, submission timestamp, and question/answer provenance
+- Ingest the resulting knowledge into searchable/RAG context
+- Treat self-submitted form answers as stronger evidence than third-party claims
+- Allow the person to later update, correct, revoke, or delete submitted information
+
+Possible implementation options:
+
+```txt
+Option 1: Google Forms + Google Sheets export/import
+Option 2: Google Forms API integration
+Option 3: Native in-app questionnaire
+```
+
+Possible model idea:
+
+```txt
+KnowledgeForm
+KnowledgeFormQuestion
+KnowledgeFormSubmission
+KnowledgeFormAnswer
+PersonFact
+```
+
+Learning focus:
+
+- structured knowledge collection
+- form ingestion
+- data provenance
+- consent-aware data modelling
+- RAG ingestion from external sources
+- verified/self-declared knowledge handling
+
+---
+
+# Phase 6: TypeScript, Testing, and API Contract Quality
+
+## Day 37: Route and Integration Testing
 
 Status: Planned.
 
@@ -946,24 +1150,30 @@ Goals:
 - Verify deleted friends return `404`
 - Verify deleted friends disappear from search results
 - Verify a second delete returns `404`
-- Decide database testing strategy for Prisma-backed routes
-- Keep tests fast and reliable
 - Add route tests for `/friends/:id/search-context`
 - Add service tests for `retrieveFriendContext`
 - Add ranking/sorting tests for search results
 - Add edge-case tests for empty query, missing friend, deleted friend, no matches
-- Add test fixtures or factories for friends, rules, events, and assessments
+- Add test fixtures or factories for friends, rules, events, assessments, and searchable documents
 - Add UUID validation for route parameters such as `friendId`, `eventId`, and `ruleId`
+- Add isolated test database setup
+- Run Prisma migrations before integration tests
+- Test full request → database → response flows
+- Reset test data safely between tests
+- Distinguish route tests, service tests, and integration tests
 
 Learning focus:
 
 - route tests vs schema tests
 - Fastify `app.inject(...)`
 - database test strategy
+- integration testing
+- test isolation
+- API behaviour vs implementation testing
 
 ---
 
-## Day 36: Data Model Hardening
+## Day 38: Data Model and Type Architecture Hardening
 
 Status: Planned.
 
@@ -979,6 +1189,11 @@ Goals:
 - Consider human-readable slugs as an optional alternative to UUIDs for development and URLs
 - Decide whether slugs should be unique globally or only per user/account
 - Keep UUIDs as primary database identifiers
+- Separate database types, API request/response types, and LLM provider types
+- Avoid leaking Prisma models directly as public API contracts
+- Add explicit DTO types for route responses
+- Use `satisfies` where useful for typed config objects
+- Use discriminated unions for provider results and domain outcomes
 
 Possible Prisma additions:
 
@@ -1008,131 +1223,65 @@ Learning focus:
 - Prisma enums
 - optional profile data
 - privacy-aware data modelling
+- type boundaries
+- DTOs
+- discriminated unions
+- `satisfies`
+- avoiding over-coupling Prisma types to API contracts
 
 ---
 
-## Day 37: Documentation and Portfolio Polish
+## Day 39: API Contract and OpenAPI Documentation
 
 Status: Planned.
 
 Goals:
 
-- Update README
-- Update ROADMAP
-- Update API docs
-- Update architecture docs
-- Add/update `.env.example`
-- Document endpoints
-- Document testing commands
-- Document CI
-- Document RAG architecture
-- Document evaluation results
-- Keep project portfolio-readable
-- Review the full codebase and add concise professional documentation comments
-- Document exported services, helpers, route groups, and non-obvious business logic
-- Remove noisy beginner comments that restate obvious syntax
-- Keep useful explanatory comments for complex TypeScript, Prisma, RAG, and LLM logic
-- Ensure documentation improves readability without cluttering the code
-- Document all exported services and helpers
-- Remove noisy beginner comments
-- Add architecture diagrams
-- Add API examples for all implemented endpoints
-- Document known limitations and production risks
+- Add OpenAPI documentation for public routes
+- Document request bodies, response bodies, error responses, and auth assumptions
+- Keep Zod schemas and API docs aligned where practical
+- Add examples for friend, rule, event, assessment, prediction, search, RAG, facts, and form endpoints
+- Decide whether to generate OpenAPI from route schemas or maintain it manually
 
 Learning focus:
 
-- technical documentation
-- portfolio presentation
-- explaining architecture clearly
+- API contracts
+- schema reuse
+- typed request/response design
+- documentation as part of backend quality
+- external API contracts vs internal implementation types
 
 ---
 
-## Day 38: Human Verification
+## Day 40: TypeScript Refactor and Code Review
 
 Status: Planned.
 
 Goals:
 
-- Design human verification for model-generated assessments and predictions
-- Allow users to mark model output as verified, rejected, corrected, or unverified
-- Support persisted assessments and hypothetical predictions
-- Separate model-generated judgement from human-verified judgement
-- Store optional correction/explanation
-- Use verified assessments as trusted future context for assessments and predictions
-- Store whether the friend/user agreed with the LLM reasoning, score, impact direction, and matched rules
-- Ingest verified assessments into searchable context
-- Treat verified feedback as stronger evidence than unverified LLM output
-- Use verified examples to improve future retrieval, prompts, and evaluation
-
-Possible model idea:
-
-```prisma
-model AssessmentVerification {
-  id                 String   @id @default(uuid())
-  assessmentId       String
-  verifiedByFriendId String?
-  agreesWithScore    Boolean
-  agreesWithReasoning Boolean
-  correctedScoreDelta Float?
-  correctionNotes    String?
-  createdAt          DateTime @default(now())
-}
-```
-
-verified human feedback > unverified LLM judgement
-
-Possible statuses:
-
-```txt
-unverified
-verified
-rejected
-corrected
-```
+- Remove unnecessary `any`
+- Tighten `unknown` handling
+- Replace duplicated route types with reusable helpers
+- Review service return types
+- Add typed domain errors where useful
+- Simplify over-complicated generics
+- Review full codebase for noisy beginner comments
+- Keep useful comments for non-obvious TypeScript, Prisma, RAG, and LLM logic
+- Document exported services and helpers concisely
 
 Learning focus:
 
-- human-in-the-loop AI
-- feedback data modelling
-- separating model output from verified truth
-
----
-
-## Day 39: Relationship Notes Design
-
-Status: Planned.
-
-Goals:
-
-- Design notes that belong to a relationship between two people
-- Support shared habits
-- Support background context
-- Support preferences
-- Support relationship routines
-- Support recurring activities
-- Prepare notes for future relationship-centred RAG context
-
-Future model idea:
-
-```txt
-Person
-Relationship
-RelationshipNote
-Event
-```
-
-Learning focus:
-
-- relationship-centred data modelling
-- contextual memory
-- retrieval design
-- long-term relationship context
+- practical TypeScript maintainability
+- readable types
+- refactoring safely
+- balancing strictness and clarity
+- professional code documentation
 
 ---
 
 # Phase 7: Infrastructure, Deployment, Security, and Privacy
 
-## Day 40: Supabase Migration
+## Day 41: Supabase Migration
 
 Status: Planned.
 
@@ -1155,7 +1304,30 @@ Learning focus:
 
 ---
 
-## Day 41: Docker and Local DevOps
+## Day 42: Runtime Configuration Validation
+
+Status: Planned.
+
+Goals:
+
+- Add `env.schema.ts`
+- Validate `DATABASE_URL`, provider API keys, model names, embedding dimensions, and environment mode
+- Fail fast with clear startup errors
+- Keep test, development, and production config explicit
+- Ensure deployment environments expose the required variables
+- Avoid reading `process.env` directly throughout the codebase where a typed config module is clearer
+
+Learning focus:
+
+- runtime validation vs compile-time types
+- safe config loading
+- typed environment variables
+- fail-fast backend design
+- deployment-safe configuration
+
+---
+
+## Day 43: Docker and Local DevOps
 
 Status: Planned.
 
@@ -1185,7 +1357,39 @@ Learning focus:
 
 ---
 
-## Day 42: Deployment and Environment Management
+## Day 44: Background Jobs for Ingestion and Embeddings
+
+Status: Planned.
+
+Goals:
+
+- Move embedding generation into a job-style workflow
+- Track job status: pending, running, succeeded, failed
+- Add retry handling for provider failures
+- Add idempotency so documents are not embedded twice accidentally
+- Keep API responses fast while work continues separately
+- Decide whether to keep the implementation simple in-process or use a queue later
+
+Possible tools:
+
+```txt
+simple database-backed job table
+BullMQ
+pg-boss
+Temporal
+```
+
+Learning focus:
+
+- async job design
+- retries
+- idempotency
+- long-running backend workflows
+- provider failure handling
+
+---
+
+## Day 45: Deployment and Environment Management
 
 Status: Planned.
 
@@ -1216,52 +1420,66 @@ Learning focus:
 
 ---
 
-## Day 43: Security and Access Control
+## Day 46: Authentication, Authorisation, and API Security
 
 Status: Planned.
 
 Goals:
 
-- Plan authentication and authorisation
-- Protect private friendship data
-- Improve secret management
-- Add rate limiting
-- Add prompt-injection awareness
-- Add safe LLM usage patterns
-- Add security checks in CI
-- Consider least-privilege database access
-- Add authentication
-- Add authorisation checks per user/resource
-- Add rate limiting
+Authentication and ownership:
+
+- Add `User` model
+- Associate friends, rules, events, assessments, searchable documents, facts, and form submissions with a user
+- Add simple bearer-token or session-based auth for learning
+- Prevent cross-user data access
+- Add route tests for unauthorised and forbidden access
+
+API security:
+
 - Add request size limits
+- Add rate limiting for LLM-heavy endpoints
+- Add CORS policy
+- Ensure secrets never appear in logs
+- Add dependency audit step
 - Add input sanitisation review
+
+LLM/RAG security:
+
+- Review prompt-injection risks in RAG/tool-calling flows
 - Add prompt-injection protection for RAG inputs
-- Add secret rotation plan
-- Add dependency vulnerability checks in CI
+- Avoid giving tools unnecessary permissions
 
 Learning focus:
 
 - secure API development
-- auth basics
+- authentication vs authorisation
+- multi-tenant data modelling
+- request context typing
 - least privilege
 - rate limiting
 - secure LLM application design
 
 ---
 
-## Day 44: Monitoring, Observability, and GDPR Planning
+## Day 47: Monitoring, Observability, and GDPR Planning
 
 Status: Planned.
 
 Goals:
+
+Monitoring and observability:
 
 - Add request/error logging
 - Add structured logging
 - Monitor API latency
 - Track endpoint usage metrics
 - Add health checks
-- Add dashboards and alerts later
 - Connect errors to tools such as Sentry later
+- Add LLM cost/token tracking
+- Add audit logs for sensitive actions
+
+Privacy and compliance planning:
+
 - Plan GDPR / DSGVO compliance before real-user usage
 - Consider German BDSG requirements where relevant
 - Define lawful basis / consent model
@@ -1269,13 +1487,7 @@ Goals:
 - Design data access, deletion, export, and correction flows
 - Define retention and deletion policies
 - Secure sensitive relationship/event/claim data
-- Add audit logs and visibility controls
-- Add structured request logging
-- Add error tracking
-- Add latency metrics
-- Add LLM cost/token tracking
-- Add audit logs for sensitive actions
-- Add retention/deletion policy
+- Add visibility controls
 - Add real GDPR erasure flow separate from soft delete
 - Add backup and restore plan
 
@@ -1305,13 +1517,45 @@ Learning focus:
 
 ---
 
-# Phase 8: Frontend
+# Phase 8: Documentation, Frontend, and Final Delivery
 
-## Day 45: Responsive GUI / Frontend
+## Day 48: Documentation and Portfolio Polish
 
-Status: Final planned task.
+Status: Planned.
 
-This must remain the final roadmap task because frontend development is not the main focus of this project. Backend, AI, testing, DevOps, security, privacy, compliance, and multi-user design should come first.
+Goals:
+
+- Update README
+- Update ROADMAP
+- Update API docs
+- Update architecture docs
+- Add/update `.env.example`
+- Document endpoints
+- Document testing commands
+- Document CI
+- Document RAG architecture
+- Document retrieval/evaluation results
+- Keep project portfolio-readable
+- Add architecture diagrams
+- Add API examples for all implemented endpoints
+- Document known limitations and production risks
+- Document security/privacy limitations honestly
+
+Learning focus:
+
+- technical documentation
+- portfolio presentation
+- explaining architecture clearly
+- honest limitations
+- communicating AI system boundaries
+
+---
+
+## Day 49: Responsive GUI / Frontend
+
+Status: Planned.
+
+This should remain near the end because frontend development is not the main focus of this project. Backend, AI, testing, DevOps, security, privacy, compliance, and multi-user design come first.
 
 Goals:
 
@@ -1325,10 +1569,8 @@ Goals:
 - Display LLM assessment and prediction results
 - Display `scoreDelta`, `impactDirection`, `confidence`, `matchedRuleIds`, `biasNotes`, `modelName`, and `promptVersion`
 - Make the app usable without curl or Prisma Studio
-- Add a GUI flow to create or send a person knowledge form
-- Allow people to submit information about their work, hobbies, preferences, values, habits, likes, and dislikes
-- Import submitted form answers into the app as person knowledge
-- Show whether knowledge came from a self-submitted form, manual entry, or another source
+- Add GUI entry points for person facts and knowledge forms
+- Display knowledge source and verification status
 
 Possible frontend options:
 
@@ -1350,7 +1592,56 @@ Learning focus:
 
 ---
 
-# Future Backlog Beyond Day 45
+## Day 50: Final Review, Demo, and Capstone Submission
+
+Status: Final planned task.
+
+Goals:
+
+- Run full lint/test/build checks
+- Run retrieval and RAG evaluation checks
+- Verify deployed or local demo flow
+- Prepare final project summary
+- Prepare demo script
+- Document what satisfies the Zoomcamp capstone requirements
+- Document known limitations and future work
+- Make final README and roadmap updates
+- Tag a final project milestone release
+
+Possible final checks:
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+Demo flow:
+
+```txt
+create friend/person
+add rules
+add events
+rebuild searchable documents
+generate embeddings
+run semantic retrieval
+run reranked RAG assessment
+run prediction
+inspect retrieved context
+show evaluation examples
+```
+
+Learning focus:
+
+- final project delivery
+- capstone packaging
+- demo storytelling
+- technical self-review
+- portfolio readiness
+
+---
+
+# Future Backlog Beyond Day 50
 
 ## Multi-User Accounts and Person/Relationship Model
 
@@ -1387,6 +1678,40 @@ Goals:
 Critical design note:
 
 A checkbox alone does not prove absence of coercion. This feature needs privacy, revocation, dispute handling, and careful visibility controls.
+
+---
+
+## Relationship Notes and Relationship-Centred Memory
+
+Goal:
+
+Design notes that belong to a relationship between two people rather than only to one friend/person.
+
+Goals:
+
+- Design notes that belong to a relationship between two people
+- Support shared habits
+- Support background context
+- Support preferences
+- Support relationship routines
+- Support recurring activities
+- Prepare notes for future relationship-centred RAG context
+
+Future model idea:
+
+```txt
+Person
+Relationship
+RelationshipNote
+Event
+```
+
+Learning focus:
+
+- relationship-centred data modelling
+- contextual memory
+- retrieval design
+- long-term relationship context
 
 ---
 
@@ -1428,131 +1753,3 @@ push to main
 ```
 
 Keep this separate from CI until the deployment process is well understood.
-
----
-
-## Person Facts and Verification Status
-
-Goal:
-
-Allow users to add structured facts about themselves or other people, with verification status depending on who the fact is about.
-
-Goals:
-
-- Add a fact model linked to a `Person`
-- Allow users to add facts through the GUI
-- Mark self-added facts about the current user as verified automatically
-- Mark facts about other people as unverified by default
-- Store source metadata, author, target person, verification status, and timestamp
-- Ingest verified and unverified facts into searchable/RAG context with different trust levels
-- Treat verified self-declared facts as stronger evidence than unverified third-party facts
-- Allow future correction, rejection, or verification by the target person
-
-Possible model idea:
-
-```txt
-PersonFact
-- id
-- personId
-- authorPersonId
-- content
-- verificationStatus
-- createdAt
-- updatedAt
-```
-
-Possible statuses:
-
-```txt
-verified_self_declared
-unverified_third_party
-verified_by_target
-rejected_by_target
-corrected
-```
-
----
-
-## Person Knowledge Intake Forms
-
-Goal:
-
-Allow the app to collect richer knowledge about a person through a shareable form and ingest the submitted answers into that person’s knowledge base.
-
-Goals:
-
-- Create a Google Form or app-generated form that can be sent to a person
-- Ideally send the form through the app once messaging/email integration exists
-- Collect structured information about the person, such as:
-  - work
-  - hobbies
-  - likes and dislikes
-  - values and principles
-  - habits and routines
-  - communication preferences
-  - boundaries
-  - goals
-  - recurring activities
-- Link each form submission to the person who filled it out
-- Import submitted answers into the app
-- Convert form answers into searchable person facts or knowledge entries
-- Mark self-submitted form answers as verified or self-declared
-- Store form source metadata, submission timestamp, and question/answer provenance
-- Ingest the resulting knowledge into searchable/RAG context
-- Treat self-submitted form answers as stronger evidence than third-party claims
-- Allow the person to later update, correct, revoke, or delete submitted information
-
-Possible implementation options:
-
-```txt
-Option 1: Google Forms + Google Sheets export/import
-Option 2: Google Forms API integration
-Option 3: Native in-app questionnaire
-```
-
-Possible model idea:
-
-```txt
-KnowledgeForm
-- id
-- title
-- createdByPersonId
-- createdAt
-
-KnowledgeFormQuestion
-- id
-- formId
-- questionText
-- category
-
-KnowledgeFormSubmission
-- id
-- formId
-- respondentPersonId
-- submittedAt
-- source
-
-KnowledgeFormAnswer
-- id
-- submissionId
-- questionId
-- answerText
-
-PersonFact
-- id
-- personId
-- sourceType
-- sourceId
-- content
-- verificationStatus
-- createdAt
-```
-
-Learning focus:
-
-- structured knowledge collection
-- form ingestion
-- data provenance
-- consent-aware data modelling
-- RAG ingestion from external sources
-- verified/self-declared knowledge handling
