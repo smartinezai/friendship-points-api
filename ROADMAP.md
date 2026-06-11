@@ -1318,6 +1318,10 @@ Goals:
 - Display LLM assessment and prediction results
 - Display `scoreDelta`, `impactDirection`, `confidence`, `matchedRuleIds`, `biasNotes`, `modelName`, and `promptVersion`
 - Make the app usable without curl or Prisma Studio
+- Add a GUI flow to create or send a person knowledge form
+- Allow people to submit information about their work, hobbies, preferences, values, habits, likes, and dislikes
+- Import submitted form answers into the app as person knowledge
+- Show whether knowledge came from a self-submitted form, manual entry, or another source
 
 Possible frontend options:
 
@@ -1457,3 +1461,90 @@ unverified_third_party
 verified_by_target
 rejected_by_target
 corrected```
+
+
+---
+
+## Person Knowledge Intake Forms
+
+Goal:
+
+Allow the app to collect richer knowledge about a person through a shareable form and ingest the submitted answers into that person’s knowledge base.
+
+Goals:
+
+- Create a Google Form or app-generated form that can be sent to a person
+- Ideally send the form through the app once messaging/email integration exists
+- Collect structured information about the person, such as:
+  - work
+  - hobbies
+  - likes and dislikes
+  - values and principles
+  - habits and routines
+  - communication preferences
+  - boundaries
+  - goals
+  - recurring activities
+- Link each form submission to the person who filled it out
+- Import submitted answers into the app
+- Convert form answers into searchable person facts or knowledge entries
+- Mark self-submitted form answers as verified or self-declared
+- Store form source metadata, submission timestamp, and question/answer provenance
+- Ingest the resulting knowledge into searchable/RAG context
+- Treat self-submitted form answers as stronger evidence than third-party claims
+- Allow the person to later update, correct, revoke, or delete submitted information
+
+Possible implementation options:
+
+```txt
+Option 1: Google Forms + Google Sheets export/import
+Option 2: Google Forms API integration
+Option 3: Native in-app questionnaire
+```
+
+Possible model idea:
+
+```txt
+KnowledgeForm
+- id
+- title
+- createdByPersonId
+- createdAt
+
+KnowledgeFormQuestion
+- id
+- formId
+- questionText
+- category
+
+KnowledgeFormSubmission
+- id
+- formId
+- respondentPersonId
+- submittedAt
+- source
+
+KnowledgeFormAnswer
+- id
+- submissionId
+- questionId
+- answerText
+
+PersonFact
+- id
+- personId
+- sourceType
+- sourceId
+- content
+- verificationStatus
+- createdAt
+```
+
+Learning focus:
+
+* structured knowledge collection
+* form ingestion
+* data provenance
+* consent-aware data modelling
+* RAG ingestion from external sources
+* verified/self-declared knowledge handling
