@@ -1753,3 +1753,71 @@ push to main
 ```
 
 Keep this separate from CI until the deployment process is well understood.
+
+---
+
+## Signal Conversation Import
+
+Goal:
+
+Allow users to import Signal conversation history manually and convert selected messages into events, facts, and RAG context.
+
+Goals:
+
+- Support manual paste or file import of Signal conversation text
+- Parse messages into sender, timestamp, and message content where available
+- Link imported messages to the relevant person or relationship
+- Use an LLM to propose candidate events, facts, preferences, habits, and context
+- Require human review before saving extracted events or facts
+- Mark imported facts as unverified unless confirmed by the relevant person
+- Store provenance linking facts/events back to the imported message source
+- Ingest approved items into searchable/RAG context
+- Avoid automatic scoring from raw messages without human confirmation
+
+Learning focus:
+
+- conversation ingestion
+- message parsing
+- extraction pipelines
+- provenance
+- consent-aware knowledge modelling
+- human review before persistence
+
+---
+
+## Agent-Suggested Relationship Rules
+
+Goal:
+
+Use imported conversations, extracted facts, events, and relationship patterns to suggest new friendship/relationship rules for human review.
+
+Goals:
+
+- Analyse approved imported conversation context, extracted events, and person facts
+- Detect repeated preferences, boundaries, repair patterns, conflict triggers, and positive behaviours
+- Generate candidate rules from observed patterns
+- Store candidate rules separately from active rules
+- Require human review before a candidate rule becomes active
+- Allow users to accept, reject, edit, or archive suggested rules
+- Store provenance explaining which events, facts, or messages motivated the suggestion
+- Mark agent-suggested rules as unverified until approved
+- Avoid creating rules from a single ambiguous message unless confidence is low and the rule is clearly labelled as tentative
+- Prevent the agent from making sensitive or moralising judgements about a person
+- Re-run retrieval/assessment only after rule approval, not merely after suggestion
+
+Possible model idea:
+
+```txt
+SuggestedRule
+- id
+- friendId / relationshipId
+- title
+- description
+- suggestedImpactDirection
+- suggestedWeight
+- confidence
+- rationale
+- provenanceSourceIds
+- status
+- createdAt
+- reviewedAt
