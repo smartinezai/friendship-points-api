@@ -20,13 +20,13 @@ The main project README is in [`README.md`](./README.md).
 Completed:
 
 ```txt
-Day 1–24: Backend foundation, validation, CI, soft delete, keyword search, ingestion, RAG, and retrieval refactor
+Day 1–26: Backend foundation, validation, CI, soft delete, keyword search, ingestion, RAG, embeddings, and semantic retrieval
 ```
 
 Next:
 
 ```txt
-Day 25: Embeddings and Vector Storage
+Day 27: Reranking
 ```
 
 ---
@@ -689,6 +689,7 @@ Learning focus:
 - similarity search
 - metadata filtering
 - keyword vs vector retrieval trade-offs
+
 ---
 
 ## Day 27: Reranking
@@ -745,6 +746,7 @@ Goals:
   - stop and produce a final structured answer
 - Add max-iteration safeguards
 - Add fallback behaviour when no relevant context is found.
+
 Additional goals:
 
 - Let the agent inspect recent event history for a friend
@@ -758,6 +760,7 @@ Additional goals:
 - Identify possible improvement, deterioration, or inconsistency
 - Log trend observations separately from individual assessments
 - Treat trends as tentative signals, not definitive character judgements
+
 Example:
 
 If most recent events about Cole are negative, the agent may log a pattern signal:
@@ -1061,6 +1064,9 @@ Goals:
 - Treat verified feedback as stronger evidence than unverified LLM output
 - Use verified examples to improve future retrieval, prompts, and evaluation
 
+Possible model idea:
+
+```prisma
 model AssessmentVerification {
   id                 String   @id @default(uuid())
   assessmentId       String
@@ -1071,6 +1077,7 @@ model AssessmentVerification {
   correctionNotes    String?
   createdAt          DateTime @default(now())
 }
+```
 
 verified human feedback > unverified LLM judgement
 
@@ -1455,13 +1462,14 @@ PersonFact
 ```
 
 Possible statuses:
+
 ```txt
 verified_self_declared
 unverified_third_party
 verified_by_target
 rejected_by_target
-corrected```
-
+corrected
+```
 
 ---
 
@@ -1542,9 +1550,9 @@ PersonFact
 
 Learning focus:
 
-* structured knowledge collection
-* form ingestion
-* data provenance
-* consent-aware data modelling
-* RAG ingestion from external sources
-* verified/self-declared knowledge handling
+- structured knowledge collection
+- form ingestion
+- data provenance
+- consent-aware data modelling
+- RAG ingestion from external sources
+- verified/self-declared knowledge handling
