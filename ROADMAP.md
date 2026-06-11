@@ -1417,3 +1417,43 @@ push to main
 ```
 
 Keep this separate from CI until the deployment process is well understood.
+
+---
+
+## Person Facts and Verification Status
+
+Goal:
+
+Allow users to add structured facts about themselves or other people, with verification status depending on who the fact is about.
+
+Goals:
+
+- Add a fact model linked to a `Person`
+- Allow users to add facts through the GUI
+- Mark self-added facts about the current user as verified automatically
+- Mark facts about other people as unverified by default
+- Store source metadata, author, target person, verification status, and timestamp
+- Ingest verified and unverified facts into searchable/RAG context with different trust levels
+- Treat verified self-declared facts as stronger evidence than unverified third-party facts
+- Allow future correction, rejection, or verification by the target person
+
+Possible model idea:
+
+```txt
+PersonFact
+- id
+- personId
+- authorPersonId
+- content
+- verificationStatus
+- createdAt
+- updatedAt
+```
+
+Possible statuses:
+```txt
+verified_self_declared
+unverified_third_party
+verified_by_target
+rejected_by_target
+corrected```
