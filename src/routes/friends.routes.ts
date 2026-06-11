@@ -11,7 +11,11 @@ import {
     sendValidationError,
     sendBadRequestError,
 } from "../utils/httpErrors.js";
-import { retrieveFriendContext, retrieveFriendContextSemantically } from "../services/search.service.js";
+import {
+    retrieveFriendContext,
+    retrieveFriendContextSemantically,
+    rerankContextItems,
+} from "../services/search.service.js";
 import { rebuildSearchableDocumentsForFriend } from "../services/searchIngestion.service.js";
 
 /** Registers friend CRUD, notes, search, and search-index maintenance routes. */
@@ -70,6 +74,30 @@ export async function friendRoutes(app: FastifyInstance) {
         });
 
         return { results };
+    });
+
+    /** Manual endpoint for inspecting semantic retrieval followed by reranking. */
+    app.get<{
+        Params: { id: string };
+        Querystring: { query?: string };
+    }>("/friends/:id/search-context/reranked", async (request, reply) => {
+        const { id } = request.params;
+        const { query } = request.query;
+
+        if (!query) {
+            return sendBadRequestError(reply, "Query parameter is required.");
+        }
+
+        const semanticResults = await retrieveFriendContextSemantically(id, query, {
+            limit: 10,
+        });
+
+        const rerankedResults = rerankContextItems(query, semanticResults).slice(0, 5);
+
+        return {
+            semanticResults,
+            rerankedResults,
+        };
     });
 
     app.post<{

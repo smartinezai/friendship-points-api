@@ -21,6 +21,11 @@ export type RetrievedContextItem = {
     score: number;
 };
 
+export type RerankedContextItem = RetrievedContextItem & {
+    rerankScore: number;
+    rerankReason: string;
+};
+
 export type SemanticRetrievedContextItem = RetrievedContextItem & {
     distance: number;
 };
@@ -36,6 +41,18 @@ export function tokenise(text: string): string[] {
         .toLowerCase()
         .split(/\W+/)
         .filter(Boolean);
+}
+
+function getSourceBoost(sourceType: RetrievedContextItem["sourceType"]): number {
+    if (sourceType === "rule") {
+        return 1.5;
+    }
+
+    if (sourceType === "event") {
+        return 1;
+    }
+
+    return 0.5;
 }
 
 /**
@@ -58,6 +75,27 @@ export function calculateKeywordScore(query: string, text: string): number {
     }
 
     return score;
+}
+
+export function rerankContextItems(
+    query: string,
+    items: RetrievedContextItem[],
+): RerankedContextItem[] {
+    return items
+        .map((item) => {
+            const keywordScore = calculateKeywordScore(query, item.content);
+
+            const sourceBoost = getSourceBoost(item.sourceType);
+
+            const rerankScore = keywordScore + sourceBoost;
+
+            return {
+                ...item,
+                rerankScore,
+                rerankReason: `keywordScore=${keywordScore}, sourceBoost=${sourceBoost}`,
+            };
+        })
+        .sort((a, b) => b.rerankScore - a.rerankScore);
 }
 
 
