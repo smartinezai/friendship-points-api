@@ -31,6 +31,26 @@ Day 28: Function Calling Search Tool
 
 ---
 
+## Testing Rule From Day 28 Onwards
+
+For every newly added feature:
+
+- Check whether unit, schema, service, route, or integration tests are required
+- Add or update tests in the same development step where practical
+- Do not postpone pure-function and schema tests to the later integration-testing phase
+- Use Day 38 for database-backed route and integration testing, not as a substitute for earlier unit tests
+- Run lint, tests, and build before marking a day complete
+
+Standard checks:
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+---
+
 # Phase 1: Core TypeScript API and PostgreSQL Foundations
 
 ## Day 1: TypeScript + Fastify Setup
@@ -833,27 +853,28 @@ Learning focus:
 - precision vs recall
 - deterministic ranking before model-based ranking
 
+Known limitation:
+
+- The initial deterministic reranker uses keyword overlap and source-type boosts; semantic-score weighting and stop-word filtering will be evaluated on Day 30.
+
 ---
 
 ## Day 28: Function Calling Search Tool
 
-Status: Planned.
+Completed:
 
-Goals:
+- Added friend-context search as a LangChain-compatible tool
+- Added Zod input schema with UUID, query, and limit validation
+- Added validation boundary for untrusted tool-call payloads
+- Added schema, tool behaviour, and execution-boundary tests
+- Verified manual LangChain tool invocation
+- Verified Mistral can select the tool and generate valid tool-call arguments
+- Verified manual tool-execution loop with model → tool → model flow
 
-- Expose search as a callable tool/function
-- Define tool input/output schemas
-- Let the LLM request a search instead of always running fixed retrieval
-- Keep tool outputs structured and safe
-- Avoid giving tools unnecessary permissions
+Known follow-up:
 
-Learning focus:
-
-- function calling
-- tool schemas
-- LLM tool use
-- tool safety boundaries
-
+- Reranking quality improvements are deferred to Day 30 retrieval evaluation
+- Empty sourceId values in searchable documents need investigation during indexing/retrieval test backfill
 ---
 
 ## Day 29: Agentic Retrieval Loop
@@ -887,27 +908,50 @@ Learning focus:
 
 ---
 
-## Day 30: Retrieval Evaluation
+## Day 30: Retrieval Evaluation and Service Test Backfill
 
 Status: Planned.
 
 Goals:
 
+- Audit existing retrieval-related test coverage
 - Create test queries for retrieval
 - Define expected relevant records
 - Measure hit rate
 - Measure precision
 - Measure recall where practical
 - Compare keyword search, semantic search, and reranking
+- Evaluate semantic-only, keyword-only, and hybrid reranking
+- Test a hybrid formula using semantic similarity, meaningful keyword overlap, and a small source-type boost
+- Test whether stop-word filtering improves keyword scoring
+- Measure whether source-type boosts improve or damage relevance
+- Tune and document reranking weights
 
-Learning focus:
+Required automated tests:
 
-- retrieval evaluation
-- hit rate
-- precision/recall
-- regression testing retrieval quality
+- Tokenisation and keyword scoring
+- Keyword result ordering
+- Deterministic reranking order
+- Reranking tie behaviour
+- Source-type boost behaviour
+- Empty input collections
+- Semantic retrieval result shape
+- Semantic retrieval ordering by distance
+- Exclusion of documents without embeddings
+- Requested retrieval limits
+- No-match behaviour
+- Searchable-document indexing and rebuilding
+- Preservation of valid source IDs during indexing
+- Detection or prevention of empty `sourceId` values
+
+Known Day 27 limitation:
+
+- The initial deterministic reranker uses keyword overlap and source-type boosts
+- Semantic-score weighting and stop-word filtering will be evaluated here
+
 
 ---
+
 
 ## Day 31: Golden Examples and Regression Tests
 
@@ -920,6 +964,11 @@ Goals:
 - Test positive, negative, neutral, and mixed cases
 - Test cases where no rule should match
 - Regression test prompt and retrieval changes
+- Add regression tests for known retrieval failures
+- Include examples where irrelevant rules must not outrank strongly relevant events
+- Include examples where common stop words must not inflate keyword scores
+- Include examples with no relevant context
+- Store previously discovered failures as permanent regression cases
 
 Learning focus:
 
@@ -1192,6 +1241,24 @@ Goals:
 - Test full request → database → response flows
 - Reset test data safely between tests
 - Distinguish route tests, service tests, and integration tests
+- Test search-index rebuild routes
+- Test embedding-generation routes without calling the real provider
+- Test keyword search routes
+- Test semantic search routes
+- Test reranked search routes
+- Test tool-backed agent routes added during Days 28–29
+- Verify malformed UUIDs return `400`
+- Verify missing friends return `404`
+- Verify deleted friends cannot be searched
+- Verify empty queries are rejected
+- Verify no-match responses are valid and predictable
+- Verify database records have valid source IDs
+- Test full request → service → database → response flows
+
+Testing scope:
+
+- Unit and schema tests should already accompany earlier feature work
+- Day 38 focuses on Fastify route behaviour and real database integration
 
 Learning focus:
 
@@ -1975,4 +2042,3 @@ Design notes:
 
 - For group chats, consent may need to come from every participant whose messages are processed.
 - Consent authorises processing; it does not verify that every statement in the messages is accurate.
-
