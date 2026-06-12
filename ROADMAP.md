@@ -1039,17 +1039,46 @@ Learning focus:
 
 ---
 
-## Day 35: Person Facts and Verification Status
+## Day 35: User Identity and Ownership Foundation
 
 Status: Planned.
 
 Goals:
 
-- Add a fact model linked to a person/friend
+- Add a basic `User` model
+- Represent the current app user explicitly
+- Link the current user to a `Person` record
+- Add `ownerUserId` or equivalent ownership fields where needed
+- Make it possible to distinguish:
+  - the current user
+  - another person
+- Add a minimal request-context mechanism for identifying the current user
+- Keep authentication simple or mocked initially
+- Seed one development user for local learning and testing
+- Defer production-grade authentication and security hardening until Day 47
+
+Learning focus:
+
+- user identity
+- ownership
+- request context
+- self vs other-person modelling
+- preparing for multi-user support
+- identity modelling vs authentication
+
+---
+
+## Day 36: Person Facts and Verification Status
+
+Status: Planned.
+
+Goals:
+
+- Add a fact model linked to a person
 - Allow users to add facts through the API first
-- Mark self-added facts about the current user as verified automatically once user identity exists
-- Mark facts about other people as unverified by default
-- Store source metadata, author, target person, verification status, and timestamp
+- Mark self-added facts about the current user as `verified_self_declared`
+- Mark facts about another person as `unverified_third_party` by default
+- Store source metadata, author, target person, verification status, and timestamps
 - Ingest verified and unverified facts into searchable/RAG context with different trust levels
 - Treat verified self-declared facts as stronger evidence than unverified third-party facts
 - Allow future correction, rejection, or verification by the target person
@@ -1063,6 +1092,8 @@ PersonFact
 - authorPersonId
 - content
 - verificationStatus
+- sourceType
+- sourceId
 - createdAt
 - updatedAt
 ```
@@ -1082,12 +1113,12 @@ Learning focus:
 - fact modelling
 - verification workflows
 - trust levels in RAG context
-- multi-user identity design
+- self vs other-person logic
 - human-in-the-loop knowledge management
 
 ---
 
-## Day 36: Person Knowledge Intake Forms
+## Day 37: Person Knowledge Intake Forms
 
 Status: Planned.
 
@@ -1136,7 +1167,7 @@ Learning focus:
 
 # Phase 6: TypeScript, Testing, and API Contract Quality
 
-## Day 37: Route and Integration Testing
+## Day 38: Route and Integration Testing
 
 Status: Planned.
 
@@ -1150,14 +1181,14 @@ Goals:
 - Verify deleted friends return `404`
 - Verify deleted friends disappear from search results
 - Verify a second delete returns `404`
-- Add route tests for `/friends/:id/search-context`
-- Add service tests for `retrieveFriendContext`
+- Add route tests for keyword, semantic, and reranked context endpoints
+- Add service tests for retrieval and reranking
 - Add ranking/sorting tests for search results
-- Add edge-case tests for empty query, missing friend, deleted friend, no matches
-- Add test fixtures or factories for friends, rules, events, assessments, and searchable documents
+- Add edge-case tests for empty query, missing friend, deleted friend, and no matches
 - Add UUID validation for route parameters such as `friendId`, `eventId`, and `ruleId`
-- Add isolated test database setup
+- Add an isolated test database setup
 - Run Prisma migrations before integration tests
+- Add factories for friends, rules, events, assessments, searchable documents, users, persons, and facts
 - Test full request → database → response flows
 - Reset test data safely between tests
 - Distinguish route tests, service tests, and integration tests
@@ -1173,7 +1204,7 @@ Learning focus:
 
 ---
 
-## Day 38: Data Model and Type Architecture Hardening
+## Day 39: Data Model and Type Architecture Hardening
 
 Status: Planned.
 
@@ -1184,8 +1215,7 @@ Goals:
 - Update Prisma-generated types
 - Update Zod schemas
 - Update route validation
-- Add optional `pronouns` field to `Friend`
-- Consider whether pronouns later belong on a generalised `Person` model
+- Add optional `pronouns` field to `Person`
 - Consider human-readable slugs as an optional alternative to UUIDs for development and URLs
 - Decide whether slugs should be unique globally or only per user/account
 - Keep UUIDs as primary database identifiers
@@ -1231,7 +1261,7 @@ Learning focus:
 
 ---
 
-## Day 39: API Contract and OpenAPI Documentation
+## Day 40: API Contract and OpenAPI Documentation
 
 Status: Planned.
 
@@ -1240,7 +1270,7 @@ Goals:
 - Add OpenAPI documentation for public routes
 - Document request bodies, response bodies, error responses, and auth assumptions
 - Keep Zod schemas and API docs aligned where practical
-- Add examples for friend, rule, event, assessment, prediction, search, RAG, facts, and form endpoints
+- Add examples for friend/person, rule, event, assessment, prediction, search, RAG, facts, and form endpoints
 - Decide whether to generate OpenAPI from route schemas or maintain it manually
 
 Learning focus:
@@ -1253,7 +1283,7 @@ Learning focus:
 
 ---
 
-## Day 40: TypeScript Refactor and Code Review
+## Day 41: TypeScript Refactor and Code Review
 
 Status: Planned.
 
@@ -1265,7 +1295,7 @@ Goals:
 - Review service return types
 - Add typed domain errors where useful
 - Simplify over-complicated generics
-- Review full codebase for noisy beginner comments
+- Review the full codebase for noisy beginner comments
 - Keep useful comments for non-obvious TypeScript, Prisma, RAG, and LLM logic
 - Document exported services and helpers concisely
 
@@ -1281,7 +1311,7 @@ Learning focus:
 
 # Phase 7: Infrastructure, Deployment, Security, and Privacy
 
-## Day 41: Supabase Migration
+## Day 42: Supabase Migration
 
 Status: Planned.
 
@@ -1290,8 +1320,9 @@ Goals:
 - Move from local PostgreSQL to Supabase-hosted Postgres
 - Update `DATABASE_URL`
 - Run Prisma migrations against Supabase
-- Use Supabase dashboard
+- Use the Supabase dashboard
 - Explore Supabase Vector / pgvector
+- Keep local PostgreSQL available for development and tests
 - Optionally explore Supabase Auth later
 
 Learning focus:
@@ -1304,7 +1335,7 @@ Learning focus:
 
 ---
 
-## Day 42: Runtime Configuration Validation
+## Day 43: Runtime Configuration Validation
 
 Status: Planned.
 
@@ -1327,19 +1358,19 @@ Learning focus:
 
 ---
 
-## Day 43: Docker and Local DevOps
+## Day 44: Docker and Local DevOps
 
 Status: Planned.
 
 Goals:
 
 - Containerise the API
-- Containerise PostgreSQL
+- Containerise PostgreSQL with pgvector support
 - Add `Dockerfile`
 - Add `docker-compose.yml`
-- Run full app locally with Docker
-- Practice environment variables in containers
-- Add Docker-friendly `.env.example`
+- Run the full app locally with Docker
+- Practise environment variables in containers
+- Add a Docker-friendly `.env.example`
 
 Possible services:
 
@@ -1357,7 +1388,7 @@ Learning focus:
 
 ---
 
-## Day 44: Background Jobs for Ingestion and Embeddings
+## Day 45: Background Jobs for Ingestion and Embeddings
 
 Status: Planned.
 
@@ -1389,16 +1420,16 @@ Learning focus:
 
 ---
 
-## Day 45: Deployment and Environment Management
+## Day 46: Deployment and Environment Management
 
 Status: Planned.
 
 Goals:
 
 - Deploy the Fastify backend API
-- Use Render as likely backend hosting option
-- Use Supabase Postgres as likely hosted database
-- Add environment variables on hosting platform
+- Use Render as the likely backend hosting option
+- Use Supabase Postgres as the likely hosted database
+- Add environment variables on the hosting platform
 - Run migrations safely
 - Test deployed endpoints
 - Keep CD automation separate until deployment is stable
@@ -1420,19 +1451,24 @@ Learning focus:
 
 ---
 
-## Day 46: Authentication, Authorisation, and API Security
+## Day 47: Authentication, Authorisation, and API Security
 
 Status: Planned.
 
 Goals:
 
-Authentication and ownership:
+Authentication:
 
-- Add `User` model
-- Associate friends, rules, events, assessments, searchable documents, facts, and form submissions with a user
-- Add simple bearer-token or session-based auth for learning
+- Replace the mocked/development identity with real authentication
+- Add simple bearer-token or session-based authentication
+- Establish the authenticated user in Fastify request context
+
+Authorisation and ownership:
+
+- Enforce ownership checks for persons, relationships, rules, events, assessments, searchable documents, facts, and form submissions
 - Prevent cross-user data access
 - Add route tests for unauthorised and forbidden access
+- Apply least-privilege database and tool access
 
 API security:
 
@@ -1440,13 +1476,13 @@ API security:
 - Add rate limiting for LLM-heavy endpoints
 - Add CORS policy
 - Ensure secrets never appear in logs
-- Add dependency audit step
-- Add input sanitisation review
+- Add dependency audit checks
+- Review input sanitisation requirements
 
 LLM/RAG security:
 
-- Review prompt-injection risks in RAG/tool-calling flows
-- Add prompt-injection protection for RAG inputs
+- Review prompt-injection risks in RAG and tool-calling flows
+- Add prompt-injection safeguards for imported or retrieved content
 - Avoid giving tools unnecessary permissions
 
 Learning focus:
@@ -1461,7 +1497,7 @@ Learning focus:
 
 ---
 
-## Day 47: Monitoring, Observability, and GDPR Planning
+## Day 48: Monitoring, Privacy, and Documentation Polish
 
 Status: Planned.
 
@@ -1482,18 +1518,29 @@ Privacy and compliance planning:
 
 - Plan GDPR / DSGVO compliance before real-user usage
 - Consider German BDSG requirements where relevant
-- Define lawful basis / consent model
+- Define lawful basis and consent models
 - Apply data minimisation and purpose limitation
 - Design data access, deletion, export, and correction flows
 - Define retention and deletion policies
-- Secure sensitive relationship/event/claim data
+- Secure sensitive relationship, event, claim, fact, and imported-message data
 - Add visibility controls
-- Add real GDPR erasure flow separate from soft delete
-- Add backup and restore plan
+- Add a real GDPR erasure flow separate from soft delete
+- Add backup and restore plans
+
+Documentation and portfolio polish:
+
+- Update README and ROADMAP
+- Update API and architecture documentation
+- Add/update `.env.example`
+- Document endpoints, testing commands, and CI
+- Document RAG architecture and evaluation results
+- Add architecture diagrams
+- Add API examples
+- Document known production, security, and privacy limitations honestly
 
 Critical design note:
 
-This should be treated as a legal/privacy design task, not just a technical checkbox. Before real users use the app, it should get proper legal review.
+This should be treated as a legal/privacy design task, not just a technical checkbox. Before real users use the app, it should receive proper legal review.
 
 Possible tools:
 
@@ -1507,49 +1554,16 @@ structured logger
 Learning focus:
 
 - production observability
-- logs
-- metrics
-- traces
+- logs, metrics, and traces
 - privacy-by-design
 - user rights
 - data governance
-- sensitive data handling
-
----
-
-# Phase 8: Documentation, Frontend, and Final Delivery
-
-## Day 48: Documentation and Portfolio Polish
-
-Status: Planned.
-
-Goals:
-
-- Update README
-- Update ROADMAP
-- Update API docs
-- Update architecture docs
-- Add/update `.env.example`
-- Document endpoints
-- Document testing commands
-- Document CI
-- Document RAG architecture
-- Document retrieval/evaluation results
-- Keep project portfolio-readable
-- Add architecture diagrams
-- Add API examples for all implemented endpoints
-- Document known limitations and production risks
-- Document security/privacy limitations honestly
-
-Learning focus:
-
 - technical documentation
 - portfolio presentation
-- explaining architecture clearly
-- honest limitations
-- communicating AI system boundaries
 
 ---
+
+# Phase 8: Frontend and Final Delivery
 
 ## Day 49: Responsive GUI / Frontend
 
@@ -1600,9 +1614,9 @@ Goals:
 
 - Run full lint/test/build checks
 - Run retrieval and RAG evaluation checks
-- Verify deployed or local demo flow
-- Prepare final project summary
-- Prepare demo script
+- Verify the deployed or local demo flow
+- Prepare the final project summary
+- Prepare a demo script
 - Document what satisfies the Zoomcamp capstone requirements
 - Document known limitations and future work
 - Make final README and roadmap updates
@@ -1619,7 +1633,8 @@ npm run build
 Demo flow:
 
 ```txt
-create friend/person
+create user/person
+create friend/relationship
 add rules
 add events
 rebuild searchable documents
@@ -1627,6 +1642,7 @@ generate embeddings
 run semantic retrieval
 run reranked RAG assessment
 run prediction
+add a verified or unverified fact
 inspect retrieved context
 show evaluation examples
 ```
@@ -1639,7 +1655,6 @@ Learning focus:
 - technical self-review
 - portfolio readiness
 
----
 
 # Future Backlog Beyond Day 50
 
@@ -1801,9 +1816,9 @@ Goals:
 - Allow users to accept, reject, edit, or archive suggested rules
 - Store provenance explaining which events, facts, or messages motivated the suggestion
 - Mark agent-suggested rules as unverified until approved
-- Avoid creating rules from a single ambiguous message unless confidence is low and the rule is clearly labelled as tentative
+- Avoid creating rules from a single ambiguous message unless the suggestion is clearly tentative
 - Prevent the agent from making sensitive or moralising judgements about a person
-- Re-run retrieval/assessment only after rule approval, not merely after suggestion
+- Re-run retrieval/assessment only after rule approval
 
 Possible model idea:
 
@@ -1823,6 +1838,25 @@ SuggestedRule
 - reviewedAt
 ```
 
+Possible statuses:
+
+```txt
+suggested
+accepted
+edited_and_accepted
+rejected
+archived
+```
+
+Learning focus:
+
+- agent-assisted knowledge modelling
+- human review workflows
+- provenance
+- rule induction from examples
+- avoiding overfitting to isolated events
+- safe AI suggestions
+
 ---
 
 ## Consent-Gated Scheduled Conversation Import
@@ -1834,24 +1868,15 @@ Allow users to schedule recurring conversation imports while requiring explicit 
 Goals:
 
 - Allow users to configure how often conversation imports are attempted
-- Support frequencies such as:
-  - manual only
-  - weekly
-  - monthly
-  - custom interval
+- Support manual-only, weekly, monthly, and custom schedules
 - Notify all affected conversation participants before an import or export is attempted
 - Require explicit consent from every required participant before processing begins
 - Block the operation if consent is missing, rejected, expired, or revoked
-- Record who consented, when they consented, what data scope was approved, and which operation was authorised
-- Require new consent when:
-  - the selected conversation changes
-  - the date range changes
-  - the processing purpose changes
-  - new extraction features are enabled
-  - an earlier consent expires or is revoked
+- Record who consented, when they consented, the approved data scope, and the authorised operation
+- Require new consent when the conversation, date range, processing purpose, or enabled extraction features change
 - Allow participants to pause or disable future scheduled imports
 - Allow participants to revoke consent before processing begins
-- Notify participants when an import succeeds, fails, or is cancelled
+- Notify participants when an import succeeds, fails, expires, or is cancelled
 - Never treat consent to one import as permanent blanket consent
 
 Possible import statuses:
@@ -1882,34 +1907,17 @@ Possible model idea:
 
 ```txt
 ConversationImportSchedule
-- id
-- conversationId
-- frequency
-- nextRunAt
-- enabled
-- createdByUserId
-- retentionPolicyId
-
 ConversationImportAttempt
-- id
-- scheduleId
-- requestedAt
-- status
-- dateRangeStart
-- dateRangeEnd
-- processingPurpose
-- completedAt
-
 ConversationImportConsent
-- id
-- importAttemptId
-- participantPersonId
-- status
-- grantedAt
-- revokedAt
-- expiresAt
-- approvedScope
 ```
+
+Learning focus:
+
+- scheduled workflows
+- multi-party consent
+- revocable consent
+- privacy-aware automation
+- auditability
 
 ---
 
@@ -1949,20 +1957,7 @@ Possible model idea:
 
 ```txt
 DataRetentionPolicy
-- id
-- dataCategory
-- retentionDays
-- deleteOnConsentRevocation
-- enabled
-
 DataDeletionJob
-- id
-- policyId
-- scheduledAt
-- startedAt
-- completedAt
-- status
-- deletedRecordCount
 ```
 
 Learning focus:
@@ -1976,7 +1971,8 @@ Learning focus:
 - provenance-aware deletion
 - privacy-by-design
 
-Two design corrections are important:
+Design notes:
 
-- For **group chats**, “both participants” is insufficient; consent may need to come from every participant whose messages are processed.
-- Do not automatically equate consent with truth or verification. Consent authorises processing. It does not verify that every statement in the messages is accurate.
+- For group chats, consent may need to come from every participant whose messages are processed.
+- Consent authorises processing; it does not verify that every statement in the messages is accurate.
+
