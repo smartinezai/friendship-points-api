@@ -20,13 +20,13 @@ The main project README is in [`README.md`](./README.md).
 Completed:
 
 ```txt
-Day 1–26: Backend foundation, validation, CI, soft delete, keyword search, ingestion, RAG, embeddings, and semantic retrieval
+Day 1–27: Backend foundation, validation, CI, soft delete, keyword search, ingestion, RAG, embeddings, semantic retrieval, and reranking
 ```
 
 Next:
 
 ```txt
-Day 27: Reranking
+Day 28: Function Calling Search Tool
 ```
 
 ---
@@ -1821,3 +1821,162 @@ SuggestedRule
 - status
 - createdAt
 - reviewedAt
+```
+
+---
+
+## Consent-Gated Scheduled Conversation Import
+
+Goal:
+
+Allow users to schedule recurring conversation imports while requiring explicit consent from all affected participants before each import or export operation.
+
+Goals:
+
+- Allow users to configure how often conversation imports are attempted
+- Support frequencies such as:
+  - manual only
+  - weekly
+  - monthly
+  - custom interval
+- Notify all affected conversation participants before an import or export is attempted
+- Require explicit consent from every required participant before processing begins
+- Block the operation if consent is missing, rejected, expired, or revoked
+- Record who consented, when they consented, what data scope was approved, and which operation was authorised
+- Require new consent when:
+  - the selected conversation changes
+  - the date range changes
+  - the processing purpose changes
+  - new extraction features are enabled
+  - an earlier consent expires or is revoked
+- Allow participants to pause or disable future scheduled imports
+- Allow participants to revoke consent before processing begins
+- Notify participants when an import succeeds, fails, or is cancelled
+- Never treat consent to one import as permanent blanket consent
+
+Possible import statuses:
+
+```txt
+scheduled
+awaiting_consent
+approved
+rejected
+cancelled
+running
+succeeded
+failed
+expired
+```
+
+Possible consent statuses:
+
+```txt
+pending
+granted
+rejected
+revoked
+expired
+```
+
+Possible model idea:
+
+```txt
+ConversationImportSchedule
+- id
+- conversationId
+- frequency
+- nextRunAt
+- enabled
+- createdByUserId
+- retentionPolicyId
+
+ConversationImportAttempt
+- id
+- scheduleId
+- requestedAt
+- status
+- dateRangeStart
+- dateRangeEnd
+- processingPurpose
+- completedAt
+
+ConversationImportConsent
+- id
+- importAttemptId
+- participantPersonId
+- status
+- grantedAt
+- revokedAt
+- expiresAt
+- approvedScope
+```
+
+---
+
+## Temporary Chat Data Retention and Deletion
+
+Purpose:
+
+Minimise stored raw conversation data and regularly delete imported chat data that is no longer needed.
+
+Requirements:
+
+- Store raw messages only for the shortest period required for parsing, review, and approved extraction
+- Separate raw imported messages from approved derived knowledge
+- Define when raw data becomes unused
+- Delete temporary files, raw messages, failed-import payloads, and intermediate LLM outputs after the retention period
+- Allow configurable retention periods
+- Run regular deletion jobs
+- Record deletion outcomes without retaining deleted message content
+- Delete embeddings derived from rejected or deleted raw content
+- Remove derived facts, events, or rules if their source is withdrawn and no lawful retention reason exists
+- Support immediate deletion when consent is revoked, where applicable
+- Provide a preview of data scheduled for deletion
+- Protect approved facts and events from accidental deletion while preserving provenance
+- Add backup-retention rules so deleted chat data is not silently restored later
+
+Possible retention categories:
+
+```txt
+raw_import
+temporary_processing
+rejected_candidate
+approved_derived_knowledge
+audit_metadata
+```
+
+Possible model idea:
+
+```txt
+DataRetentionPolicy
+- id
+- dataCategory
+- retentionDays
+- deleteOnConsentRevocation
+- enabled
+
+DataDeletionJob
+- id
+- policyId
+- scheduledAt
+- startedAt
+- completedAt
+- status
+- deletedRecordCount
+```
+
+Learning focus:
+
+- scheduled workflows
+- multi-party consent
+- revocable consent
+- data minimisation
+- retention policies
+- deletion jobs
+- provenance-aware deletion
+- privacy-by-design
+
+Two design corrections are important:
+
+- For **group chats**, “both participants” is insufficient; consent may need to come from every participant whose messages are processed.
+- Do not automatically equate consent with truth or verification. Consent authorises processing. It does not verify that every statement in the messages is accurate.
