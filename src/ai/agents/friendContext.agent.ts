@@ -1,12 +1,8 @@
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { SystemMessage } from "@langchain/core/messages";
 import { ChatMistralAI } from "@langchain/mistralai";
 import { createAgent } from "langchain";
 import { searchFriendContextLangChainTool } from "../tools/searchFriendContext.tool.js";
-
-const model = new ChatMistralAI({
-    model: "mistral-small-latest",
-    temperature: 0,
-});
 
 const systemPrompt = new SystemMessage(
     [
@@ -19,8 +15,18 @@ const systemPrompt = new SystemMessage(
     ].join(" "),
 );
 
-export const friendContextAgent = createAgent({
-    model,
-    tools: [searchFriendContextLangChainTool],
-    systemPrompt,
+export function createFriendContextAgent(model: BaseChatModel) {
+    return createAgent({
+        model,
+        tools: [searchFriendContextLangChainTool],
+        systemPrompt,
+    });
+}
+
+const productionModel = new ChatMistralAI({
+    model: "mistral-small-latest",
+    temperature: 0,
 });
+
+export const friendContextAgent =
+    createFriendContextAgent(productionModel);
