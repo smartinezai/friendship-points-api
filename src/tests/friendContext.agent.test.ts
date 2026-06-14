@@ -110,5 +110,76 @@ describe("createFriendContextAgent group tests", () => {
             limit: 3,
         });
     });
+
+    it("test case that states when retrieved context is insufficient", async () => {
+        type FakeSearchInput = {
+            friendId: string;
+            query: string;
+            limit?: number;
+        };
+
+        const emptySearchImplementation = vi.fn(
+            async (
+                input: FakeSearchInput,
+                runtime?: unknown,
+            ) => {
+                void input;
+                void runtime;
+
+                return {
+                    results: [],
+                };
+            },
+        );
+
+        const emptySearchTool = tool(emptySearchImplementation, {
+            name: "search_friend_context",
+            description: "Search stored friend context",
+            schema: z.object({
+                friendId: z.uuid(),
+                query: z.string(),
+                limit: z.number().optional(),
+            }),
+        });
+
+        const model = fakeModel()
+            .respondWithTools([
+                {
+                    name: "search_friend_context",
+                    args: {
+                        friendId:
+                            "5da77ede-2290-4ede-9839-d83a29a310e6",
+                        query: "a holiday disagreement",
+                        limit: 3,
+                    },
+                },
+            ])
+            .respond(
+                new AIMessage(
+                    "I could not find enough stored context to answer that reliably.",
+                ),
+            );
+
+        const agent = createFriendContextAgent(model, [
+            emptySearchTool,
+        ]);
+
+        const result = await agent.invoke({
+            messages: [
+                {
+                    role: "user",
+                    content:
+                        "What happened during my holiday disagreement with Cole?",
+                },
+            ],
+        });
+
+        expect(result.messages.at(-1)?.content).toBe(
+            "I could not find enough stored context to answer that reliably.",
+        );
+
+        expect(emptySearchImplementation).toHaveBeenCalledTimes(1);
+        expect(model.callCount).toBe(2);
+    });
 });
 
