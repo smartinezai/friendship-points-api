@@ -4,7 +4,7 @@ import { friendContextAgent } from "../ai/agents/friendContext.agent.js";
 const validFriendId = "5da77ede-2290-4ede-9839-d83a29a310e6";
 
 async function main(): Promise<void> {
-    const result = await friendContextAgent.invoke({
+    const retrievalResult = await friendContextAgent.invoke({
         messages: [
             {
                 role: "user",
@@ -15,10 +15,29 @@ async function main(): Promise<void> {
         ],
     });
 
-    const finalMessage = result.messages.at(-1);
-
     console.log("Final agent response:");
-    console.dir(finalMessage?.content, { depth: null });
+    console.dir(retrievalResult.messages.at(-1)?.content, {
+        depth: null,
+    });
+
+    const greetingResult = await friendContextAgent.invoke({
+        messages: [
+            {
+                role: "user",
+                content: "Hello, how are you?",
+            },
+        ],
+    });
+
+    console.log("\nGreeting response:");
+    console.dir(greetingResult.messages.at(-1)?.content, {
+        depth: null,
+    });
+
+    console.log("\nGreeting message history:");
+    console.dir(greetingResult.messages, {
+        depth: null,
+    });
 }
 
 main().catch((error: unknown) => {
