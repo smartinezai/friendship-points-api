@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { friendContextAgent } from "../ai/agents/friendContext.agent.js";
+import { friendContextAgent } from "../ai/agents/friendContext.production.js";
 
 const validFriendId = "5da77ede-2290-4ede-9839-d83a29a310e6";
 
