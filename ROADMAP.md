@@ -877,26 +877,28 @@ Known follow-up:
 - Empty sourceId values in searchable documents need investigation during indexing/retrieval test backfill
 ---
 
-## Day 29: Agentic Retrieval Loop
+## Day 29: Friend Context Agent
 
-Status: Planned.
+Status: Complete.
 
-Goals:
+Completed:
 
-- Implement a loop where the LLM can decide to call a search tool, inspect returned context, call another tool if needed, and stop with a final structured answer
-- Add max-iteration safeguards
-- Add fallback behaviour when no relevant context is found
-- Let the agent inspect recent event history for a friend
-- Detect repeated patterns, such as many negative events about the same person
-- Generate bias/pattern notes when history suggests possible narrator bias
-- Detect behaviour trends over time, not just repeated patterns
-- Treat patterns and trends as tentative signals, not definitive character judgements
+- Added a reusable LangChain friend-context agent
+- Configured the agent with the semantic friend-context search tool
+- Added system instructions for tool use, grounding, and prompt-injection protection
+- Verified the real model → tool → model execution loop
+- Verified that simple greetings do not trigger retrieval
+- Added dependency injection for chat models and tools
+- Added automated tests using a fake model and fake search tool
+- Tested direct responses without retrieval
+- Tested tool execution for history-dependent requests
+- Tested cautious responses when retrieval returns insufficient context
 
-Example pattern note:
+Known follow-ups:
 
-```txt
-Recent event history about Cole is strongly negative. This may indicate genuine repeated conflict, selective event logging, temporary frustration, or narrator bias. Future assessments should account for this uncertainty.
-```
+- Improve reranking quality during Day 30 retrieval evaluation
+- Investigate empty searchable-document source IDs during the test backfill
+- Add a service or route wrapper only when the agent is connected to a real API workflow
 
 Learning focus:
 
