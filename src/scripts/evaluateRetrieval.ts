@@ -19,6 +19,30 @@ const evaluationQueries = [
         label: "Friendship repair",
         query: "repairing communication after upsetting Cole",
     },
+    {
+        label: "English query for Spanish apology context",
+        query: "apologising after a message came across badly",
+    },
+    {
+        label: "Spanish query for apology context",
+        query: "disculparse después de que un mensaje sonó mal",
+    },
+    {
+        label: "Spanish query for unexpected call context",
+        query: "llamada inesperada sin avisar",
+    },
+    {
+        label: "No-match query: airport luggage",
+        query: "lost luggage at the airport",
+    },
+    {
+        label: "No-match query: dentist appointment",
+        query: "dentist appointment rescheduling",
+    },
+    {
+        label: "Weak-match query: financial emergency",
+        query: "urgent financial help during a crisis",
+    },
 ];
 
 async function main(): Promise<void> {
