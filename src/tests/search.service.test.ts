@@ -118,13 +118,14 @@ describe("rerankContextItems retrieval evaluation tests group", () => {
         expect(semanticItem.distance).toBe(0.12);
     });
 
-    it("reveals that the current reranker does not include distance in the rerank reason", () => {
+    it("includes semantic distance in the rerank reason", () => {
         const results = rerankContextItems(
             "apologising after a badly worded message",
             semanticRetrievalFixture,
         );
 
-        expect(results.at(0)?.rerankReason).not.toContain("distance");
+        expect(results.at(0)?.rerankReason).toContain("semanticScore=");
+        expect(results.at(0)?.rerankReason).toContain("distance=");
     });
 });
 

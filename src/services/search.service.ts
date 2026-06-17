@@ -30,6 +30,10 @@ export type SemanticRetrievedContextItem = RetrievedContextItem & {
     distance: number;
 };
 
+type RerankableContextItem =
+    | RetrievedContextItem
+    | SemanticRetrievedContextItem;
+
 const stopWords = new Set([
     "a",
     "after",
@@ -95,16 +99,25 @@ export function removeStopWords(tokens: string[]): string[] {
 }
 
 function getSourceBoost(sourceType: RetrievedContextItem["sourceType"]): number {
-    if (sourceType === "rule") {
-        return 1.5;
-    }
-
     if (sourceType === "event") {
-        return 1;
+        return 0.3;
     }
 
-    return 0.5;
+    if (sourceType === "rule") {
+        return 0.2;
+    }
+
+    return 0.1;
 }
+
+function calculateSemanticScore(item: RerankableContextItem): number {
+    if (!("distance" in item)) {
+        return 0;
+    }
+
+    return Math.max(0, 1 - item.distance) * 3;
+}
+
 
 /**
  * Scores a text by counting unique query tokens that also appear in the text.
@@ -130,20 +143,27 @@ export function calculateKeywordScore(query: string, text: string): number {
 
 export function rerankContextItems(
     query: string,
-    items: RetrievedContextItem[],
+    items: RerankableContextItem[],
 ): RerankedContextItem[] {
     return items
         .map((item) => {
             const keywordScore = calculateKeywordScore(query, item.content);
-
+            const semanticScore = calculateSemanticScore(item);
             const sourceBoost = getSourceBoost(item.sourceType);
 
-            const rerankScore = keywordScore + sourceBoost;
+            const rerankScore = keywordScore + semanticScore + sourceBoost;
+
+            const distanceReason =
+                "distance" in item ? item.distance.toFixed(3) : "none";
 
             return {
                 ...item,
                 rerankScore,
-                rerankReason: `keywordScore=${keywordScore}, sourceBoost=${sourceBoost}`,
+                rerankReason:
+                    `keywordScore=${keywordScore}, ` +
+                    `semanticScore=${semanticScore.toFixed(2)}, ` +
+                    `distance=${distanceReason}, ` +
+                    `sourceBoost=${sourceBoost}`,
             };
         })
         .sort((a, b) => b.rerankScore - a.rerankScore);
