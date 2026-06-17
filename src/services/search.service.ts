@@ -253,6 +253,10 @@ function isSearchableSourceType(
     return ["friend_note", "rule", "event"].includes(sourceType);
 }
 
+export function hasValidSourceId(sourceId: string): boolean {
+    return sourceId.trim().length > 0;
+}
+
 /**
  * Retrieves relevant ingested context for a friend using keyword scoring.
  * Supports excluding a specific source, such as the event currently being assessed.
@@ -278,11 +282,14 @@ export async function retrieveFriendContext(
             continue;
         }
 
+        if (!hasValidSourceId(doc.sourceId)) {
+            continue;
+        }
+
         if (
             options.excludeSourceType === doc.sourceType &&
             options.excludeSourceId === doc.sourceId
         ) {
-            // Avoid retrieving the same event that is currently being assessed.
             continue;
         }
 
@@ -351,15 +358,21 @@ export async function retrieveFriendContextSemantically(
             continue;
         }
 
+        const sourceType = row.sourceType;
+
+        if (!hasValidSourceId(row.sourceId)) {
+            continue;
+        }
+
         if (
-            options.excludeSourceType === row.sourceType &&
+            options.excludeSourceType === sourceType &&
             options.excludeSourceId === row.sourceId
         ) {
             continue;
         }
 
         results.push({
-            sourceType: row.sourceType,
+            sourceType,
             sourceId: row.sourceId,
             friendId: row.friendId,
             content: row.content,

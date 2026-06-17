@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
     calculateKeywordScore,
+    hasValidSourceId,
     removeStopWords,
     rerankContextItems,
     tokenise,
@@ -71,6 +72,26 @@ describe("search service tests", () => {
         );
 
         expect(result).toBe(0);
+    });
+
+    it("hasValidSourceId should accept a non-empty source ID", () => {
+        const result = hasValidSourceId(
+            "11111111-1111-4111-8111-111111111111",
+        );
+
+        expect(result).toBe(true);
+    });
+
+    it("hasValidSourceId should reject an empty source ID", () => {
+        const result = hasValidSourceId("");
+
+        expect(result).toBe(false);
+    });
+
+    it("hasValidSourceId should reject a whitespace-only source ID", () => {
+        const result = hasValidSourceId("   ");
+
+        expect(result).toBe(false);
     });
 
 });
