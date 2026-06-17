@@ -946,6 +946,21 @@ Required automated tests:
 - Preservation of valid source IDs during indexing
 - Detection or prevention of empty `sourceId` values
 
+Progress:
+
+- Added retrieval evaluation fixtures
+- Added reranking regression tests
+- Added stop-word filtering for keyword scoring
+- Added semantic-distance weighting to reranking
+- Reduced source-type boosts so they act as tie-breakers
+- Added invalid source ID filtering for retrieved context
+- Verified smoke test no longer returns empty source IDs
+
+Known remaining retrieval quality issues:
+
+- Some semantically weak but non-empty results can still appear in the top 5
+- Add thresholding or minimum relevance filtering later if evaluation shows it is needed
+
 Known Day 27 limitation:
 
 - The initial deterministic reranker uses keyword overlap and source-type boosts
