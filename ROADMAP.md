@@ -966,6 +966,14 @@ Known Day 27 limitation:
 - The initial deterministic reranker uses keyword overlap and source-type boosts
 - Semantic-score weighting and stop-word filtering will be evaluated here
 
+Day 30 retrieval evaluation findings:
+
+- Empty source IDs no longer appear in semantic tool output
+- Hybrid reranking now includes keyword score, semantic score, distance, and source boost
+- The correct apology event ranks first for the apology query
+- Some weak tail results still appear because semantic retrieval always returns nearest available documents
+- Friend names such as "Cole" can inflate keyword score because all friend-scoped documents contain the friend's name
+- Relevance thresholding should be evaluated later before being added
 
 ---
 
