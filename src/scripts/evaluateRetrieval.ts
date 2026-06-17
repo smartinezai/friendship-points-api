@@ -107,7 +107,7 @@ async function main(): Promise<void> {
                     returnedSourceIds.includes(sourceId),
                 );
 
-            const expectedAtTop =
+            const expectedAtRankOne =
                 evaluationQuery.expectedSourceIds.includes(
                     rerankedResults.at(0)?.sourceId ?? "",
                 );
@@ -116,12 +116,12 @@ async function main(): Promise<void> {
                 summary.expectedInTopFive += 1;
             }
 
-            if (expectedAtTop) {
+            if (expectedAtRankOne) {
                 summary.expectedAtRankOne += 1;
             }
 
             console.log(`Expected result in top 5: ${expectedInTopFive}`);
-            console.log(`Expected result at rank 1: ${expectedAtTop}`);
+            console.log(`Expected result at rank 1: ${expectedAtRankOne}`);
         } else {
             summary.exploratoryQueries += 1;
             console.log("No expected source ID configured for this query.");
