@@ -6,30 +6,46 @@ import {
 
 const friendId = "5da77ede-2290-4ede-9839-d83a29a310e6";
 
-const evaluationQueries = [
+type EvaluationQuery = {
+    label: string;
+    query: string;
+    /**
+     * Source IDs that should appear in the top reranked results for known-positive queries.
+     * Omit this for no-match or exploratory queries.
+     */
+    expectedSourceIds?: string[];
+};
+
+const evaluationQueries: EvaluationQuery[] = [
     {
         label: "Apology after badly worded message",
         query: "apologising after a misunderstood or badly worded message",
+        expectedSourceIds: ["aa4e0523-356c-4db5-99f5-ef0d39ffc863"],
     },
     {
         label: "Unexpected phone call",
         query: "unexpected phone call without warning",
+        expectedSourceIds: ["451fa48b-43d7-444f-8fd4-668136a564a0"],
     },
     {
         label: "Friendship repair",
         query: "repairing communication after upsetting Cole",
-    },
-    {
-        label: "English query for Spanish apology context",
-        query: "apologising after a message came across badly",
+        expectedSourceIds: ["aa4e0523-356c-4db5-99f5-ef0d39ffc863"],
     },
     {
         label: "Spanish query for apology context",
         query: "disculparse después de que un mensaje sonó mal",
+        expectedSourceIds: ["aa4e0523-356c-4db5-99f5-ef0d39ffc863"],
     },
     {
         label: "Spanish query for unexpected call context",
         query: "llamada inesperada sin avisar",
+        expectedSourceIds: ["451fa48b-43d7-444f-8fd4-668136a564a0"],
+    },
+    {
+        label: "English query for Spanish apology context",
+        query: "apologising after a message came across badly",
+        expectedSourceIds: ["aa4e0523-356c-4db5-99f5-ef0d39ffc863"],
     },
     {
         label: "No-match query: airport luggage",
@@ -62,6 +78,27 @@ async function main(): Promise<void> {
             evaluationQuery.query,
             semanticResults,
         ).slice(0, 5);
+
+        const returnedSourceIds = rerankedResults.map(
+            (result) => result.sourceId,
+        );
+
+        if (evaluationQuery.expectedSourceIds) {
+            const expectedInTopFive =
+                evaluationQuery.expectedSourceIds.some((sourceId) =>
+                    returnedSourceIds.includes(sourceId),
+                );
+
+            const expectedAtTop =
+                evaluationQuery.expectedSourceIds.includes(
+                    rerankedResults.at(0)?.sourceId ?? "",
+                );
+
+            console.log(`Expected result in top 5: ${expectedInTopFive}`);
+            console.log(`Expected result at rank 1: ${expectedAtTop}`);
+        } else {
+            console.log("No expected source ID configured for this query.");
+        }
 
         console.dir(
             rerankedResults.map((result) => ({
