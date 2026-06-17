@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
     calculateKeywordScore,
+    removeStopWords,
     rerankContextItems,
     tokenise,
 } from "../services/search.service.js";
@@ -40,6 +41,38 @@ describe("search service tests", () => {
         );
         expect(result).toBe(2);
     });
+
+    it("removeStopWords should remove common low-value words", () => {
+        const result = removeStopWords([
+            "the",
+            "user",
+            "apologised",
+            "after",
+            "a",
+            "message",
+        ]);
+
+        expect(result).toEqual(["user", "apologised", "message"]);
+    });
+
+    it("calculateKeywordScore should ignore stop words in the query", () => {
+        const result = calculateKeywordScore(
+            "the a after apologised",
+            "The user apologised clearly.",
+        );
+
+        expect(result).toBe(1);
+    });
+
+    it("calculateKeywordScore should return zero when the query only contains stop words", () => {
+        const result = calculateKeywordScore(
+            "the a after",
+            "The user apologised clearly.",
+        );
+
+        expect(result).toBe(0);
+    });
+
 });
 
 

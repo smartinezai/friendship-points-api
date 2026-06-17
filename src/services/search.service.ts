@@ -30,6 +30,53 @@ export type SemanticRetrievedContextItem = RetrievedContextItem & {
     distance: number;
 };
 
+const stopWords = new Set([
+    "a",
+    "after",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "because",
+    "but",
+    "by",
+    "for",
+    "from",
+    "has",
+    "have",
+    "he",
+    "her",
+    "him",
+    "his",
+    "i",
+    "in",
+    "is",
+    "it",
+    "me",
+    "my",
+    "of",
+    "on",
+    "or",
+    "she",
+    "so",
+    "that",
+    "the",
+    "their",
+    "them",
+    "they",
+    "this",
+    "to",
+    "was",
+    "we",
+    "were",
+    "with",
+    "you",
+    "your",
+]);
+
+
 /**
  * Splits free text into lowercase keyword tokens.
  *
@@ -41,6 +88,10 @@ export function tokenise(text: string): string[] {
         .toLowerCase()
         .split(/\W+/)
         .filter(Boolean);
+}
+
+export function removeStopWords(tokens: string[]): string[] {
+    return tokens.filter((token) => !stopWords.has(token)); //only keep the tokens that are not in the stopWords set
 }
 
 function getSourceBoost(sourceType: RetrievedContextItem["sourceType"]): number {
@@ -63,7 +114,7 @@ function getSourceBoost(sourceType: RetrievedContextItem["sourceType"]): number 
  * @returns Number of unique matching tokens. Higher means more relevant.
  */
 export function calculateKeywordScore(query: string, text: string): number {
-    const queryTokens = new Set(tokenise(query));
+    const queryTokens = new Set(removeStopWords(tokenise(query)));
     const textTokens = new Set(tokenise(text));
 
     let score = 0;
