@@ -945,6 +945,11 @@ Required automated tests:
 - Searchable-document indexing and rebuilding
 - Preservation of valid source IDs during indexing
 - Detection or prevention of empty `sourceId` values
+- Add multilingual retrieval evaluation examples
+- Test English query against Spanish event content
+- Test Spanish query against English event content
+- Check whether semantic retrieval still finds cross-language matches
+- Ensure keyword scoring does not unfairly suppress multilingual matches
 
 Progress:
 
