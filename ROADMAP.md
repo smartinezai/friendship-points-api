@@ -910,76 +910,33 @@ Learning focus:
 
 ---
 
-## Day 30: Retrieval Evaluation and Service Test Backfill
+### Day 30 — Retrieval evaluation and service test backfill
 
-Status: Planned.
+Status: Complete
 
-Goals:
-
-- Audit existing retrieval-related test coverage
-- Create test queries for retrieval
-- Define expected relevant records
-- Measure hit rate
-- Measure precision
-- Measure recall where practical
-- Compare keyword search, semantic search, and reranking
-- Evaluate semantic-only, keyword-only, and hybrid reranking
-- Test a hybrid formula using semantic similarity, meaningful keyword overlap, and a small source-type boost
-- Test whether stop-word filtering improves keyword scoring
-- Measure whether source-type boosts improve or damage relevance
-- Tune and document reranking weights
-
-Required automated tests:
-
-- Tokenisation and keyword scoring
-- Keyword result ordering
-- Deterministic reranking order
-- Reranking tie behaviour
-- Source-type boost behaviour
-- Empty input collections
-- Semantic retrieval result shape
-- Semantic retrieval ordering by distance
-- Exclusion of documents without embeddings
-- Requested retrieval limits
-- No-match behaviour
-- Searchable-document indexing and rebuilding
-- Preservation of valid source IDs during indexing
-- Detection or prevention of empty `sourceId` values
-- Add multilingual retrieval evaluation examples
-- Test English query against Spanish event content
-- Test Spanish query against English event content
-- Check whether semantic retrieval still finds cross-language matches
-- Ensure keyword scoring does not unfairly suppress multilingual matches
-
-Progress:
-
+Completed:
 - Added retrieval evaluation fixtures
 - Added reranking regression tests
 - Added stop-word filtering for keyword scoring
-- Added semantic-distance weighting to reranking
-- Reduced source-type boosts so they act as tie-breakers
-- Added invalid source ID filtering for retrieved context
-- Verified smoke test no longer returns empty source IDs
+- Included semantic distance in hybrid reranking
+- Reduced source-type boost so it acts as a tie-breaker rather than dominating relevance
+- Filtered invalid/empty source IDs from retrieved context
+- Added manual retrieval evaluation script
+- Added multilingual, no-match, and weak-match retrieval evaluation queries
+- Added expected-hit reporting and summary output to the evaluation script
 
-Known remaining retrieval quality issues:
+Findings:
+- The correct apology event ranks first for apology-related English queries
+- The unexpected-call rule ranks first for the unexpected-call query
+- Spanish queries can retrieve relevant English context through semantic similarity
+- No-match queries still return weak nearest-neighbour results because semantic retrieval always returns the closest available documents
+- Simple thresholding is not safe yet because useful multilingual matches and no-match results have overlapping scores
+- Friend names such as "Cole" can inflate keyword scores in friend-scoped retrieval
 
-- Some semantically weak but non-empty results can still appear in the top 5
-- Add thresholding or minimum relevance filtering later if evaluation shows it is needed
-
-Known Day 27 limitation:
-
-- The initial deterministic reranker uses keyword overlap and source-type boosts
-- Semantic-score weighting and stop-word filtering will be evaluated here
-
-Day 30 retrieval evaluation findings:
-
-- Empty source IDs no longer appear in semantic tool output
-- Hybrid reranking now includes keyword score, semantic score, distance, and source boost
-- The correct apology event ranks first for the apology query
-- Some weak tail results still appear because semantic retrieval always returns nearest available documents
-- Friend names such as "Cole" can inflate keyword score because all friend-scoped documents contain the friend's name
-- Relevance thresholding should be evaluated later before being added
-
+Deferred:
+- Relevance thresholding
+- Friend-name-aware keyword scoring
+- More robust multilingual evaluation with actual Spanish stored source documents
 ---
 
 
