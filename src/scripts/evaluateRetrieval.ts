@@ -16,6 +16,14 @@ type EvaluationQuery = {
     expectedSourceIds?: string[];
 };
 
+type EvaluationSummary = {
+    totalQueries: number;
+    queriesWithExpectedSources: number;
+    expectedInTopFive: number;
+    expectedAtRankOne: number;
+    exploratoryQueries: number;
+};
+
 const evaluationQueries: EvaluationQuery[] = [
     {
         label: "Apology after badly worded message",
@@ -62,6 +70,14 @@ const evaluationQueries: EvaluationQuery[] = [
 ];
 
 async function main(): Promise<void> {
+    const summary: EvaluationSummary = {
+        totalQueries: evaluationQueries.length,
+        queriesWithExpectedSources: 0,
+        expectedInTopFive: 0,
+        expectedAtRankOne: 0,
+        exploratoryQueries: 0,
+    };
+
     for (const evaluationQuery of evaluationQueries) {
         console.log(`\n=== ${evaluationQuery.label} ===`);
         console.log(`Query: ${evaluationQuery.query}`);
@@ -84,6 +100,8 @@ async function main(): Promise<void> {
         );
 
         if (evaluationQuery.expectedSourceIds) {
+            summary.queriesWithExpectedSources += 1;
+
             const expectedInTopFive =
                 evaluationQuery.expectedSourceIds.some((sourceId) =>
                     returnedSourceIds.includes(sourceId),
@@ -94,9 +112,18 @@ async function main(): Promise<void> {
                     rerankedResults.at(0)?.sourceId ?? "",
                 );
 
+            if (expectedInTopFive) {
+                summary.expectedInTopFive += 1;
+            }
+
+            if (expectedAtTop) {
+                summary.expectedAtRankOne += 1;
+            }
+
             console.log(`Expected result in top 5: ${expectedInTopFive}`);
             console.log(`Expected result at rank 1: ${expectedAtTop}`);
         } else {
+            summary.exploratoryQueries += 1;
             console.log("No expected source ID configured for this query.");
         }
 
@@ -112,6 +139,18 @@ async function main(): Promise<void> {
             { depth: null },
         );
     }
+    console.log("\n=== Retrieval evaluation summary ===");
+    console.log(`Queries evaluated: ${summary.totalQueries}`);
+    console.log(
+        `Queries with expected source IDs: ${summary.queriesWithExpectedSources}`,
+    );
+    console.log(
+        `Expected results in top 5: ${summary.expectedInTopFive}/${summary.queriesWithExpectedSources}`,
+    );
+    console.log(
+        `Expected results at rank 1: ${summary.expectedAtRankOne}/${summary.queriesWithExpectedSources}`,
+    );
+    console.log(`Exploratory/no-match queries: ${summary.exploratoryQueries}`);
 }
 
 main().catch((error: unknown) => {
