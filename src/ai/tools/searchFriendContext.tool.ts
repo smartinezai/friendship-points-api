@@ -5,6 +5,7 @@ import {
     type RerankedContextItem,
 } from "../../services/search.service.js";
 import { tool } from "@langchain/core/tools";
+import { formatSourceCitation } from "./sourceCitation.js";
 /**
  * Runtime schema for the agent-facing friend-context search tool.
  *
@@ -38,18 +39,33 @@ export type SearchFriendContextToolInput = z.infer<
     typeof searchFriendContextToolInputSchema
 >;
 
-/** Structured result returned to the agent after semantic search and reranking. */
+/**
+ * Structured result returned to the agent after semantic search and reranking.
+ *
+ * Results include both the retrieved evidence and a preformatted citation so
+ * downstream agent prompts do not need to invent their own citation format.
+ */
 export type SearchFriendContextToolOutput = {
     results: CitedSearchFriendContextResult[];
 };
 
-export type CitedSearchFriendContextResult = RerankedContextItem & { // Extends the base retrieved and reranked context item with source citation for agent use.
+/**
+ * Reranked context item enriched with a ready-made citation string.
+ *
+ * The search tool returns this shape to the agent so the model can copy the
+ * citation directly instead of reconstructing source metadata itself. This
+ * keeps citation formatting consistent across retrieved events, rules, and
+ * friend notes.
+ */
+export type CitedSearchFriendContextResult = RerankedContextItem & {
+    /**
+     * Canonical source citation that should be copied into agent responses.
+     *
+     * Example: `[event: aa4e0523-356c-4db5-99f5-ef0d39ffc863]`
+     */
     citation: string;
 };
 
-function formatSourceCitation(item: RerankedContextItem): string {
-    return `[${item.sourceType}: ${item.sourceId}]`;
-}
 
 /**
  * Searches a friend's ingested context and returns reranked results.
@@ -77,7 +93,7 @@ export async function searchFriendContextTool(
 
     const citedResults = rerankedResults.map((result) => ({
         ...result,
-        citation: formatSourceCitation(result),
+        citation: formatSourceCitation(result.sourceType, result.sourceId),
     }));
 
     return {
@@ -106,6 +122,14 @@ export async function executeSearchFriendContextTool(
     return searchFriendContextTool(validationResult.data);
 }
 
+/**
+ * LangChain-compatible wrapper around the friend-context search tool.
+ *
+ * The wrapper exposes the validated search function to agents under a stable
+ * tool name. LangChain handles schema validation before invoking the function,
+ * while `searchFriendContextTool` handles retrieval, reranking, and citation
+ * enrichment.
+ */
 export const searchFriendContextLangChainTool = tool(
     async (input) => {
         return searchFriendContextTool(input);
