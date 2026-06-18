@@ -42,9 +42,13 @@ describe("createFriendContextAgent group tests", () => {
                 input: FakeSearchInput,
                 runtime?: unknown,
             ) => {
-                void input;//use void to indicate that we are intentionally not using the input in this fake implementation
-                void runtime;// In a real test, you might want to assert on the input here
-
+                /**
+ * The fake tool implementation does not need to inspect the input because this
+ * test controls the model's tool call separately and asserts the received input
+ * after invocation.
+ */
+                void input;
+                void runtime;
                 return {
                     results: [
                         {
@@ -85,7 +89,11 @@ describe("createFriendContextAgent group tests", () => {
             ])
             .respond(
                 new AIMessage(
-                    "You apologised, clarified your meaning, and Cole responded positively. [event: aa4e0523-356c-4db5-99f5-ef0d39ffc863]",
+                    [
+                        "You apologised, clarified your meaning, and Cole responded positively.",
+                        "",
+                        "Evidence used: [event: aa4e0523-356c-4db5-99f5-ef0d39ffc863]",
+                    ].join("\n"),
                 ),
             );
 
@@ -103,12 +111,29 @@ describe("createFriendContextAgent group tests", () => {
             ],
         });
 
+        /**
+ * The grounded response should follow the current agent contract:
+ * a short natural-language answer followed by a separate evidence line.
+ *
+ * This makes the citation easier to inspect than embedding it somewhere inside
+ * the prose, and it protects the response format we expect the real agent to use.
+ */
         expect(result.messages.at(-1)?.content).toBe(
-            "You apologised, clarified your meaning, and Cole responded positively. [event: aa4e0523-356c-4db5-99f5-ef0d39ffc863]",
+            [
+                "You apologised, clarified your meaning, and Cole responded positively.",
+                "",
+                "Evidence used: [event: aa4e0523-356c-4db5-99f5-ef0d39ffc863]",
+            ].join("\n"),
         );
 
+        /**
+ * The response must include the exact source citation from retrieved context.
+ *
+ * This assertion protects the citation itself, while the previous assertion
+ * protects the full response structure.
+ */
         expect(result.messages.at(-1)?.content).toContain(
-            "[event: aa4e0523-356c-4db5-99f5-ef0d39ffc863]",
+            "Evidence used: [event: aa4e0523-356c-4db5-99f5-ef0d39ffc863]",
         );
 
         expect(model.callCount).toBe(2);
