@@ -11,6 +11,8 @@ import {
     searchFriendContextTool,
     searchFriendContextToolInputSchema,
 } from "../ai/tools/searchFriendContext.tool.js";
+import { formatSourceCitation } from "../ai/tools/sourceCitation.js";
+
 
 // Mock the retrieval service so these tests only verify tool behavior.
 // Semantic retrieval and reranking have their own service-level tests.
@@ -36,7 +38,7 @@ function addExpectedCitations<
 >(results: Result[]) {
     return results.map((result) => ({
         ...result,
-        citation: `[${result.sourceType}: ${result.sourceId}]`,
+        citation: formatSourceCitation(result.sourceType, result.sourceId),
     }));
 }
 
