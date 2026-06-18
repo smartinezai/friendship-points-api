@@ -946,36 +946,36 @@ Deferred:
 
 ### Day 31 — Source-grounded agent responses
 
-Status: In progress
+Status: Complete
 
 Completed:
 
 - Required the friend context agent to cite retrieved context
 - Added source citation expectations to the agent tests
 - Added formatted `citation` fields to search tool results
-- Updated the agent prompt to reuse citation fields
-- Tightened the prompt so the agent copies citation fields exactly
-- Normalised agent smoke-test output for readable message content
-- Verified the real agent copies citations in the expected format
-Completed:
-- Added formatted `citation` fields to search tool results
+- Extracted source citation formatting into a shared helper
+- Added direct unit coverage for citation formatting
+- Updated search tool tests to use the shared citation helper
 - Updated the agent prompt to copy citation fields exactly
-- Normalised production agent smoke-test output
+- Required grounded agent responses to include a final `Evidence used:` line
+- Updated agent tests to enforce the evidence-line response contract
+- Normalised production agent smoke-test output for readable message content
 - Added a smoke-test assertion that retrieval-backed answers include the expected citation
 - Added a smoke-test assertion that greeting requests do not trigger tool calls
-git add src/tests/searchFriendContext.tool.test.ts
-git commit -m "Use source citation helper in search tool tests"
+- Verified the production smoke test cites the expected event source in the required format
 
 Current behaviour:
 
 - Search tool results include a canonical `citation` field
-- Agent prompt instructs the model to copy citation fields exactly
-- Smoke test fails if the expected citation is missing
-- Smoke test fails if a greeting triggers tool callsss
+- Retrieval-backed answers end with `Evidence used: [sourceType: sourceId]`
+- The agent prompt instructs the model to copy citation fields exactly
+- The smoke test fails if the expected citation is missing
+- The smoke test fails if a greeting triggers tool calls
+- Greeting requests are answered directly without friend-context retrieval
 
 Known issue:
 
-- Citation compliance is still prompt-based. A later API-layer response formatter could make citations deterministic.
+- Citation and evidence-line compliance are still prompt-based. A later API-layer response formatter could make citations deterministic.
 
 ---
 
