@@ -2041,3 +2041,8 @@ Design notes:
 
 - For group chats, consent may need to come from every participant whose messages are processed.
 - Consent authorises processing; it does not verify that every statement in the messages is accurate.
+
+
+## Optional Future Search Upgrade: Elasticsearch or OpenSearch
+
+Consider Elasticsearch/OpenSearch only if Postgres + pgvector becomes insufficient for full-text search, hybrid retrieval, typo tolerance, search analytics, or large imported conversation/document datasets.
