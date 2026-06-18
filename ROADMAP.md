@@ -963,12 +963,15 @@ Completed:
 - Normalised production agent smoke-test output
 - Added a smoke-test assertion that retrieval-backed answers include the expected citation
 - Added a smoke-test assertion that greeting requests do not trigger tool calls
+git add src/tests/searchFriendContext.tool.test.ts
+git commit -m "Use source citation helper in search tool tests"
 
-Verified behaviour:
+Current behaviour:
 
-- Retrieval-backed answer includes `[event: aa4e0523-356c-4db5-99f5-ef0d39ffc863]`
-- Greeting request does not call the search tool
-- Automated tests and TypeScript build pass
+- Search tool results include a canonical `citation` field
+- Agent prompt instructs the model to copy citation fields exactly
+- Smoke test fails if the expected citation is missing
+- Smoke test fails if a greeting triggers tool callsss
 
 Known issue:
 
