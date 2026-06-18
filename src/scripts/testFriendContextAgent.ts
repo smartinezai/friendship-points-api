@@ -3,6 +3,8 @@ import { friendContextAgent } from "../ai/agents/friendContext.production.js";
 
 const validFriendId = "5da77ede-2290-4ede-9839-d83a29a310e6";
 
+const expectedApologyCitation =
+    "[event: aa4e0523-356c-4db5-99f5-ef0d39ffc863]";
 /**
  * Converts LangChain message content into readable plain text for smoke-test output.
  *
@@ -36,6 +38,24 @@ function normaliseMessageContent(content: unknown): string {
 }
 
 /**
+ * Fails the smoke script if the retrieval-backed response does not include
+ * the expected source citation.
+ *
+ * This keeps citation checking explicit while still leaving the script as a
+ * manual smoke test rather than a deterministic unit test.
+ */
+function assertResponseContainsCitation(
+    responseContent: string,
+    expectedCitation: string,
+): void {
+    if (!responseContent.includes(expectedCitation)) {
+        throw new Error(
+            `Expected agent response to include citation ${expectedCitation}`,
+        );
+    }
+}
+
+/**
  * Runs a manual smoke test for the production friend context agent.
  *
  * The first invocation checks whether the agent retrieves stored context and
@@ -58,6 +78,8 @@ async function main(): Promise<void> {
     const finalResponseContent = normaliseMessageContent(
         retrievalResult.messages.at(-1)?.content,
     );
+
+    assertResponseContainsCitation(finalResponseContent, expectedApologyCitation);
 
     console.log("Final agent response:");
     console.log(finalResponseContent);
