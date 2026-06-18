@@ -9,9 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository #download repository code into github runner
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up Node.js #set up node environment
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 25 
           cache: npm #cache npm dependencies to speed up future runs
