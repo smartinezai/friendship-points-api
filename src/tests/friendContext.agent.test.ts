@@ -48,8 +48,14 @@ describe("createFriendContextAgent group tests", () => {
                 return {
                     results: [
                         {
+                            sourceType: "event",
+                            sourceId: "aa4e0523-356c-4db5-99f5-ef0d39ffc863",
+                            friendId: "5da77ede-2290-4ede-9839-d83a29a310e6",
                             content:
                                 "The user apologised and Cole responded positively.",
+                            score: 0,
+                            rerankScore: 3.5,
+                            rerankReason: "Controlled test result",
                         },
                     ],
                 };
@@ -79,7 +85,7 @@ describe("createFriendContextAgent group tests", () => {
             ])
             .respond(
                 new AIMessage(
-                    "You apologised, clarified your meaning, and Cole responded positively.",
+                    "You apologised, clarified your meaning, and Cole responded positively. [event: aa4e0523-356c-4db5-99f5-ef0d39ffc863]",
                 ),
             );
 
@@ -98,7 +104,11 @@ describe("createFriendContextAgent group tests", () => {
         });
 
         expect(result.messages.at(-1)?.content).toBe(
-            "You apologised, clarified your meaning, and Cole responded positively.",
+            "You apologised, clarified your meaning, and Cole responded positively. [event: aa4e0523-356c-4db5-99f5-ef0d39ffc863]",
+        );
+
+        expect(result.messages.at(-1)?.content).toContain(
+            "[event: aa4e0523-356c-4db5-99f5-ef0d39ffc863]",
         );
 
         expect(model.callCount).toBe(2);
