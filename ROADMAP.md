@@ -875,6 +875,7 @@ Known follow-up:
 
 - Reranking quality improvements are deferred to Day 30 retrieval evaluation
 - Empty sourceId values in searchable documents need investigation during indexing/retrieval test backfill
+
 ---
 
 ## Day 29: Friend Context Agent
@@ -915,6 +916,7 @@ Learning focus:
 Status: Complete
 
 Completed:
+
 - Added retrieval evaluation fixtures
 - Added reranking regression tests
 - Added stop-word filtering for keyword scoring
@@ -926,6 +928,7 @@ Completed:
 - Added expected-hit reporting and summary output to the evaluation script
 
 Findings:
+
 - The correct apology event ranks first for apology-related English queries
 - The unexpected-call rule ranks first for the unexpected-call query
 - Spanish queries can retrieve relevant English context through semantic similarity
@@ -934,35 +937,36 @@ Findings:
 - Friend names such as "Cole" can inflate keyword scores in friend-scoped retrieval
 
 Deferred:
+
 - Relevance thresholding
 - Friend-name-aware keyword scoring
 - More robust multilingual evaluation with actual Spanish stored source documents
+
 ---
 
+### Day 31 — Source-grounded agent responses
 
-## Day 31: Golden Examples and Regression Tests
+Status: In progress
 
-Status: Planned.
+Completed:
 
-Goals:
+- Required the friend context agent to cite retrieved context
+- Added source citation expectations to the agent tests
+- Added formatted `citation` fields to search tool results
+- Updated the agent prompt to reuse citation fields
+- Tightened the prompt so the agent copies citation fields exactly
+- Normalised agent smoke-test output for readable message content
+- Verified the real agent copies citations in the expected format
 
-- Create golden examples for assessments and predictions
-- Compare expected assessment behaviour with actual output
-- Test positive, negative, neutral, and mixed cases
-- Test cases where no rule should match
-- Regression test prompt and retrieval changes
-- Add regression tests for known retrieval failures
-- Include examples where irrelevant rules must not outrank strongly relevant events
-- Include examples where common stop words must not inflate keyword scores
-- Include examples with no relevant context
-- Store previously discovered failures as permanent regression cases
+Verified behaviour:
 
-Learning focus:
+- Retrieval-backed answer includes `[event: aa4e0523-356c-4db5-99f5-ef0d39ffc863]`
+- Greeting request does not call the search tool
+- Automated tests and TypeScript build pass
 
-- end-to-end LLM evaluation
-- golden datasets
-- prompt regression testing
-- output quality checks
+Known issue:
+
+- Citation compliance is still prompt-based. A later API-layer response formatter could make citations deterministic.
 
 ---
 
@@ -1708,7 +1712,6 @@ Learning focus:
 - demo storytelling
 - technical self-review
 - portfolio readiness
-
 
 # Future Backlog Beyond Day 50
 
