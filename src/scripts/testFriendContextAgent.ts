@@ -56,6 +56,31 @@ function assertResponseContainsCitation(
 }
 
 /**
+ * Fails the smoke script if any message contains tool calls.
+ *
+ * This protects the expected routing behaviour: simple greetings should be
+ * answered directly by the model and should not trigger friend-context search.
+ */
+function assertNoToolCalls(messages: unknown[]): void {
+    const messageWithToolCall = messages.find((message) => {
+        if (
+            typeof message === "object" &&
+            message !== null &&
+            "tool_calls" in message &&
+            Array.isArray(message.tool_calls)
+        ) {
+            return message.tool_calls.length > 0;
+        }
+
+        return false;
+    });
+
+    if (messageWithToolCall) {
+        throw new Error("Expected greeting response not to call any tools");
+    }
+}
+
+/**
  * Runs a manual smoke test for the production friend context agent.
  *
  * The first invocation checks whether the agent retrieves stored context and
@@ -79,7 +104,10 @@ async function main(): Promise<void> {
         retrievalResult.messages.at(-1)?.content,
     );
 
-    assertResponseContainsCitation(finalResponseContent, expectedApologyCitation);
+    assertResponseContainsCitation(
+        finalResponseContent,
+        expectedApologyCitation,
+    );
 
     console.log("Final agent response:");
     console.log(finalResponseContent);
@@ -93,12 +121,16 @@ async function main(): Promise<void> {
         ],
     });
 
+    assertNoToolCalls(greetingResult.messages);
+
     const greetingResponseContent = normaliseMessageContent(
         greetingResult.messages.at(-1)?.content,
     );
 
     console.log("\nGreeting response:");
     console.log(greetingResponseContent);
+
+    assertNoToolCalls(greetingResult.messages);
 
     console.log("\nGreeting message history:");
     console.dir(greetingResult.messages, {
