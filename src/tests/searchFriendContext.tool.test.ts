@@ -22,6 +22,25 @@ vi.mock("../services/search.service.js", () => ({
 // A stable UUID used anywhere the schema requires a valid friend id.
 const validFriendId = "5da77ede-2290-4ede-9839-d83a29a310e6";
 
+
+/**
+ * Adds the citation field that the search tool now appends to returned results.
+ *
+ * The mocked reranker returns plain RerankedContextItem objects, but the tool
+ * wraps those results with a formatted citation before returning them to the
+ * agent. This helper keeps the test expectations aligned with that output
+ * shape without duplicating citation strings in every assertion.
+ */
+function addExpectedCitations<
+    Result extends { sourceType: string; sourceId: string },
+>(results: Result[]) {
+    return results.map((result) => ({
+        ...result,
+        citation: `[${result.sourceType}: ${result.sourceId}]`,
+    }));
+}
+
+
 // These tests verify the Zod schema that protects the tool from bad input.
 describe("searchFriendContextToolInputSchema group tests", () => {
     // Valid input should include a UUID friend id, a non-empty query, and an allowed limit.
@@ -207,7 +226,9 @@ describe("searchFriendContextTool group tests", () => {
             query: "communication repair",
         });
 
-        expect(result.results).toEqual(rerankedResults.slice(0, 5));
+        expect(result.results).toEqual(
+            addExpectedCitations(rerankedResults.slice(0, 5)),
+        );
     });
 
     // A valid caller-supplied limit controls final output size after reranking.
@@ -218,7 +239,9 @@ describe("searchFriendContextTool group tests", () => {
             limit: 2,
         });
 
-        expect(result.results).toEqual(rerankedResults.slice(0, 2));
+        expect(result.results).toEqual(
+            addExpectedCitations(rerankedResults.slice(0, 2)),
+        );
     });
 });
 
@@ -260,7 +283,9 @@ describe("search friend context execution boundaries group tests", () => {
             limit: 2,
         });
 
-        expect(result.results).toEqual(rerankedResults.slice(0, 2));
+        expect(result.results).toEqual(
+            addExpectedCitations(rerankedResults.slice(0, 2)),
+        );
     });
 
     // The LangChain wrapper should execute the same tool logic for valid inputs.
@@ -271,7 +296,9 @@ describe("search friend context execution boundaries group tests", () => {
             limit: 2,
         });
 
-        expect(result.results).toEqual(rerankedResults.slice(0, 2));
+        expect(result.results).toEqual(
+            addExpectedCitations(rerankedResults.slice(0, 2)),
+        );
     });
 
     // LangChain schema validation should reject invalid input before retrieval runs.

@@ -40,8 +40,16 @@ export type SearchFriendContextToolInput = z.infer<
 
 /** Structured result returned to the agent after semantic search and reranking. */
 export type SearchFriendContextToolOutput = {
-    results: RerankedContextItem[];
+    results: CitedSearchFriendContextResult[];
 };
+
+export type CitedSearchFriendContextResult = RerankedContextItem & { // Extends the base retrieved and reranked context item with source citation for agent use.
+    citation: string;
+};
+
+function formatSourceCitation(item: RerankedContextItem): string {
+    return `[${item.sourceType}: ${item.sourceId}]`;
+}
 
 /**
  * Searches a friend's ingested context and returns reranked results.
@@ -54,7 +62,6 @@ export async function searchFriendContextTool(
 ): Promise<SearchFriendContextToolOutput> {
     const finalLimit = input.limit ?? 5;
 
-    // Retrieve more than the final count so reranking has room to improve order.
     const semanticResults = await retrieveFriendContextSemantically(
         input.friendId,
         input.query,
@@ -63,17 +70,20 @@ export async function searchFriendContextTool(
         },
     );
 
-    // Deterministic reranking adds source and keyword signals before truncation.
     const rerankedResults = rerankContextItems(
         input.query,
         semanticResults,
     ).slice(0, finalLimit);
 
+    const citedResults = rerankedResults.map((result) => ({
+        ...result,
+        citation: formatSourceCitation(result),
+    }));
+
     return {
-        results: rerankedResults,
+        results: citedResults,
     };
 }
-
 /**
  * Validates and executes the search tool from an untrusted tool-call payload.
  *
@@ -103,7 +113,7 @@ export const searchFriendContextLangChainTool = tool(
     {
         name: "search_friend_context",
         description:
-            "Search a friend's stored rules, notes, and events using semantic retrieval and deterministic reranking. Use this when an assessment or prediction requires historical relationship context.",
+            "Search a friend's stored rules, notes, and events using semantic retrieval and deterministic reranking. Use this when an assessment or prediction requires historical relationship context. Reuse each result's citation field when citing retrieved context.",
         schema: searchFriendContextToolInputSchema,
     },
 );
