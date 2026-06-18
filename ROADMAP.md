@@ -957,6 +957,12 @@ Completed:
 - Tightened the prompt so the agent copies citation fields exactly
 - Normalised agent smoke-test output for readable message content
 - Verified the real agent copies citations in the expected format
+Completed:
+- Added formatted `citation` fields to search tool results
+- Updated the agent prompt to copy citation fields exactly
+- Normalised production agent smoke-test output
+- Added a smoke-test assertion that retrieval-backed answers include the expected citation
+- Added a smoke-test assertion that greeting requests do not trigger tool calls
 
 Verified behaviour:
 
