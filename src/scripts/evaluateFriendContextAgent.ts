@@ -27,6 +27,15 @@ type AgentEvaluationCase = {
      * Omit this for exploratory cases where the answer may legitimately vary.
      */
     expectedCitation?: string;
+
+    /**
+     * Optional text that should appear in the final response.
+     *
+     * This is used for broad behavioural checks, such as verifying that the
+     * agent admits insufficient context instead of forcing an answer from
+     * weakly related retrieval results.
+     */
+    expectedResponseIncludes?: string;
 };
 
 type AgentEvaluationSummary = {
@@ -49,6 +58,21 @@ type AgentEvaluationSummary = {
      * Number of expected citations found in final agent responses.
      */
     citationMatches: number;
+
+    /**
+     * Number of cases that configured expected response text.
+     */
+    responseTextChecks: number;
+
+    /**
+     * Number of configured response-text expectations found in final responses.
+     */
+    responseTextMatches: number;
+
+    /**
+     * Whether any configured manual expectation failed during this evaluation run.
+     */
+    hasFailedExpectation: boolean;
 };
 
 /**
@@ -125,6 +149,7 @@ const evaluationCases: AgentEvaluationCase[] = [
             `Using stored context for friend ${validFriendId}, ` +
             "what happened during my holiday disagreement with Cole?",
         shouldUseTool: true,
+        expectedResponseIncludes: "does not contain",
     },
 ];
 
@@ -141,6 +166,9 @@ async function main(): Promise<void> {
         toolUseMatches: 0,
         citationChecks: 0,
         citationMatches: 0,
+        responseTextChecks: 0,
+        responseTextMatches: 0,
+        hasFailedExpectation: false,
     };
 
     for (const evaluationCase of evaluationCases) {
@@ -166,6 +194,9 @@ async function main(): Promise<void> {
         if (toolUseMatchedExpectation) {
             summary.toolUseMatches += 1;
         }
+        if (!toolUseMatchedExpectation) {
+            summary.hasFailedExpectation = true;
+        }
 
         console.log(`Expected tool use: ${evaluationCase.shouldUseTool}`);
         console.log(`Actual tool use: ${usedTool}`);
@@ -183,8 +214,33 @@ async function main(): Promise<void> {
             if (citationPresent) {
                 summary.citationMatches += 1;
             }
+            if (!citationPresent) {
+                summary.hasFailedExpectation = true;
+            }
 
             console.log(`Expected citation present: ${citationPresent}`);
+        }
+
+        if (evaluationCase.expectedResponseIncludes) {
+            summary.responseTextChecks += 1;
+
+            const expectedTextPresent = finalResponse
+                .toLowerCase()
+                .includes(
+                    evaluationCase.expectedResponseIncludes.toLowerCase(),
+                );
+
+            if (expectedTextPresent) {
+                summary.responseTextMatches += 1;
+            }
+
+            if (!expectedTextPresent) {
+                summary.hasFailedExpectation = true;
+            }
+
+            console.log(
+                `Expected response text present: ${expectedTextPresent}`,
+            );
         }
 
         console.log("\nFinal response:");
@@ -199,6 +255,15 @@ async function main(): Promise<void> {
     console.log(
         `Expected citations found: ${summary.citationMatches}/${summary.citationChecks}`,
     );
+    console.log(
+        `Expected response text found: ${summary.responseTextMatches}/${summary.responseTextChecks}`,
+    );
+
+    if (summary.hasFailedExpectation) {
+        throw new Error(
+            "One or more manual agent evaluation expectations failed",
+        );
+    }
 }
 
 main().catch((error: unknown) => {

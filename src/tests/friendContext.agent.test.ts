@@ -191,7 +191,11 @@ describe("createFriendContextAgent group tests", () => {
             ])
             .respond(
                 new AIMessage(
-                    "I could not find enough stored context to answer that reliably.",
+                    [
+                        "I could not find enough stored context to answer that reliably.",
+                        "",
+                        "Evidence used: None",
+                    ].join("\n"),
                 ),
             );
 
@@ -210,11 +214,14 @@ describe("createFriendContextAgent group tests", () => {
         });
 
         expect(result.messages.at(-1)?.content).toBe(
-            "I could not find enough stored context to answer that reliably.",
+            [
+                "I could not find enough stored context to answer that reliably.",
+                "",
+                "Evidence used: None",
+            ].join("\n"),
         );
 
         expect(emptySearchImplementation).toHaveBeenCalledTimes(1);
         expect(model.callCount).toBe(2);
     });
 });
-
