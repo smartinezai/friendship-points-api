@@ -13,20 +13,20 @@ The main project README is in [`README.md`](./README.md).
 
 ---
 
-# Detailed 50-Day Roadmap
+## Detailed 50-Day Roadmap
 
-## Current Position
+### Current Position
 
 Completed:
 
 ```txt
-Day 1–27: Backend foundation, validation, CI, soft delete, keyword search, ingestion, RAG, embeddings, semantic retrieval, and reranking
+Day 1–32: Backend foundation, validation, CI, soft delete, RAG, embeddings, semantic retrieval, reranking, tool calling, agentic retrieval, source grounding, and agentic RAG evaluation
 ```
 
 Next:
 
 ```txt
-Day 28: Function Calling Search Tool
+Day 33: LLM Tracing and Prompt Analytics
 ```
 
 ---
@@ -980,6 +980,8 @@ Known issue:
 ---
 
 ## Day 32: Agentic RAG Evaluation
+
+Status: Complete.
 
 Completed:
 
@@ -2050,7 +2052,6 @@ Design notes:
 
 - For group chats, consent may need to come from every participant whose messages are processed.
 - Consent authorises processing; it does not verify that every statement in the messages is accurate.
-
 
 ## Optional Future Search Upgrade: Elasticsearch or OpenSearch
 
