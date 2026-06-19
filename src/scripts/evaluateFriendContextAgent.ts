@@ -3,27 +3,60 @@ import { friendContextAgent } from "../ai/agents/friendContext.production.js";
 
 const validFriendId = "5da77ede-2290-4ede-9839-d83a29a310e6";
 
-/**
- * One manual evaluation case for the production friend-context agent.
- *
- * These cases are intentionally not unit tests because they call the real model
- * and may vary slightly between runs. They are used to inspect whether the
- * agent chooses tools appropriately and whether grounded answers include
- * evidence.
- */
 type AgentEvaluationCase = {
+    /**
+     * Human-readable label printed in the terminal so each evaluation case is easy to inspect.
+     */
     label: string;
+
+    /**
+     * The exact user question sent to the production friend-context agent.
+     */
     question: string;
+
+    /**
+     * Whether this case should trigger the search_friend_context tool.
+     *
+     * This evaluates tool-routing behaviour, not answer quality.
+     */
     shouldUseTool: boolean;
+
+    /**
+     * Optional citation expected in the final answer for known-positive grounded cases.
+     *
+     * Omit this for exploratory cases where the answer may legitimately vary.
+     */
     expectedCitation?: string;
+};
+
+type AgentEvaluationSummary = {
+    /**
+     * Total number of manual evaluation cases executed.
+     */
+    totalCases: number;
+
+    /**
+     * Number of cases where tool usage matched the expected routing behaviour.
+     */
+    toolUseMatches: number;
+
+    /**
+     * Number of cases that configured an expected citation.
+     */
+    citationChecks: number;
+
+    /**
+     * Number of expected citations found in final agent responses.
+     */
+    citationMatches: number;
 };
 
 /**
  * Converts LangChain message content into readable plain text.
  *
- * Model responses can be either plain strings or arrays of content blocks.
- * Keeping this normalisation local to the evaluation script makes the terminal
- * output readable without changing agent or production behaviour.
+ * Some model responses are plain strings, while others are arrays of content
+ * blocks such as `{ type: "text", text: "..." }`. This helper keeps terminal
+ * output readable without changing production agent behaviour.
  */
 function normaliseMessageContent(content: unknown): string {
     if (typeof content === "string") {
@@ -51,11 +84,10 @@ function normaliseMessageContent(content: unknown): string {
 }
 
 /**
- * Checks whether any agent message contains tool calls.
+ * Checks whether any LangChain message contains tool calls.
  *
- * This is a lightweight evaluation signal for tool-routing behaviour. It does
- * not judge answer quality; it only checks whether the model attempted to use a
- * tool during the agent loop.
+ * This gives a lightweight signal for whether the agent attempted retrieval.
+ * It intentionally does not judge whether the retrieved context was good.
  */
 function didUseTool(messages: unknown[]): boolean {
     return messages.some((message) => {
@@ -99,11 +131,18 @@ const evaluationCases: AgentEvaluationCase[] = [
 /**
  * Runs manual agentic-RAG evaluation cases against the production agent.
  *
- * The script reports whether tool use matched expectations and whether known
- * citation-bearing answers include the expected citation. It is a manual
- * evaluation aid, not a deterministic CI test.
+ * This script is intentionally manual because it calls the real model and real
+ * retrieval stack. It should be used during development to inspect tool routing,
+ * evidence usage, and citation behaviour, not as a deterministic CI test.
  */
 async function main(): Promise<void> {
+    const summary: AgentEvaluationSummary = {
+        totalCases: evaluationCases.length,
+        toolUseMatches: 0,
+        citationChecks: 0,
+        citationMatches: 0,
+    };
+
     for (const evaluationCase of evaluationCases) {
         console.log(`\n=== ${evaluationCase.label} ===`);
 
@@ -124,6 +163,10 @@ async function main(): Promise<void> {
         const toolUseMatchedExpectation =
             usedTool === evaluationCase.shouldUseTool;
 
+        if (toolUseMatchedExpectation) {
+            summary.toolUseMatches += 1;
+        }
+
         console.log(`Expected tool use: ${evaluationCase.shouldUseTool}`);
         console.log(`Actual tool use: ${usedTool}`);
         console.log(
@@ -131,16 +174,31 @@ async function main(): Promise<void> {
         );
 
         if (evaluationCase.expectedCitation) {
-            console.log(
-                `Expected citation present: ${finalResponse.includes(
-                    evaluationCase.expectedCitation,
-                )}`,
+            summary.citationChecks += 1;
+
+            const citationPresent = finalResponse.includes(
+                evaluationCase.expectedCitation,
             );
+
+            if (citationPresent) {
+                summary.citationMatches += 1;
+            }
+
+            console.log(`Expected citation present: ${citationPresent}`);
         }
 
         console.log("\nFinal response:");
         console.log(finalResponse);
     }
+
+    console.log("\n=== Agent evaluation summary ===");
+    console.log(`Cases evaluated: ${summary.totalCases}`);
+    console.log(
+        `Tool-use expectations met: ${summary.toolUseMatches}/${summary.totalCases}`,
+    );
+    console.log(
+        `Expected citations found: ${summary.citationMatches}/${summary.citationChecks}`,
+    );
 }
 
 main().catch((error: unknown) => {
