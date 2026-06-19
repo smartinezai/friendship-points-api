@@ -981,21 +981,30 @@ Known issue:
 
 ## Day 32: Agentic RAG Evaluation
 
-Status: Planned.
+Completed:
 
-Goals:
+- Added manual friend-context agent evaluation script
+- Added evaluation cases for history-dependent retrieval, simple greetings, and unknown/insufficient context
+- Added tool-use expectation reporting
+- Added expected-citation reporting for known grounded answers
+- Added expected-response-text checks for insufficient-context behaviour
+- Made the manual evaluation script fail when configured expectations are not met
+- Tightened the agent prompt so weakly related context is not treated as direct evidence
+- Required unsupported answers to use `Evidence used: None`
+- Verified the production agent avoids inventing a holiday-disagreement answer from unrelated retrieved context
 
-- Evaluate whether the agent searched when it should
-- Evaluate whether the agent avoided unnecessary searches
-- Evaluate whether retrieved context was used correctly
-- Evaluate final structured answers
-- Add guardrails for poor tool usage
+Current behaviour:
 
-Learning focus:
+- History-dependent questions trigger retrieval
+- Simple greetings do not trigger retrieval
+- Known grounded answers include the expected citation
+- Weakly related retrieved context is treated as insufficient context
+- Unsupported answers end with `Evidence used: None`
 
-- agent behaviour evaluation
-- tool-use evaluation
-- end-to-end agentic RAG quality
+Known limitation:
+
+- This is still prompt-based and manually evaluated because it uses the real production model
+- Later API-layer formatting should make evidence handling deterministic
 
 ---
 
