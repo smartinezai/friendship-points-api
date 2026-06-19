@@ -51,9 +51,9 @@ npm run build
 
 ---
 
-# Phase 1: Core TypeScript API and PostgreSQL Foundations
+## Phase 1: Core TypeScript API and PostgreSQL Foundations
 
-## Day 1: TypeScript + Fastify Setup
+### Day 1: TypeScript + Fastify Setup
 
 Status: Done.
 
@@ -74,7 +74,7 @@ Learning focus:
 
 ---
 
-## Day 2: PostgreSQL + Prisma Setup
+### Day 2: PostgreSQL + Prisma Setup
 
 Status: Done.
 
@@ -97,7 +97,7 @@ Learning focus:
 
 ---
 
-## Day 3: Friends API
+### Day 3: Friends API
 
 Status: Done.
 
@@ -129,7 +129,7 @@ Learning focus:
 
 ---
 
-## Day 4: Friendship Rules
+### Day 4: Friendship Rules
 
 Status: Done.
 
@@ -169,7 +169,7 @@ Learning focus:
 
 ---
 
-## Day 5: Friendship Events
+### Day 5: Friendship Events
 
 Status: Done.
 
@@ -198,7 +198,7 @@ Learning focus:
 
 ---
 
-## Day 6: Manual Scoring and Balance
+### Day 6: Manual Scoring and Balance
 
 Status: Done.
 
@@ -225,7 +225,7 @@ Learning focus:
 
 ---
 
-## Day 7: Refactor, Validation, and Duplicate Handling
+### Day 7: Refactor, Validation, and Duplicate Handling
 
 Status: Done.
 
@@ -256,9 +256,9 @@ Learning focus:
 
 ---
 
-# Phase 2: LangChain and LLM-Assisted Scoring
+## Phase 2: LangChain and LLM-Assisted Scoring
 
-## Day 8: LLM Assessment Design
+### Day 8: LLM Assessment Design
 
 Status: Done.
 
@@ -299,7 +299,7 @@ Learning focus:
 
 ---
 
-## Day 8.5: Mock LLM and Structured Assessment Storage
+### Day 8.5: Mock LLM and Structured Assessment Storage
 
 Status: Done.
 
@@ -325,7 +325,7 @@ Learning focus:
 
 ---
 
-## Day 9: Real LLM Providers and Provider Refactor
+### Day 9: Real LLM Providers and Provider Refactor
 
 Status: Done.
 
@@ -363,7 +363,7 @@ Learning focus:
 
 ---
 
-## Day 10: Prompt Extraction, Provider Cleanup, and Metadata
+### Day 10: Prompt Extraction, Provider Cleanup, and Metadata
 
 Status: Done.
 
@@ -390,7 +390,7 @@ Learning focus:
 
 ---
 
-## Day 11: Route and Request Validation
+### Day 11: Route and Request Validation
 
 Status: Done.
 
@@ -411,7 +411,7 @@ Learning focus:
 
 ---
 
-## Day 12: Friend Management Endpoints
+### Day 12: Friend Management Endpoints
 
 Status: Mostly done.
 
@@ -445,7 +445,7 @@ Learning focus:
 
 ---
 
-## Day 13: Prediction Endpoint
+### Day 13: Prediction Endpoint
 
 Status: Done.
 
@@ -474,7 +474,7 @@ Learning focus:
 
 ---
 
-## Day 14: Testing Foundation
+### Day 14: Testing Foundation
 
 Status: Done.
 
@@ -506,9 +506,9 @@ Learning focus:
 
 ---
 
-# Phase 3: Backend Quality, Testing, and Automation
+## Phase 3: Backend Quality, Testing, and Automation
 
-## Day 15: Error Handling and Response Consistency
+### Day 15: Error Handling and Response Consistency
 
 Status: Done.
 
@@ -546,7 +546,7 @@ Learning focus:
 
 ---
 
-## Day 16: Safe Internal Logging
+### Day 16: Safe Internal Logging
 
 Status: Done.
 
@@ -576,7 +576,7 @@ Learning focus:
 
 ---
 
-## Day 17: Local Test Automation with Husky
+### Day 17: Local Test Automation with Husky
 
 Status: Done.
 
@@ -608,7 +608,7 @@ Learning focus:
 
 ---
 
-## Day 18: ESLint Setup
+### Day 18: ESLint Setup
 
 Status: Done.
 
@@ -630,7 +630,7 @@ Learning focus:
 
 ---
 
-## Day 19: GitHub Actions CI
+### Day 19: GitHub Actions CI
 
 Status: Done.
 
@@ -657,7 +657,7 @@ Learning focus:
 
 ---
 
-## Day 20: Friend Soft Delete
+### Day 20: Friend Soft Delete
 
 Status: Done.
 
@@ -687,11 +687,11 @@ Learning focus:
 
 ---
 
-# Phase 4: Zoomcamp Compliance First — Search, RAG, and Agentic Retrieval
+## Phase 4: Zoomcamp Compliance First — Search, RAG, and Agentic Retrieval
 
 This phase is prioritised so the project becomes a complete LLM Zoomcamp-style RAG project before adding lower-priority production/product features.
 
-## Day 21: Keyword Search over Rules, Notes, and Events
+### Day 21: Keyword Search over Rules, Notes, and Events
 
 Status: Done.
 
@@ -715,7 +715,7 @@ Learning focus:
 
 ---
 
-## Day 22: Search Ingestion Layer
+### Day 22: Search Ingestion Layer
 
 Status: Done.
 
@@ -737,7 +737,7 @@ Learning focus:
 
 ---
 
-## Day 23: Basic RAG Pipeline
+### Day 23: Basic RAG Pipeline
 
 Status: Done.
 
@@ -759,7 +759,7 @@ Learning focus:
 
 ---
 
-## Day 24: Retrieval Service Refactor
+### Day 24: Retrieval Service Refactor
 
 Status: Done.
 
@@ -785,7 +785,7 @@ Learning focus:
 
 ---
 
-## Day 25: Embeddings and Vector Storage
+### Day 25: Embeddings and Vector Storage
 
 Status: Done.
 
@@ -810,7 +810,7 @@ Learning focus:
 
 ---
 
-## Day 26: Semantic Retrieval
+### Day 26: Semantic Retrieval
 
 Status: Done.
 
@@ -832,7 +832,7 @@ Learning focus:
 
 ---
 
-## Day 27: Reranking
+### Day 27: Reranking
 
 Status: Done.
 
@@ -859,7 +859,7 @@ Known limitation:
 
 ---
 
-## Day 28: Function Calling Search Tool
+### Day 28: Function Calling Search Tool
 
 Completed:
 
@@ -878,7 +878,7 @@ Known follow-up:
 
 ---
 
-## Day 29: Friend Context Agent
+### Day 29: Friend Context Agent
 
 Status: Complete.
 
@@ -911,9 +911,9 @@ Learning focus:
 
 ---
 
-### Day 30 — Retrieval evaluation and service test backfill
+### Day 30: Retrieval Evaluation and Service Test Backfill
 
-Status: Complete
+Status: Complete.
 
 Completed:
 
@@ -944,9 +944,9 @@ Deferred:
 
 ---
 
-### Day 31 — Source-grounded agent responses
+### Day 31: Source-Grounded Agent Responses
 
-Status: Complete
+Status: Complete.
 
 Completed:
 
@@ -979,7 +979,7 @@ Known issue:
 
 ---
 
-## Day 32: Agentic RAG Evaluation
+### Day 32: Agentic RAG Evaluation
 
 Status: Complete.
 
@@ -1032,9 +1032,9 @@ This should satisfy the core requirements of the LLM Zoomcamp capstone project.
 
 ---
 
-# Phase 5: Extended AI and Knowledge Features
+## Phase 5: Extended AI and Knowledge Features
 
-## Day 33: LLM Tracing and Prompt Analytics
+### Day 33: LLM Tracing and Prompt Analytics
 
 Status: Planned.
 
@@ -1067,7 +1067,7 @@ Learning focus:
 
 ---
 
-## Day 34: Document Ingestion
+### Day 34: Document Ingestion
 
 Status: Planned.
 
@@ -1099,7 +1099,7 @@ Learning focus:
 
 ---
 
-## Day 35: User Identity and Ownership Foundation
+### Day 35: User Identity and Ownership Foundation
 
 Status: Planned.
 
@@ -1128,7 +1128,7 @@ Learning focus:
 
 ---
 
-## Day 36: Person Facts and Verification Status
+### Day 36: Person Facts and Verification Status
 
 Status: Planned.
 
@@ -1178,7 +1178,7 @@ Learning focus:
 
 ---
 
-## Day 37: Person Knowledge Intake Forms
+### Day 37: Person Knowledge Intake Forms
 
 Status: Planned.
 
@@ -1225,9 +1225,9 @@ Learning focus:
 
 ---
 
-# Phase 6: TypeScript, Testing, and API Contract Quality
+## Phase 6: TypeScript, Testing, and API Contract Quality
 
-## Day 38: Route and Integration Testing
+### Day 38: Route and Integration Testing
 
 Status: Planned.
 
@@ -1282,7 +1282,7 @@ Learning focus:
 
 ---
 
-## Day 39: Data Model and Type Architecture Hardening
+### Day 39: Data Model and Type Architecture Hardening
 
 Status: Planned.
 
@@ -1339,7 +1339,7 @@ Learning focus:
 
 ---
 
-## Day 40: API Contract and OpenAPI Documentation
+### Day 40: API Contract and OpenAPI Documentation
 
 Status: Planned.
 
@@ -1361,7 +1361,7 @@ Learning focus:
 
 ---
 
-## Day 41: TypeScript Refactor and Code Review
+### Day 41: TypeScript Refactor and Code Review
 
 Status: Planned.
 
@@ -1387,9 +1387,9 @@ Learning focus:
 
 ---
 
-# Phase 7: Infrastructure, Deployment, Security, and Privacy
+## Phase 7: Infrastructure, Deployment, Security, and Privacy
 
-## Day 42: Supabase Migration
+### Day 42: Supabase Migration
 
 Status: Planned.
 
@@ -1413,7 +1413,7 @@ Learning focus:
 
 ---
 
-## Day 43: Runtime Configuration Validation
+### Day 43: Runtime Configuration Validation
 
 Status: Planned.
 
@@ -1436,7 +1436,7 @@ Learning focus:
 
 ---
 
-## Day 44: Docker and Local DevOps
+### Day 44: Docker and Local DevOps
 
 Status: Planned.
 
@@ -1466,7 +1466,7 @@ Learning focus:
 
 ---
 
-## Day 45: Background Jobs for Ingestion and Embeddings
+### Day 45: Background Jobs for Ingestion and Embeddings
 
 Status: Planned.
 
@@ -1498,7 +1498,7 @@ Learning focus:
 
 ---
 
-## Day 46: Deployment and Environment Management
+### Day 46: Deployment and Environment Management
 
 Status: Planned.
 
@@ -1529,7 +1529,7 @@ Learning focus:
 
 ---
 
-## Day 47: Authentication, Authorisation, and API Security
+### Day 47: Authentication, Authorisation, and API Security
 
 Status: Planned.
 
@@ -1575,7 +1575,7 @@ Learning focus:
 
 ---
 
-## Day 48: Monitoring, Privacy, and Documentation Polish
+### Day 48: Monitoring, Privacy, and Documentation Polish
 
 Status: Planned.
 
@@ -1641,9 +1641,9 @@ Learning focus:
 
 ---
 
-# Phase 8: Frontend and Final Delivery
+## Phase 8: Frontend and Final Delivery
 
-## Day 49: Responsive GUI / Frontend
+### Day 49: Responsive GUI / Frontend
 
 Status: Planned.
 
@@ -1684,7 +1684,7 @@ Learning focus:
 
 ---
 
-## Day 50: Final Review, Demo, and Capstone Submission
+### Day 50: Final Review, Demo, and Capstone Submission
 
 Status: Final planned task.
 
@@ -1733,9 +1733,11 @@ Learning focus:
 - technical self-review
 - portfolio readiness
 
-# Future Backlog Beyond Day 50
+---
 
-## Multi-User Accounts and Person/Relationship Model
+## Future Backlog Beyond Day 50
+
+### Multi-User Accounts and Person/Relationship Model
 
 Goal:
 
@@ -1752,7 +1754,7 @@ Goals:
 
 ---
 
-## Multi-Perspective Events and Claim Verification
+### Multi-Perspective Events and Claim Verification
 
 Goal:
 
@@ -1773,7 +1775,7 @@ A checkbox alone does not prove absence of coercion. This feature needs privacy,
 
 ---
 
-## Relationship Notes and Relationship-Centred Memory
+### Relationship Notes and Relationship-Centred Memory
 
 Goal:
 
@@ -1807,7 +1809,7 @@ Learning focus:
 
 ---
 
-## Production Readiness Checklist
+### Production Readiness Checklist
 
 - Authentication and authorisation
 - Environment-specific config
@@ -1829,7 +1831,7 @@ Learning focus:
 
 ---
 
-## Production CD Pipeline
+### Production CD Pipeline
 
 Goal:
 
@@ -1848,7 +1850,7 @@ Keep this separate from CI until the deployment process is well understood.
 
 ---
 
-## Signal Conversation Import
+### Signal Conversation Import
 
 Goal:
 
@@ -1877,7 +1879,7 @@ Learning focus:
 
 ---
 
-## Agent-Suggested Relationship Rules
+### Agent-Suggested Relationship Rules
 
 Goal:
 
@@ -1936,7 +1938,7 @@ Learning focus:
 
 ---
 
-## Consent-Gated Scheduled Conversation Import
+### Consent-Gated Scheduled Conversation Import
 
 Goal:
 
@@ -1998,7 +2000,7 @@ Learning focus:
 
 ---
 
-## Temporary Chat Data Retention and Deletion
+### Temporary Chat Data Retention and Deletion
 
 Purpose:
 
@@ -2053,6 +2055,8 @@ Design notes:
 - For group chats, consent may need to come from every participant whose messages are processed.
 - Consent authorises processing; it does not verify that every statement in the messages is accurate.
 
-## Optional Future Search Upgrade: Elasticsearch or OpenSearch
+---
+
+### Optional Future Search Upgrade: Elasticsearch or OpenSearch
 
 Consider Elasticsearch/OpenSearch only if Postgres + pgvector becomes insufficient for full-text search, hybrid retrieval, typo tolerance, search analytics, or large imported conversation/document datasets.
