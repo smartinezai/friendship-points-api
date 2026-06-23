@@ -71,9 +71,68 @@ type AgentEvaluationSummary = {
     responseTextMatches: number;
 
     /**
+     * Number of final responses that included a concrete source citation.
+     */
+    evidenceCitationCount: number;
+
+    /**
+     * Number of final responses that explicitly said no direct evidence was used.
+     */
+    evidenceNoneCount: number;
+
+    /**
+     * Number of final responses that did not include a recognisable evidence line.
+     */
+    evidenceMissingCount: number;
+
+    /**
+     * Number of retrieval-backed cases that did not include a recognisable evidence line.
+     *
+     * Direct non-retrieval responses, such as greetings, do not need evidence lines.
+     */
+    retrievalEvidenceMissingCount: number;
+
+    /**
      * Whether any configured manual expectation failed during this evaluation run.
      */
     hasFailedExpectation: boolean;
+};
+
+type EvidenceStatus = "citation" | "none" | "missing";
+
+/**
+ * Lightweight analytics extracted from the final model message.
+ *
+ * These values are optional because different LangChain models/providers expose
+ * metadata differently. The script should report metadata when available without
+ * failing when a provider omits it.
+ */
+type FinalMessageAnalytics = {
+    /**
+     * Whether the final answer ended with a source citation, explicit no-evidence
+     * marker, or no recognisable evidence line.
+     */
+    evidenceStatus: EvidenceStatus;
+
+    /**
+     * Model name reported by the provider, when available.
+     */
+    modelName?: string;
+
+    /**
+     * Number of input tokens reported by the provider, when available.
+     */
+    inputTokens?: number;
+
+    /**
+     * Number of output tokens reported by the provider, when available.
+     */
+    outputTokens?: number;
+
+    /**
+     * Total tokens reported by the provider, when available.
+     */
+    totalTokens?: number;
 };
 
 /**
@@ -129,6 +188,91 @@ function didUseTool(messages: unknown[]): boolean {
     });
 }
 
+/**
+ * Classifies the final evidence line in an agent response.
+ *
+ * The agent is expected to end grounded answers with either:
+ * - `Evidence used: [sourceType: sourceId]`
+ * - `Evidence used: None`
+ *
+ * This helper gives the evaluation script a compact quality signal without
+ * needing to compare the full natural-language answer exactly.
+ */
+function getEvidenceStatus(finalResponse: string): EvidenceStatus {
+    if (/^Evidence used:\s*\[[^\]]+\]/m.test(finalResponse)) {
+        return "citation";
+    }
+
+    if (/^Evidence used:\s*None/m.test(finalResponse)) {
+        return "none";
+    }
+
+    return "missing";
+}
+
+/**
+ * Extracts provider metadata from the final LangChain message when available.
+ *
+ * LangChain message objects are not treated as trusted plain objects here, so
+ * the helper checks each field before reading it. This keeps the script robust
+ * across provider-specific message metadata shapes.
+ */
+function getFinalMessageAnalytics(
+    messages: unknown[],
+    finalResponse: string,
+): FinalMessageAnalytics {
+    const finalMessage = messages.at(-1);
+
+    const analytics: FinalMessageAnalytics = {
+        evidenceStatus: getEvidenceStatus(finalResponse),
+    };
+
+    if (
+        typeof finalMessage === "object" &&
+        finalMessage !== null &&
+        "response_metadata" in finalMessage &&
+        typeof finalMessage.response_metadata === "object" &&
+        finalMessage.response_metadata !== null &&
+        "model" in finalMessage.response_metadata &&
+        typeof finalMessage.response_metadata.model === "string"
+    ) {
+        analytics.modelName = finalMessage.response_metadata.model;
+    }
+
+    if (
+        typeof finalMessage === "object" &&
+        finalMessage !== null &&
+        "usage_metadata" in finalMessage &&
+        typeof finalMessage.usage_metadata === "object" &&
+        finalMessage.usage_metadata !== null
+    ) {
+        const usageMetadata = finalMessage.usage_metadata;
+
+        if (
+            "input_tokens" in usageMetadata &&
+            typeof usageMetadata.input_tokens === "number"
+        ) {
+            analytics.inputTokens = usageMetadata.input_tokens;
+        }
+
+        if (
+            "output_tokens" in usageMetadata &&
+            typeof usageMetadata.output_tokens === "number"
+        ) {
+            analytics.outputTokens = usageMetadata.output_tokens;
+        }
+
+        if (
+            "total_tokens" in usageMetadata &&
+            typeof usageMetadata.total_tokens === "number"
+        ) {
+            analytics.totalTokens = usageMetadata.total_tokens;
+        }
+    }
+
+    return analytics;
+}
+
 const evaluationCases: AgentEvaluationCase[] = [
     {
         label: "History-dependent apology question",
@@ -169,6 +313,10 @@ async function main(): Promise<void> {
         citationMatches: 0,
         responseTextChecks: 0,
         responseTextMatches: 0,
+        evidenceCitationCount: 0,
+        evidenceNoneCount: 0,
+        evidenceMissingCount: 0,
+        retrievalEvidenceMissingCount: 0,
         hasFailedExpectation: false,
     };
 
@@ -202,6 +350,28 @@ async function main(): Promise<void> {
             result.messages.at(-1)?.content,
         );
 
+        const finalMessageAnalytics = getFinalMessageAnalytics(
+            result.messages,
+            finalResponse,
+        );
+
+        if (finalMessageAnalytics.evidenceStatus === "citation") {
+            summary.evidenceCitationCount += 1;
+        }
+
+        if (finalMessageAnalytics.evidenceStatus === "none") {
+            summary.evidenceNoneCount += 1;
+        }
+
+        if (finalMessageAnalytics.evidenceStatus === "missing") {
+            summary.evidenceMissingCount += 1;
+
+            if (evaluationCase.shouldUseTool) {
+                summary.retrievalEvidenceMissingCount += 1;
+                summary.hasFailedExpectation = true;
+            }
+        }
+
         const usedTool = didUseTool(result.messages);
         const toolUseMatchedExpectation =
             usedTool === evaluationCase.shouldUseTool;
@@ -222,6 +392,14 @@ async function main(): Promise<void> {
         console.log(`Trace operation: ${trace.operationName}`);
         console.log(`Trace durationMs: ${trace.durationMs}`);
         console.log(`Trace success: ${trace.success}`);
+
+        console.log(`Evidence status: ${finalMessageAnalytics.evidenceStatus}`);
+        console.log(`Model name: ${finalMessageAnalytics.modelName ?? "unknown"}`);
+        console.log(
+            `Token usage: input=${finalMessageAnalytics.inputTokens ?? "unknown"}, ` +
+            `output=${finalMessageAnalytics.outputTokens ?? "unknown"}, ` +
+            `total=${finalMessageAnalytics.totalTokens ?? "unknown"}`,
+        );
 
         if (evaluationCase.expectedCitation) {
             summary.citationChecks += 1;
@@ -276,6 +454,14 @@ async function main(): Promise<void> {
     );
     console.log(
         `Expected response text found: ${summary.responseTextMatches}/${summary.responseTextChecks}`,
+    );
+    console.log(
+        `Evidence status counts: citation=${summary.evidenceCitationCount}, ` +
+            `none=${summary.evidenceNoneCount}, ` +
+            `missing=${summary.evidenceMissingCount}`,
+    );
+    console.log(
+        `Retrieval-backed missing evidence lines: ${summary.retrievalEvidenceMissingCount}`,
     );
 
     if (summary.hasFailedExpectation) {
