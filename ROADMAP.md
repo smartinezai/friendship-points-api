@@ -1044,33 +1044,20 @@ Completed:
 - Added tests for successful and failing traced async operations
 - Wrapped manual friend-context agent evaluation runs with tracing
 - Reported operation name, duration, and success status for each agent evaluation case
+- Added trace logging around the friend-context search tool
+- Compared full agent latency with retrieval/tool latency
 
 Current behaviour:
 
-- Manual agent evaluation now reports latency per case
-- Retrieval-backed agent runs can be compared against direct greeting responses
-- Tracing remains local and provider-independent
+- Manual agent evaluation reports full agent latency per case
+- Search tool calls report retrieval/reranking latency
+- Retrieval-backed cases now expose both outer agent duration and inner tool duration
 
 Known limitation:
 
-- Current traces measure the full agent run only
-- They do not yet split model latency, retrieval latency, tool latency, or final-response latency
-Possible tools:
-
-```txt
-LangSmith
-Langfuse
-Helicone
-OpenTelemetry
-custom logging
-```
-
-Learning focus:
-
-- LLM observability
-- debugging prompt behaviour
-- cost and latency awareness
-- model comparison
+- Tool traces are currently logged with `console.log`
+- Traces are not yet persisted or structured into a central trace record
+- Model-call latency is still inferred indirectly rather than measured separately
 
 ---
 
