@@ -1036,18 +1036,25 @@ This should satisfy the core requirements of the LLM Zoomcamp capstone project.
 
 ### Day 33: LLM Tracing and Prompt Analytics
 
-Status: Planned.
+Status: In progress.
 
-Goals:
+Completed:
 
-- Trace LangChain/LLM calls
-- Track prompt version
-- Track model name
-- Track latency
-- Track token usage/cost where available
-- Track structured output validity
-- Analyse retrieved context quality after RAG is added
+- Added local async tracing helper
+- Added tests for successful and failing traced async operations
+- Wrapped manual friend-context agent evaluation runs with tracing
+- Reported operation name, duration, and success status for each agent evaluation case
 
+Current behaviour:
+
+- Manual agent evaluation now reports latency per case
+- Retrieval-backed agent runs can be compared against direct greeting responses
+- Tracing remains local and provider-independent
+
+Known limitation:
+
+- Current traces measure the full agent run only
+- They do not yet split model latency, retrieval latency, tool latency, or final-response latency
 Possible tools:
 
 ```txt
