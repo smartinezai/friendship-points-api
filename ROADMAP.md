@@ -1034,31 +1034,37 @@ This should satisfy the core requirements of the LLM Zoomcamp capstone project.
 
 ## Phase 5: Extended AI and Knowledge Features
 
-### Day 33: LLM Tracing and Prompt Analytics
+## Day 33: LLM Tracing and Prompt Analytics
 
-Status: In progress.
+Status: Complete.
 
 Completed:
 
 - Added local async tracing helper
 - Added tests for successful and failing traced async operations
 - Wrapped manual friend-context agent evaluation runs with tracing
-- Reported operation name, duration, and success status for each agent evaluation case
 - Added trace logging around the friend-context search tool
-- Compared full agent latency with retrieval/tool latency
+- Reported operation name, duration, and success status for each agent evaluation case
+- Reported model name and token usage when provider metadata is available
+- Classified final responses by evidence status: `citation`, `none`, or `missing`
+- Added evidence-status summary counts to the manual evaluation script
+- Allowed direct non-retrieval responses, such as greetings, to omit evidence lines
+- Failed the evaluation only when retrieval-backed cases have missing evidence lines
 
 Current behaviour:
 
 - Manual agent evaluation reports full agent latency per case
 - Search tool calls report retrieval/reranking latency
-- Retrieval-backed cases now expose both outer agent duration and inner tool duration
+- Retrieval-backed cases expose both outer agent duration and inner tool duration
+- Final responses are checked for citation, explicit no-evidence, or missing evidence status
+- Token usage and model name are printed when available
 
 Known limitation:
 
 - Tool traces are currently logged with `console.log`
-- Traces are not yet persisted or structured into a central trace record
+- Traces are not persisted or exported to a tracing system
 - Model-call latency is still inferred indirectly rather than measured separately
-
+- Prompt analytics are local/manual rather than integrated with LangSmith, Langfuse, or OpenTelemetry
 ---
 
 ### Day 34: Document Ingestion
