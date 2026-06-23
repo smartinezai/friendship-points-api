@@ -6,6 +6,7 @@ import {
 } from "../../services/search.service.js";
 import { tool } from "@langchain/core/tools";
 import { formatSourceCitation } from "./sourceCitation.js";
+import { traceAsync } from "../tracing/traceAsync.js";
 /**
  * Runtime schema for the agent-facing friend-context search tool.
  *
@@ -78,27 +79,44 @@ export async function searchFriendContextTool(
 ): Promise<SearchFriendContextToolOutput> {
     const finalLimit = input.limit ?? 5;
 
-    const semanticResults = await retrieveFriendContextSemantically(
-        input.friendId,
-        input.query,
-        {
-            limit: 10,
+    /**
+     * Trace the retrieval and reranking part of the search tool.
+     *
+     * This measures only the tool's internal retrieval pipeline, not the full
+     * model → tool → model agent loop. Comparing this trace with the outer agent
+     * trace tells us whether latency mostly comes from retrieval or from LLM calls.
+     */
+    const { result, trace } = await traceAsync(
+        "search-friend-context-tool",
+        async () => {
+            const semanticResults = await retrieveFriendContextSemantically(
+                input.friendId,
+                input.query,
+                { limit: 10 },
+            );
+
+            const rerankedResults = rerankContextItems(
+                input.query,
+                semanticResults,
+            ).slice(0, finalLimit);
+
+            const citedResults = rerankedResults.map((result) => ({
+                ...result,
+                citation: formatSourceCitation(
+                    result.sourceType,
+                    result.sourceId,
+                ),
+            }));
+
+            return { results: citedResults };
         },
     );
 
-    const rerankedResults = rerankContextItems(
-        input.query,
-        semanticResults,
-    ).slice(0, finalLimit);
+    console.log(
+        `[trace] ${trace.operationName} completed in ${trace.durationMs}ms`,
+    );
 
-    const citedResults = rerankedResults.map((result) => ({
-        ...result,
-        citation: formatSourceCitation(result.sourceType, result.sourceId),
-    }));
-
-    return {
-        results: citedResults,
-    };
+    return result;
 }
 /**
  * Validates and executes the search tool from an untrusted tool-call payload.
