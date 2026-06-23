@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { friendContextAgent } from "../ai/agents/friendContext.production.js";
+import { traceAsync } from "../ai/tracing/traceAsync.js";
 
 const validFriendId = "5da77ede-2290-4ede-9839-d83a29a310e6";
 
@@ -174,14 +175,28 @@ async function main(): Promise<void> {
     for (const evaluationCase of evaluationCases) {
         console.log(`\n=== ${evaluationCase.label} ===`);
 
-        const result = await friendContextAgent.invoke({
-            messages: [
-                {
-                    role: "user",
-                    content: evaluationCase.question,
-                },
-            ],
-        });
+        /**
+         * Trace the full production agent invocation for this evaluation case.
+         *
+         * `traceAsync` returns an object with two properties:
+         * - `result`: the original agent response from `friendContextAgent.invoke(...)`
+         * - `trace`: timing and success metadata for this evaluation run
+         *
+         * We destructure both properties here so the rest of the script can keep
+         * using `result.messages` while also printing trace metadata.
+         */
+        const { result, trace } = await traceAsync(
+            `friend-context-agent:${evaluationCase.label}`,
+            async () =>
+                friendContextAgent.invoke({
+                    messages: [
+                        {
+                            role: "user",
+                            content: evaluationCase.question,
+                        },
+                    ],
+                }),
+        );
 
         const finalResponse = normaliseMessageContent(
             result.messages.at(-1)?.content,
@@ -203,6 +218,10 @@ async function main(): Promise<void> {
         console.log(
             `Tool-use expectation met: ${toolUseMatchedExpectation}`,
         );
+
+        console.log(`Trace operation: ${trace.operationName}`);
+        console.log(`Trace durationMs: ${trace.durationMs}`);
+        console.log(`Trace success: ${trace.success}`);
 
         if (evaluationCase.expectedCitation) {
             summary.citationChecks += 1;
