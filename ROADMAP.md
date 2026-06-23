@@ -1059,12 +1059,14 @@ Current behaviour:
 - Final responses are checked for citation, explicit no-evidence, or missing evidence status
 - Token usage and model name are printed when available
 
-Known limitation:
+Known limitations:
 
 - Tool traces are currently logged with `console.log`
 - Traces are not persisted or exported to a tracing system
 - Model-call latency is still inferred indirectly rather than measured separately
 - Prompt analytics are local/manual rather than integrated with LangSmith, Langfuse, or OpenTelemetry
+- External tracing tools such as LangSmith are deferred until the production observability phase
+
 ---
 
 ### Day 34: Document Ingestion
@@ -1623,6 +1625,8 @@ This should be treated as a legal/privacy design task, not just a technical chec
 Possible tools:
 
 ```txt
+LangSmith
+Langfuse
 Sentry
 Grafana
 OpenTelemetry
