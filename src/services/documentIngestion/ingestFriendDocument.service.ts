@@ -29,6 +29,11 @@ export type IngestFriendDocumentResult = {
     friendId: string;
 
     /**
+     * ID shared by every chunk created from this document ingestion.
+     */
+    documentId: string;
+
+    /**
      * Trimmed title of the ingested document.
      */
     title: string;
@@ -66,6 +71,7 @@ export async function ingestFriendDocument(
 ): Promise<IngestFriendDocumentResult> {
     const preparedDocument = prepareDocumentForIngestion(input);
 
+    const documentId = randomUUID();
     const sourceIds: string[] = [];
 
     const searchableDocumentRows = preparedDocument.chunks.map((chunk) => {
@@ -83,6 +89,13 @@ export async function ingestFriendDocument(
             friendId: input.friendId,
             sourceType: DOCUMENT_CHUNK_SOURCE_TYPE,
             sourceId,
+            documentId,
+            documentTitle: preparedDocument.title,
+            documentType: preparedDocument.documentType,
+            chunkIndex: chunk.chunkIndex,
+            ...(preparedDocument.sourceDate === undefined
+                ? {}
+                : { sourceDate: preparedDocument.sourceDate }),
             content: [
                 `Document title: ${preparedDocument.title}`,
                 `Document type: ${preparedDocument.documentType}`,
@@ -99,6 +112,7 @@ export async function ingestFriendDocument(
 
     return {
         friendId: input.friendId,
+        documentId,
         title: preparedDocument.title,
         documentType: preparedDocument.documentType,
         createdChunkCount: preparedDocument.chunks.length,

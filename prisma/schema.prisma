@@ -66,12 +66,19 @@ model Assessment {
 
 /// Denormalized text record used by keyword retrieval and RAG prompts.
 model SearchableDocument {
-  id         String   @id @default(uuid())
-  friendId   String
-  friend     Friend   @relation(fields: [friendId], references: [id])
-  sourceType String
-  sourceId   String
-  content    String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String   @id @default(uuid())
+  friendId      String
+  friend        Friend   @relation(fields: [friendId], references: [id])
+  sourceType    String
+  sourceId      String
+  content       String
+  documentId    String?
+  documentTitle String?
+  documentType  String?
+  sourceDate    DateTime?
+  chunkIndex    Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([friendId, documentId])
 }
