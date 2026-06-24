@@ -5,6 +5,7 @@ import { eventRoutes } from "./routes/events.routes.js";
 import { assessmentRoutes } from "./routes/assessments.routes.js";
 import { predictionRoutes } from "./routes/predictions.routes.js";
 import { embeddingRoutes } from "./routes/embeddings.routes.js";
+import { documentsRoutes } from "./routes/documents.routes.js";
 /** Fastify app instance with all route modules registered. */
 const app = Fastify();
 
@@ -18,4 +19,5 @@ app.register(eventRoutes);
 app.register(assessmentRoutes);
 app.register(predictionRoutes);
 app.register(embeddingRoutes);
+app.register(documentsRoutes);
 export default app;
