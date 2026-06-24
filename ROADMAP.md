@@ -1099,6 +1099,26 @@ Learning focus:
 - metadata design
 - handling messy input
 
+Chunking strategy:
+
+- Start with TXT and Markdown only
+- Normalise text before chunking
+- Treat each chunk as a future retrievable evidence unit
+- Prefer semantically coherent chunks over arbitrary fixed-size chunks
+- Split primarily on Markdown structure and blank lines:
+  - headings
+  - sections
+  - paragraphs
+  - bullet groups
+- Combine neighbouring paragraphs only when they belong to the same topic
+- Avoid mixing unrelated topics in one chunk, even if the chunk is still under the size limit
+- Use a deterministic character limit as a safety cap, not as the main splitting principle
+- Preserve chunk order with `chunkIndex`
+- Preserve lightweight source metadata such as document title, document type, section heading, and source date where available
+- Do not use overlap in the first implementation
+- Split oversized paragraphs only as a fallback
+- Revisit overlap, token-based chunking, and semantic chunking after retrieval evaluation
+
 ---
 
 ### Day 35: User Identity and Ownership Foundation
