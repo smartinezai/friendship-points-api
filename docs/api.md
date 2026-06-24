@@ -282,6 +282,59 @@ Does not save an `Event` or `Assessment`.
 
 ---
 
+## Document ingestion
+
+### `POST /friends/:friendId/documents/ingest`
+
+Stores raw TXT or Markdown content as searchable chunks for one active friend.
+The chunks are available to keyword retrieval immediately and to semantic
+retrieval after missing embeddings have been generated.
+
+This first version accepts document text in JSON. It does not accept file
+uploads or parse files on the server.
+
+```json
+{
+  "title": "Relationship communication notes",
+  "documentType": "markdown",
+  "content": "## Communication\nCole prefers planned calls.\n\n## Conflict repair\nCole appreciates time to cool down.",
+  "sourceDate": "2026-06-24"
+}
+```
+
+Validation:
+
+- `friendId` must be a UUID for an active friend.
+- `title` and `content` must contain non-whitespace text.
+- `documentType` must be `txt` or `markdown`.
+- `sourceDate` is optional and should be an ISO 8601 date or datetime.
+
+Successful response: `201 Created`.
+
+```json
+{
+  "friendId": "5da77ede-2290-4ede-9839-d83a29a310e6",
+  "documentId": "a3b2c1d0-1d2c-4b3a-8f6e-7d8c9b0a1e2f",
+  "title": "Relationship communication notes",
+  "documentType": "markdown",
+  "createdChunkCount": 2,
+  "sourceIds": [
+    "b4c3d2e1-2e3d-4c4b-9a7f-8e9d0c1b2a3f",
+    "c5d4e3f2-3f4e-4d5c-8b0a-9f0e1d2c3b4a"
+  ]
+}
+```
+
+`documentId` is shared by every chunk from the same ingestion request.
+Each `sourceId` identifies one individual chunk.
+
+Errors:
+
+- `400 Bad Request` for an invalid friend ID or request body.
+- `404 Not Found` when the friend does not exist or has been deleted.
+
+---
+
 ## Error helpers
 
 The API uses shared HTTP error helpers:

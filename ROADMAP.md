@@ -1071,7 +1071,26 @@ Known limitations:
 
 ### Day 34: Document Ingestion
 
-Status: Planned.
+Status: Complete.
+
+Completed:
+
+- Added `POST /friends/:friendId/documents/ingest` for raw TXT and Markdown content
+- Validated friend IDs and document request bodies with Zod
+- Normalised document text before chunking
+- Split content on Markdown headings and blank-line paragraphs, with a character safety cap for oversized paragraphs
+- Preserved chunk order and section headings
+- Stored document ID, title, type, source date, chunk index, and section heading on searchable document rows
+- Added document chunks to keyword and semantic retrieval, including LLM assessment and prediction context
+- Added unit tests for chunking, metadata persistence, and route responses
+
+Known limitations:
+
+- The API accepts raw text in JSON; it does not yet support file uploads or server-side file parsing
+- CSV, DOCX, and PDF support remain deferred
+- Document chunks are stored directly in `SearchableDocument` rather than separate `Document` and `DocumentChunk` models
+- Chunking uses no overlap and is character-based only when a paragraph exceeds the configured safety cap
+- The document metadata migrations must be applied in each database environment
 
 Goals:
 
