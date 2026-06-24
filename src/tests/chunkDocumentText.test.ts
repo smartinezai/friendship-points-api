@@ -72,6 +72,31 @@ describe("chunkDocumentText", () => {
         ]);
     });
 
+    it("keeps Markdown sections separate and preserves their headings", () => {
+        const chunks = chunkDocumentText(
+            "## Communication\nCole prefers planned calls.\n\n" +
+                "Unexpected calls can feel disruptive.\n\n" +
+                "## Conflict repair\nCole appreciates time to cool down.",
+            {
+                maxChunkCharacters: 100,
+            },
+        );
+
+        expect(chunks).toEqual([
+            {
+                chunkIndex: 0,
+                sectionHeading: "Communication",
+                content:
+                    "Cole prefers planned calls.\n\nUnexpected calls can feel disruptive.",
+            },
+            {
+                chunkIndex: 1,
+                sectionHeading: "Conflict repair",
+                content: "Cole appreciates time to cool down.",
+            },
+        ]);
+    });
+
     it("rejects invalid chunk size", () => {
         expect(() =>
             chunkDocumentText("Some text", {

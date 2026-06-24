@@ -93,12 +93,18 @@ export async function ingestFriendDocument(
             documentTitle: preparedDocument.title,
             documentType: preparedDocument.documentType,
             chunkIndex: chunk.chunkIndex,
+            ...(chunk.sectionHeading === undefined
+                ? {}
+                : { sectionHeading: chunk.sectionHeading }),
             ...(preparedDocument.sourceDate === undefined
                 ? {}
                 : { sourceDate: preparedDocument.sourceDate }),
             content: [
                 `Document title: ${preparedDocument.title}`,
                 `Document type: ${preparedDocument.documentType}`,
+                ...(chunk.sectionHeading === undefined
+                    ? []
+                    : [`Section heading: ${chunk.sectionHeading}`]),
                 `Chunk index: ${chunk.chunkIndex}`,
                 "",
                 chunk.content,

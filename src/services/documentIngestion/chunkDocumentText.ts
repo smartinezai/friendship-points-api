@@ -16,7 +16,66 @@ export type DocumentTextChunk = {
      * Text content for this chunk.
      */
     content: string;
+
+    /**
+     * Nearest preceding Markdown heading, when the chunk belongs to a section.
+     */
+    sectionHeading?: string;
 };
+
+type SectionParagraph = {
+    content: string;
+    sectionHeading?: string;
+};
+
+const markdownHeadingPattern = /^#{1,6}\s+(.+?)(?:\s+#+)?\s*$/u;
+
+function getMarkdownHeading(line: string): string | undefined {
+    const match = line.match(markdownHeadingPattern);
+    const heading = match?.[1]?.trim();
+
+    return heading || undefined;
+}
+
+function splitIntoSectionParagraphs(text: string): SectionParagraph[] {
+    const paragraphs: SectionParagraph[] = [];
+    let sectionHeading: string | undefined;
+
+    for (const block of text.split(/\n{2,}/)) {
+        const contentLines: string[] = [];
+
+        const addContent = () => {
+            const content = contentLines.join("\n").trim();
+
+            if (content.length > 0) {
+                paragraphs.push({
+                    content,
+                    ...(sectionHeading === undefined
+                        ? {}
+                        : { sectionHeading }),
+                });
+            }
+
+            contentLines.length = 0;
+        };
+
+        for (const line of block.split("\n")) {
+            const heading = getMarkdownHeading(line);
+
+            if (heading !== undefined) {
+                addContent();
+                sectionHeading = heading;
+                continue;
+            }
+
+            contentLines.push(line);
+        }
+
+        addContent();
+    }
+
+    return paragraphs;
+}
 
 /**
  * Options controlling document chunking.
@@ -35,7 +94,7 @@ export type ChunkDocumentTextOptions = {
  * Splits normalised document text into ordered, relevance-oriented chunks.
  *
  * First version strategy:
- * - split on blank lines to preserve paragraph/section boundaries;
+ * - split on Markdown headings and blank lines to preserve section boundaries;
  * - combine neighbouring paragraphs only while the chunk stays under the size cap;
  * - split oversized paragraphs only as a fallback.
  *
@@ -51,36 +110,49 @@ export function chunkDocumentText(
         throw new Error("maxChunkCharacters must be greater than 0");
     }
 
-    const paragraphs = text
-        .split(/\n{2,}/)
-        .map((paragraph) => paragraph.trim())
-        .filter(Boolean);
+    const paragraphs = splitIntoSectionParagraphs(text);
 
     const chunks: DocumentTextChunk[] = [];
     let currentChunk = "";
+    let currentSectionHeading: string | undefined;
+
+    const addChunk = (content: string, sectionHeading: string | undefined) => {
+        chunks.push({
+            chunkIndex: chunks.length,
+            content,
+            ...(sectionHeading === undefined ? {} : { sectionHeading }),
+        });
+    };
 
     for (const paragraph of paragraphs) {
-        if (paragraph.length > options.maxChunkCharacters) {
+        if (
+            currentChunk.length > 0 &&
+            currentSectionHeading !== paragraph.sectionHeading
+        ) {
+            addChunk(currentChunk, currentSectionHeading);
+            currentChunk = "";
+        }
+
+        currentSectionHeading = paragraph.sectionHeading;
+
+        if (paragraph.content.length > options.maxChunkCharacters) {
             if (currentChunk.length > 0) {
-                chunks.push({
-                    chunkIndex: chunks.length,
-                    content: currentChunk,
-                });
+                addChunk(currentChunk, currentSectionHeading);
                 currentChunk = "";
             }
 
             for (
                 let startIndex = 0;
-                startIndex < paragraph.length;
+                startIndex < paragraph.content.length;
                 startIndex += options.maxChunkCharacters
             ) {
-                chunks.push({
-                    chunkIndex: chunks.length,
-                    content: paragraph.slice(
+                addChunk(
+                    paragraph.content.slice(
                         startIndex,
                         startIndex + options.maxChunkCharacters,
                     ),
-                });
+                    currentSectionHeading,
+                );
             }
 
             continue;
@@ -88,27 +160,21 @@ export function chunkDocumentText(
 
         const candidateChunk =
             currentChunk.length === 0
-                ? paragraph
-                : `${currentChunk}\n\n${paragraph}`;
+                ? paragraph.content
+                : `${currentChunk}\n\n${paragraph.content}`;
 
         if (candidateChunk.length <= options.maxChunkCharacters) {
             currentChunk = candidateChunk;
             continue;
         }
 
-        chunks.push({
-            chunkIndex: chunks.length,
-            content: currentChunk,
-        });
+        addChunk(currentChunk, currentSectionHeading);
 
-        currentChunk = paragraph;
+        currentChunk = paragraph.content;
     }
 
     if (currentChunk.length > 0) {
-        chunks.push({
-            chunkIndex: chunks.length,
-            content: currentChunk,
-        });
+        addChunk(currentChunk, currentSectionHeading);
     }
 
     return chunks;
