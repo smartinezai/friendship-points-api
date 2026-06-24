@@ -46,4 +46,33 @@ describe("buildPredictionInput", () => {
       retrievedContext: [],
     });
   });
+
+  it("keeps retrieved document chunks in the LLM input", () => {
+    const result = buildPredictionInput(
+      {
+        id: "friend-1",
+        displayName: "Cole",
+        notes: null,
+        rules: [],
+      },
+      "I call Cole without warning tomorrow.",
+      [
+        {
+          sourceType: "document_chunk",
+          sourceId: "document-chunk-1",
+          content: "Cole prefers scheduled calls.",
+          score: 1,
+        },
+      ],
+    );
+
+    expect(result.retrievedContext).toEqual([
+      {
+        sourceType: "document_chunk",
+        sourceId: "document-chunk-1",
+        content: "Cole prefers scheduled calls.",
+        score: 1,
+      },
+    ]);
+  });
 });

@@ -67,5 +67,5 @@ Instructions:
 - Note any potential biases in biasNotes that might be affecting your assessment, such as emotionally loaded wording, missing context, or assumptions about intent.
 - Assess the impact of the event on the friendship using the provided information and rules.
 - Use retrieved context as additional evidence, but do not treat it as automatically decisive.
-- Consider the source type: rules are explicit expectations, notes are background context, and events are historical evidence.`;
+- Consider the source type: rules are explicit expectations, notes are background context, events are historical evidence, and document chunks are imported supporting material.`;
 }

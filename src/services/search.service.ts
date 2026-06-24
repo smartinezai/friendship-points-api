@@ -1,5 +1,12 @@
 import { prisma } from "../db/prisma.js";
 import { createEmbedding, formatVectorForSql } from "./embeddings.service.js";
+import { DOCUMENT_CHUNK_SOURCE_TYPE } from "./documentIngestion/documentSourceTypes.js";
+
+export type SearchableSourceType =
+    | "friend_note"
+    | "rule"
+    | "event"
+    | typeof DOCUMENT_CHUNK_SOURCE_TYPE;
 
 /**
  * createEmbedding(query)       → turns query text into number[]
@@ -7,14 +14,14 @@ formatVectorForSql(vector)   → turns number[] into pgvector SQL format
 
  */
 export type RetrieveFriendContextOptions = {
-    excludeSourceType?: "friend_note" | "rule" | "event";
+    excludeSourceType?: SearchableSourceType;
     excludeSourceId?: string;
     /** Maximum number of context items to return. Keeps LLM prompts bounded. */
     limit?: number;
 };
 
 export type RetrievedContextItem = {
-    sourceType: "friend_note" | "rule" | "event";
+    sourceType: SearchableSourceType;
     sourceId: string;
     friendId: string;
     content: string;
@@ -247,10 +254,16 @@ export async function legacySearchFriendContext(
     return results;
 }
 
-function isSearchableSourceType(
+/** Returns whether a stored source type is eligible for retrieval. */
+export function isSearchableSourceType(
     sourceType: string,
 ): sourceType is RetrievedContextItem["sourceType"] {
-    return ["friend_note", "rule", "event"].includes(sourceType);
+    return [
+        "friend_note",
+        "rule",
+        "event",
+        DOCUMENT_CHUNK_SOURCE_TYPE,
+    ].includes(sourceType);
 }
 
 export function hasValidSourceId(sourceId: string): boolean {

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
     calculateKeywordScore,
     hasValidSourceId,
+    isSearchableSourceType,
     removeStopWords,
     rerankContextItems,
     tokenise,
@@ -94,6 +95,10 @@ describe("search service tests", () => {
         expect(result).toBe(false);
     });
 
+    it("recognises ingested document chunks as retrievable context", () => {
+        expect(isSearchableSourceType("document_chunk")).toBe(true);
+    });
+
 });
 
 
@@ -149,4 +154,3 @@ describe("rerankContextItems retrieval evaluation tests group", () => {
         expect(results.at(0)?.rerankReason).toContain("distance=");
     });
 });
-
