@@ -20,14 +20,17 @@ type RebuildSearchIndexResult = {
  * active rules, and events.
  *
  * @param friendId - Friend whose searchable documents should be rebuilt.
+ * @param ownerUserId - Current user that must own the friend.
  * @returns Created document count, or null when the friend is missing/deleted.
  */
 export async function rebuildSearchableDocumentsForFriend(
     friendId: string,
+    ownerUserId: string,
 ): Promise<RebuildSearchIndexResult | null> {
     const friend = await prisma.friend.findFirst({
         where: {
             id: friendId,
+            ownerUserId,
             deletedAt: null,
         },
         include: {

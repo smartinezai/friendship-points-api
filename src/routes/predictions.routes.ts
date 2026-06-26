@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { predictFriendActionBodySchema } from "../schemas/predictions.schema.js";
 import { mockLlmAssessment } from "../ai/mockAssessment.service.js";
 import { predictFriendActionWithProvider } from "../services/predictions.service.js";
+import { getCurrentUserId } from "../services/currentUser.service.js";
 import { mistralAssessEvent } from "../ai/mistralAssessment.service.js";
 import { sendNotFoundError, sendValidationError } from "../utils/httpErrors.js";
 
@@ -11,6 +12,7 @@ export async function predictionRoutes(app: FastifyInstance) {
         Params: { friendId: string };
     }>("/friends/:friendId/predict", async (request, reply) => {
         const { friendId } = request.params;
+        const ownerUserId = getCurrentUserId(request);
 
         const parsedBody = predictFriendActionBodySchema.safeParse(request.body);
 
@@ -20,6 +22,7 @@ export async function predictionRoutes(app: FastifyInstance) {
 
         const predictionResult = await predictFriendActionWithProvider(
             friendId,
+            ownerUserId,
             parsedBody.data.hypotheticalAction,
             mockLlmAssessment,
         );
@@ -35,6 +38,7 @@ export async function predictionRoutes(app: FastifyInstance) {
         Params: { friendId: string };
     }>("/friends/:friendId/predict/mistral", async (request, reply) => {
         const { friendId } = request.params;
+        const ownerUserId = getCurrentUserId(request);
 
         const parsedBody = predictFriendActionBodySchema.safeParse(request.body);
 
@@ -44,6 +48,7 @@ export async function predictionRoutes(app: FastifyInstance) {
 
         const predictionResult = await predictFriendActionWithProvider(
             friendId,
+            ownerUserId,
             parsedBody.data.hypotheticalAction,
             mistralAssessEvent,
         );

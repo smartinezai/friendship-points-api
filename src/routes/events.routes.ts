@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../db/prisma.js";
 import { getFriendById } from "../services/friends.service.js";
+import { getCurrentUserId } from "../services/currentUser.service.js";
 import { createEventBodySchema } from "../schemas/events.schema.js";
 import { sendNotFoundError, sendValidationError } from "../utils/httpErrors.js";
 
@@ -9,8 +10,9 @@ export async function eventRoutes(app: FastifyInstance) {
 
     app.get<{ Params: { friendId: string } }>("/friends/:friendId/events", async (request, reply) => {
         const { friendId } = request.params;
+        const ownerUserId = getCurrentUserId(request);
 
-        const friend = await getFriendById(friendId);
+        const friend = await getFriendById(friendId, ownerUserId);
 
         if (!friend) {
             return sendNotFoundError(reply, "Friend not found");
@@ -23,9 +25,13 @@ export async function eventRoutes(app: FastifyInstance) {
 
     app.get<{ Params: { eventId: string } }>("/events/:eventId", async (request, reply) => {
         const { eventId } = request.params;
+        const ownerUserId = getCurrentUserId(request);
 
-        const event = await prisma.event.findUnique({
-            where: { id: eventId },
+        const event = await prisma.event.findFirst({
+            where: {
+                id: eventId,
+                friend: { ownerUserId },
+            },
         });
 
         if (!event) {
@@ -46,7 +52,8 @@ export async function eventRoutes(app: FastifyInstance) {
         };
     }>("/friends/:friendId/events", async (request, reply) => {
         const { friendId } = request.params;
-        const friend = await getFriendById(friendId);
+        const ownerUserId = getCurrentUserId(request);
+        const friend = await getFriendById(friendId, ownerUserId);
 
         if (!friend) {
             return sendNotFoundError(reply, "Friend not found");

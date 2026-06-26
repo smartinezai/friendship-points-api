@@ -4,6 +4,7 @@ import {
     ingestFriendDocumentParamsSchema,
 } from "../schemas/document.schema.js";
 import { getFriendById } from "../services/friends.service.js";
+import { getCurrentUserId } from "../services/currentUser.service.js";
 import { ingestFriendDocument } from "../services/documentIngestion/ingestFriendDocument.service.js";
 import {
     sendNotFoundError,
@@ -30,7 +31,8 @@ export async function documentsRoutes(app: FastifyInstance): Promise<void> {
             return sendValidationError(reply, bodyResult.error.issues);
         }
 
-        const friend = await getFriendById(paramsResult.data.friendId);
+        const ownerUserId = getCurrentUserId(request);
+        const friend = await getFriendById(paramsResult.data.friendId, ownerUserId);
 
         if (!friend) {
             return sendNotFoundError(reply, "Friend not found");

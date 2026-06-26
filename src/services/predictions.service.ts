@@ -27,12 +27,17 @@ type PredictionProvider = (
  * Loads the active friend data needed to predict a hypothetical action.
  *
  * @param friendId - Friend id from the prediction route.
+ * @param ownerUserId - Current user that must own the friend.
  * @returns Friend with active rules, or null when missing/deleted.
  */
-export async function getFriendWithActiveRules(friendId: string) {
+export async function getFriendWithActiveRules(
+  friendId: string,
+  ownerUserId: string,
+) {
   return prisma.friend.findFirst({
     where: {
       id: friendId,
+      ownerUserId,
       deletedAt: null,
     },
     include: {
@@ -88,10 +93,11 @@ export function buildPredictionInput(
  */
 export async function predictFriendActionWithProvider(
   friendId: string,
+  ownerUserId: string,
   hypotheticalAction: string,
   provider: PredictionProvider,
 ) {
-  const friend = await getFriendWithActiveRules(friendId);
+  const friend = await getFriendWithActiveRules(friendId, ownerUserId);
 
   if (!friend) {
     return null;

@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from "../db/prisma.js";
 import { getFriendById } from "../services/friends.service.js";
+import { getCurrentUserId } from "../services/currentUser.service.js";
 import { mockLlmAssessment } from '../ai/mockAssessment.service.js';
 import { openAiAssessEvent } from '../ai/openAiAssessment.service.js';
 import { mistralAssessEvent } from "../ai/mistralAssessment.service.js";
@@ -20,6 +21,7 @@ export async function assessmentRoutes(app: FastifyInstance) {
         };
     }>("/events/:eventId/manual-assessment", async (request, reply) => {
         const { eventId } = request.params;
+        const ownerUserId = getCurrentUserId(request);
         const parsedBody = manualAssessmentBodySchema.safeParse(request.body);
 
         if (!parsedBody.success) {
@@ -28,8 +30,11 @@ export async function assessmentRoutes(app: FastifyInstance) {
 
         const { scoreDelta, reason } = parsedBody.data;
 
-        const event = await prisma.event.findUnique({
-            where: { id: eventId }
+        const event = await prisma.event.findFirst({
+            where: {
+                id: eventId,
+                friend: { ownerUserId },
+            },
         });
 
         if (!event) {
@@ -52,7 +57,8 @@ export async function assessmentRoutes(app: FastifyInstance) {
         Params: { friendId: string }
     }>("/friends/:friendId/balance", async (request, reply) => {
         const { friendId } = request.params;
-        const friend = await getFriendById(friendId);
+        const ownerUserId = getCurrentUserId(request);
+        const friend = await getFriendById(friendId, ownerUserId);
 
         if (!friend) {
             return sendNotFoundError(reply, "Friend not found");
@@ -78,10 +84,12 @@ export async function assessmentRoutes(app: FastifyInstance) {
         Params: { eventId: string };
     }>("/events/:eventId/mock-assessment", async (request, reply) => {
         const { eventId } = request.params;
+        const ownerUserId = getCurrentUserId(request);
 
         try {
             const result = await assessEventWithProvider(
                 eventId,
+                ownerUserId,
                 "mock",
                 mockLlmAssessment,
                 {
@@ -106,10 +114,12 @@ export async function assessmentRoutes(app: FastifyInstance) {
         Params: { eventId: string };
     }>("/events/:eventId/mistral-assessment", async (request, reply) => {
         const { eventId } = request.params;
+        const ownerUserId = getCurrentUserId(request);
 
         try {
             const result = await assessEventWithProvider(
                 eventId,
+                ownerUserId,
                 "mistral",
                 mistralAssessEvent,
                 {
@@ -135,10 +145,12 @@ export async function assessmentRoutes(app: FastifyInstance) {
         Params: { eventId: string };
     }>("/events/:eventId/openai-assessment", async (request, reply) => {
         const { eventId } = request.params;
+        const ownerUserId = getCurrentUserId(request);
 
         try {
             const result = await assessEventWithProvider(
                 eventId,
+                ownerUserId,
                 "openai",
                 openAiAssessEvent,
                 {

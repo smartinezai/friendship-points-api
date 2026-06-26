@@ -11,6 +11,7 @@ vi.mock("../services/documentIngestion/ingestFriendDocument.service.js", () => (
 
 import { documentsRoutes } from "../routes/documents.routes.js";
 import { getFriendById } from "../services/friends.service.js";
+import { DEFAULT_DEV_USER_ID } from "../services/currentUser.service.js";
 import { ingestFriendDocument } from "../services/documentIngestion/ingestFriendDocument.service.js";
 
 const friendId = "5da77ede-2290-4ede-9839-d83a29a310e6";
@@ -19,6 +20,7 @@ const existingFriend: NonNullable<
     Awaited<ReturnType<typeof getFriendById>>
 > = {
     id: friendId,
+    ownerUserId: DEFAULT_DEV_USER_ID,
     displayName: "Cole",
     notes: null,
     createdAt: new Date("2026-06-01T00:00:00.000Z"),
@@ -68,7 +70,10 @@ describe("documentsRoutes", () => {
 
         expect(response.statusCode).toBe(201);
         expect(response.json()).toEqual(ingestionResult);
-        expect(mockedGetFriendById).toHaveBeenCalledWith(friendId);
+        expect(mockedGetFriendById).toHaveBeenCalledWith(
+            friendId,
+            DEFAULT_DEV_USER_ID,
+        );
         expect(mockedIngestFriendDocument).toHaveBeenCalledWith({
             friendId,
             title: "Relationship notes",

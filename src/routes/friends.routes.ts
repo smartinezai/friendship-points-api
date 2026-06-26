@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../db/prisma.js";
 import { getFriendById } from "../services/friends.service.js";
+import { getCurrentUserId } from "../services/currentUser.service.js";
 import {
     createFriendBodySchema,
     updateFriendBodySchema,
@@ -23,12 +24,14 @@ export async function friendRoutes(app: FastifyInstance) {
 
     app.get<{ Querystring: { name?: string } }>("/friends/search", async (request, reply) => {
         const { name } = request.query;
+        const ownerUserId = getCurrentUserId(request);
 
         if (!name) {
             return sendBadRequestError(reply, "Name query parameter is required.");
         }
         const friends = await prisma.friend.findMany({
             where: {
+                ownerUserId,
                 deletedAt: null,
                 displayName: {
                     contains: name,
@@ -52,6 +55,13 @@ export async function friendRoutes(app: FastifyInstance) {
             return sendBadRequestError(reply, "Query parameter is required.");
         }
 
+        const ownerUserId = getCurrentUserId(request);
+        const friend = await getFriendById(id, ownerUserId);
+
+        if (!friend) {
+            return sendNotFoundError(reply, "Friend not found");
+        }
+
         const results = await retrieveFriendContext(id, query);
 
         return { results };
@@ -67,6 +77,13 @@ export async function friendRoutes(app: FastifyInstance) {
 
         if (!query) {
             return sendBadRequestError(reply, "Query parameter is required.");
+        }
+
+        const ownerUserId = getCurrentUserId(request);
+        const friend = await getFriendById(id, ownerUserId);
+
+        if (!friend) {
+            return sendNotFoundError(reply, "Friend not found");
         }
 
         const results = await retrieveFriendContextSemantically(id, query, {
@@ -88,6 +105,13 @@ export async function friendRoutes(app: FastifyInstance) {
             return sendBadRequestError(reply, "Query parameter is required.");
         }
 
+        const ownerUserId = getCurrentUserId(request);
+        const friend = await getFriendById(id, ownerUserId);
+
+        if (!friend) {
+            return sendNotFoundError(reply, "Friend not found");
+        }
+
         const semanticResults = await retrieveFriendContextSemantically(id, query, {
             limit: 10,
         });
@@ -104,7 +128,8 @@ export async function friendRoutes(app: FastifyInstance) {
         Params: { id: string };
     }>("/friends/:id/rebuild-search-index", async (request, reply) => {
         const { id } = request.params;
-        const result = await rebuildSearchableDocumentsForFriend(id);
+        const ownerUserId = getCurrentUserId(request);
+        const result = await rebuildSearchableDocumentsForFriend(id, ownerUserId);
 
         if (!result) {
             return sendNotFoundError(reply, "Friend not found");
@@ -118,8 +143,9 @@ export async function friendRoutes(app: FastifyInstance) {
 
     app.get<{ Params: { id: string } }>("/friends/:id", async (request, reply) => {
         const { id } = request.params;
+        const ownerUserId = getCurrentUserId(request);
 
-        const friend = await getFriendById(id);
+        const friend = await getFriendById(id, ownerUserId);
 
         if (!friend) {
             return sendNotFoundError(reply, "Friend not found");
@@ -129,9 +155,11 @@ export async function friendRoutes(app: FastifyInstance) {
     });
 
 
-    app.get("/friends", async () => {
+    app.get("/friends", async (request) => {
+        const ownerUserId = getCurrentUserId(request);
         const friends = await prisma.friend.findMany({
             where: {
+                ownerUserId,
                 deletedAt: null,
             },
         });
@@ -146,6 +174,7 @@ export async function friendRoutes(app: FastifyInstance) {
             allowDuplicate?: boolean;
         }
     }>("/friends", async (request, reply) => {
+        const ownerUserId = getCurrentUserId(request);
         const parsedBody = createFriendBodySchema.safeParse(request.body);
 
         if (!parsedBody.success) {
@@ -155,7 +184,7 @@ export async function friendRoutes(app: FastifyInstance) {
         const { displayName, notes, allowDuplicate } = parsedBody.data;
 
         const existingFriend = await prisma.friend.findFirst({
-            where: { displayName, deletedAt: null }
+            where: { ownerUserId, displayName, deletedAt: null }
         });
 
         if (existingFriend && !allowDuplicate) {
@@ -169,6 +198,7 @@ export async function friendRoutes(app: FastifyInstance) {
 
         const friend = await prisma.friend.create({
             data: {
+                ownerUserId,
                 displayName,
                 notes: notes ?? null,
             },
@@ -182,6 +212,7 @@ export async function friendRoutes(app: FastifyInstance) {
         Params: { id: string };
     }>("/friends/:id", async (request, reply) => {
         const { id } = request.params;
+        const ownerUserId = getCurrentUserId(request);
 
         const parsedBody = updateFriendBodySchema.safeParse(request.body);
 
@@ -189,7 +220,7 @@ export async function friendRoutes(app: FastifyInstance) {
             return sendValidationError(reply, parsedBody.error.issues);
         }
 
-        const existingFriend = await getFriendById(id);
+        const existingFriend = await getFriendById(id, ownerUserId);
 
         if (!existingFriend) {
             return sendNotFoundError(reply, "Friend not found");
@@ -220,6 +251,7 @@ export async function friendRoutes(app: FastifyInstance) {
         Params: { id: string };
     }>("/friends/:id/notes/append", async (request, reply) => {
         const { id } = request.params;
+        const ownerUserId = getCurrentUserId(request);
 
         const parsedBody = appendFriendNoteBodySchema.safeParse(request.body);
 
@@ -227,7 +259,7 @@ export async function friendRoutes(app: FastifyInstance) {
             return sendValidationError(reply, parsedBody.error.issues);
         }
 
-        const existingFriend = await getFriendById(id);
+        const existingFriend = await getFriendById(id, ownerUserId);
 
         if (!existingFriend) {
             return sendNotFoundError(reply, "Friend not found");
@@ -252,8 +284,9 @@ export async function friendRoutes(app: FastifyInstance) {
         Params: { id: string };
     }>("/friends/:id", async (request, reply) => {
         const { id } = request.params;
+        const ownerUserId = getCurrentUserId(request);
 
-        const existingFriend = await getFriendById(id);
+        const existingFriend = await getFriendById(id, ownerUserId);
 
         if (!existingFriend) {
             return sendNotFoundError(reply, "Friend not found");

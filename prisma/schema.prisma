@@ -7,9 +7,21 @@ datasource db {
   provider = "postgresql"
 }
 
+/// Application user who owns friendship data.
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  displayName String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  friends     Friend[]
+}
+
 /// Person whose friendship state is tracked by the API.
 model Friend {
   id                  String               @id @default(uuid())
+  ownerUserId         String
+  ownerUser           User                 @relation(fields: [ownerUserId], references: [id])
   displayName         String
   notes               String?
   createdAt           DateTime             @default(now())
@@ -18,6 +30,8 @@ model Friend {
   events              Event[]
   deletedAt           DateTime?
   searchableDocuments SearchableDocument[]
+
+  @@index([ownerUserId])
 }
 
 /// Preference or boundary that affects friendship scoring.

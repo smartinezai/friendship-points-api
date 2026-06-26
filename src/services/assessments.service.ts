@@ -8,11 +8,18 @@ import { retrieveFriendContext } from "./search.service.js";
  * Loads an event with the friend and active rules needed for LLM assessment.
  *
  * @param eventId - Event id being assessed.
+ * @param ownerUserId - Current user that must own the event's friend.
  * @returns Event graph for prompt building, or null when the event is missing.
  */
-export async function getEventWithFriendAndActiveRules(eventId: string) {
-  return prisma.event.findUnique({
-    where: { id: eventId },
+export async function getEventWithFriendAndActiveRules(
+  eventId: string,
+  ownerUserId: string,
+) {
+  return prisma.event.findFirst({
+    where: {
+      id: eventId,
+      friend: { ownerUserId },
+    },
     include: {
       friend: {
         include: {
@@ -101,6 +108,7 @@ export async function saveLlmAssessment(
  * Runs the full event-assessment flow with the selected LLM provider.
  *
  * @param eventId - Event to assess.
+ * @param ownerUserId - Current user that must own the event's friend.
  * @param source - Source label stored on the Assessment row.
  * @param assessFn - Provider function that accepts LlmAssessmentInput.
  * @param metadata - Optional model and prompt metadata stored with the result.
@@ -108,6 +116,7 @@ export async function saveLlmAssessment(
  */
 export async function assessEventWithProvider(
   eventId: string,
+  ownerUserId: string,
   source: string,
   assessFn: (input: LlmAssessmentInput) => Promise<LlmAssessmentResult>,
   metadata?: {
@@ -115,7 +124,7 @@ export async function assessEventWithProvider(
     promptVersion?: string;
   }
 ) {
-  const event = await getEventWithFriendAndActiveRules(eventId);
+  const event = await getEventWithFriendAndActiveRules(eventId, ownerUserId);
 
   if (!event) {
     return null;
