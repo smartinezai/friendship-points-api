@@ -20,13 +20,13 @@ The main project README is in [`README.md`](./README.md).
 Completed:
 
 ```txt
-Day 1–34: Backend foundation, validation, CI, soft delete, RAG, embeddings, semantic retrieval, reranking, tool calling, agentic retrieval, source grounding, agentic RAG evaluation, tracing, prompt analytics, and document ingestion
+Day 1–35: Backend foundation, validation, CI, soft delete, RAG, embeddings, semantic retrieval, reranking, tool calling, agentic retrieval, source grounding, agentic RAG evaluation, tracing, prompt analytics, document ingestion, and user ownership foundation
 ```
 
 Next:
 
 ```txt
-Day 35: User Identity and Ownership Foundation
+Day 36: Person Facts and Verification Status
 ```
 
 ---
@@ -1142,7 +1142,27 @@ Chunking strategy:
 
 ### Day 35: User Identity and Ownership Foundation
 
-Status: Planned.
+Status: Complete.
+
+Completed:
+
+- Added a basic `User` model
+- Added `ownerUserId` ownership to `Friend`
+- Seeded one deterministic development user in the migration
+- Backfilled existing friends to the development user
+- Added a mocked current-user request context using `x-user-id`
+- Defaulted requests without `x-user-id` to the development user
+- Scoped friend listing, lookup, creation, updates, notes, deletion, search-index rebuilds, and context inspection by owner
+- Scoped child routes and services for rules, events, assessments, predictions, and document ingestion through the owning friend
+- Added tests for current-user resolution
+- Updated document route tests for owner-aware friend lookup
+
+Current behaviour:
+
+- Local development uses `00000000-0000-4000-8000-000000000001` as the default current user
+- API callers can pass `x-user-id` to simulate another user
+- Production-grade authentication remains deferred
+- `Friend` remains the tracked-person model for now; a fuller `Person` model is deferred to the person-facts work
 
 Goals:
 
