@@ -20,13 +20,13 @@ The main project README is in [`README.md`](./README.md).
 Completed:
 
 ```txt
-Day 1–32: Backend foundation, validation, CI, soft delete, RAG, embeddings, semantic retrieval, reranking, tool calling, agentic retrieval, source grounding, and agentic RAG evaluation
+Day 1–34: Backend foundation, validation, CI, soft delete, RAG, embeddings, semantic retrieval, reranking, tool calling, agentic retrieval, source grounding, agentic RAG evaluation, tracing, prompt analytics, and document ingestion
 ```
 
 Next:
 
 ```txt
-Day 33: LLM Tracing and Prompt Analytics
+Day 35: User Identity and Ownership Foundation
 ```
 
 ---
