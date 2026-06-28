@@ -8,9 +8,11 @@ vi.mock("../db/prisma.js", () => ({
         personFact: {
             create: vi.fn(),
             findMany: vi.fn(),
+            update: vi.fn(),
         },
         searchableDocument: {
             create: vi.fn(),
+            updateMany: vi.fn(),
         },
     },
 }));
@@ -22,13 +24,18 @@ import {
     getDefaultPersonFactVerificationStatus,
     getPersonIdForUser,
     listPersonFactsForTarget,
+    updatePersonFactVerificationStatus,
 } from "../services/personFacts.service.js";
 
 const mockedFindUniqueUser = vi.mocked(prisma.user.findUnique);
 const mockedCreatePersonFact = vi.mocked(prisma.personFact.create);
 const mockedFindManyPersonFacts = vi.mocked(prisma.personFact.findMany);
+const mockedUpdatePersonFact = vi.mocked(prisma.personFact.update);
 const mockedCreateSearchableDocument = vi.mocked(
     prisma.searchableDocument.create,
+);
+const mockedUpdateManySearchableDocuments = vi.mocked(
+    prisma.searchableDocument.updateMany,
 );
 
 describe("getDefaultPersonFactVerificationStatus", () => {
@@ -198,6 +205,49 @@ describe("listPersonFactsForTarget", () => {
         expect(mockedFindManyPersonFacts).toHaveBeenCalledWith({
             where: { targetPersonId: "person-1" },
             orderBy: { createdAt: "desc" },
+        });
+    });
+});
+
+describe("updatePersonFactVerificationStatus", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockedUpdatePersonFact.mockResolvedValue({
+            id: "fact-1",
+            targetPersonId: "person-1",
+            authorPersonId: "person-2",
+            content: "Cole prefers planned calls.",
+            verificationStatus: "verified_by_target",
+            sourceType: "manual",
+            sourceId: null,
+            createdAt: new Date("2026-06-28T00:00:00.000Z"),
+            updatedAt: new Date("2026-06-28T00:00:00.000Z"),
+        });
+        mockedUpdateManySearchableDocuments.mockResolvedValue({ count: 1 });
+    });
+
+    it("updates the fact status and refreshes searchable text", async () => {
+        const fact = await updatePersonFactVerificationStatus({
+            factId: "fact-1",
+            verificationStatus: "verified_by_target",
+        });
+
+        expect(fact.verificationStatus).toBe("verified_by_target");
+        expect(mockedUpdatePersonFact).toHaveBeenCalledWith({
+            where: { id: "fact-1" },
+            data: { verificationStatus: "verified_by_target" },
+        });
+        expect(mockedUpdateManySearchableDocuments).toHaveBeenCalledWith({
+            where: {
+                sourceType: "person_fact",
+                sourceId: "fact-1",
+            },
+            data: {
+                content:
+                    "Person fact verification status: verified_by_target\n" +
+                    "Person fact source type: manual\n" +
+                    "Cole prefers planned calls.",
+            },
         });
     });
 });

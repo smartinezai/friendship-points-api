@@ -10,6 +10,11 @@ type CreatePersonFactInput = {
     sourceId?: string;
 };
 
+type UpdatePersonFactVerificationStatusInput = {
+    factId: string;
+    verificationStatus: PersonFactVerificationStatus;
+};
+
 /** Returns the Person id linked to the current app user account. */
 export async function getPersonIdForUser(userId: string): Promise<string | null> {
     const user = await prisma.user.findUnique({
@@ -83,4 +88,32 @@ export async function listPersonFactsForTarget(targetPersonId: string) {
         where: { targetPersonId },
         orderBy: { createdAt: "desc" },
     });
+}
+
+/**
+ * Updates a fact's verification status and refreshes its searchable text.
+ */
+export async function updatePersonFactVerificationStatus(
+    input: UpdatePersonFactVerificationStatusInput,
+) {
+    const fact = await prisma.personFact.update({
+        where: { id: input.factId },
+        data: { verificationStatus: input.verificationStatus },
+    });
+
+    await prisma.searchableDocument.updateMany({
+        where: {
+            sourceType: "person_fact",
+            sourceId: fact.id,
+        },
+        data: {
+            content: buildPersonFactSearchContent({
+                content: fact.content,
+                verificationStatus: input.verificationStatus,
+                sourceType: fact.sourceType,
+            }),
+        },
+    });
+
+    return fact;
 }
