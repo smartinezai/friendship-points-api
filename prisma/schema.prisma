@@ -15,6 +15,27 @@ model Person {
   updatedAt   DateTime @updatedAt
   users       User[]
   trackedBy   Friend[]
+  authoredFacts PersonFact[] @relation("AuthoredPersonFacts")
+  targetFacts   PersonFact[] @relation("TargetPersonFacts")
+}
+
+/// Discrete claim or profile fact about a person, with provenance and trust status.
+model PersonFact {
+  id                 String   @id @default(uuid())
+  targetPersonId     String
+  targetPerson       Person   @relation("TargetPersonFacts", fields: [targetPersonId], references: [id])
+  authorPersonId     String
+  authorPerson       Person   @relation("AuthoredPersonFacts", fields: [authorPersonId], references: [id])
+  content            String
+  verificationStatus String
+  sourceType         String   @default("manual")
+  sourceId           String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([targetPersonId])
+  @@index([authorPersonId])
+  @@index([verificationStatus])
 }
 
 /// Application user who owns friendship data.
