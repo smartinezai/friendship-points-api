@@ -54,6 +54,7 @@ export async function personFactsRoutes(
         }
 
         const fact = await createPersonFact({
+            friendId: paramsResult.data.friendId,
             targetPersonId: friend.targetPersonId,
             authorPersonId,
             content: bodyResult.data.content,

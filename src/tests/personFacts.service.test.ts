@@ -8,11 +8,15 @@ vi.mock("../db/prisma.js", () => ({
         personFact: {
             create: vi.fn(),
         },
+        searchableDocument: {
+            create: vi.fn(),
+        },
     },
 }));
 
 import { prisma } from "../db/prisma.js";
 import {
+    buildPersonFactSearchContent,
     createPersonFact,
     getDefaultPersonFactVerificationStatus,
     getPersonIdForUser,
@@ -20,6 +24,9 @@ import {
 
 const mockedFindUniqueUser = vi.mocked(prisma.user.findUnique);
 const mockedCreatePersonFact = vi.mocked(prisma.personFact.create);
+const mockedCreateSearchableDocument = vi.mocked(
+    prisma.searchableDocument.create,
+);
 
 describe("getDefaultPersonFactVerificationStatus", () => {
     it("marks self-authored facts as verified self-declared", () => {
@@ -41,6 +48,22 @@ describe("getDefaultPersonFactVerificationStatus", () => {
     });
 });
 
+describe("buildPersonFactSearchContent", () => {
+    it("includes verification and source metadata with fact content", () => {
+        const content = buildPersonFactSearchContent({
+            content: "Cole prefers planned calls.",
+            verificationStatus: "unverified_third_party",
+            sourceType: "manual",
+        });
+
+        expect(content).toBe(
+            "Person fact verification status: unverified_third_party\n" +
+                "Person fact source type: manual\n" +
+                "Cole prefers planned calls.",
+        );
+    });
+});
+
 describe("createPersonFact", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -55,10 +78,29 @@ describe("createPersonFact", () => {
             createdAt: new Date("2026-06-28T00:00:00.000Z"),
             updatedAt: new Date("2026-06-28T00:00:00.000Z"),
         });
+        mockedCreateSearchableDocument.mockResolvedValue({
+            id: "search-doc-1",
+            friendId: "friend-1",
+            sourceType: "person_fact",
+            sourceId: "fact-1",
+            content:
+                "Person fact verification status: unverified_third_party\n" +
+                "Person fact source type: manual\n" +
+                "Cole prefers planned calls.",
+            documentId: null,
+            documentTitle: null,
+            documentType: null,
+            sourceDate: null,
+            chunkIndex: null,
+            sectionHeading: null,
+            createdAt: new Date("2026-06-28T00:00:00.000Z"),
+            updatedAt: new Date("2026-06-28T00:00:00.000Z"),
+        });
     });
 
     it("creates a fact with default verification and source metadata", async () => {
         await createPersonFact({
+            friendId: "friend-1",
             targetPersonId: "person-1",
             authorPersonId: "person-2",
             content: "Cole prefers planned calls.",
@@ -74,10 +116,22 @@ describe("createPersonFact", () => {
                 sourceId: null,
             },
         });
+        expect(mockedCreateSearchableDocument).toHaveBeenCalledWith({
+            data: {
+                friendId: "friend-1",
+                sourceType: "person_fact",
+                sourceId: "fact-1",
+                content:
+                    "Person fact verification status: unverified_third_party\n" +
+                    "Person fact source type: manual\n" +
+                    "Cole prefers planned calls.",
+            },
+        });
     });
 
     it("preserves provided source metadata", async () => {
         await createPersonFact({
+            friendId: "friend-1",
             targetPersonId: "person-1",
             authorPersonId: "person-1",
             content: "I prefer direct feedback.",

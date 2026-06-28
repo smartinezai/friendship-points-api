@@ -2,6 +2,7 @@ import { prisma } from "../db/prisma.js";
 import type { PersonFactVerificationStatus } from "../schemas/personFacts.schema.js";
 
 type CreatePersonFactInput = {
+    friendId: string;
     targetPersonId: string;
     authorPersonId: string;
     content: string;
@@ -28,6 +29,18 @@ export function getDefaultPersonFactVerificationStatus(
         : "unverified_third_party";
 }
 
+export function buildPersonFactSearchContent(input: {
+    content: string;
+    verificationStatus: PersonFactVerificationStatus;
+    sourceType: string;
+}): string {
+    return [
+        `Person fact verification status: ${input.verificationStatus}`,
+        `Person fact source type: ${input.sourceType}`,
+        input.content,
+    ].join("\n");
+}
+
 /**
  * Persists a person fact with the default trust status for its author/target.
  */
@@ -37,7 +50,7 @@ export async function createPersonFact(input: CreatePersonFactInput) {
         input.authorPersonId,
     );
 
-    return prisma.personFact.create({
+    const fact = await prisma.personFact.create({
         data: {
             targetPersonId: input.targetPersonId,
             authorPersonId: input.authorPersonId,
@@ -47,4 +60,19 @@ export async function createPersonFact(input: CreatePersonFactInput) {
             sourceId: input.sourceId ?? null,
         },
     });
+
+    await prisma.searchableDocument.create({
+        data: {
+            friendId: input.friendId,
+            sourceType: "person_fact",
+            sourceId: fact.id,
+            content: buildPersonFactSearchContent({
+                content: fact.content,
+                verificationStatus,
+                sourceType: fact.sourceType,
+            }),
+        },
+    });
+
+    return fact;
 }

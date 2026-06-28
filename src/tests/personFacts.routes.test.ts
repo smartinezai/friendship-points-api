@@ -91,6 +91,7 @@ describe("personFactsRoutes", () => {
             DEFAULT_DEV_USER_ID,
         );
         expect(mockedCreatePersonFact).toHaveBeenCalledWith({
+            friendId,
             targetPersonId,
             authorPersonId,
             content: "Cole prefers planned calls.",
