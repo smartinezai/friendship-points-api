@@ -7,6 +7,7 @@ vi.mock("../db/prisma.js", () => ({
         },
         personFact: {
             create: vi.fn(),
+            findFirst: vi.fn(),
             findMany: vi.fn(),
             update: vi.fn(),
         },
@@ -21,6 +22,7 @@ import { prisma } from "../db/prisma.js";
 import {
     buildPersonFactSearchContent,
     createPersonFact,
+    getAccessiblePersonFact,
     getDefaultPersonFactVerificationStatus,
     getPersonIdForUser,
     listPersonFactsForTarget,
@@ -29,6 +31,7 @@ import {
 
 const mockedFindUniqueUser = vi.mocked(prisma.user.findUnique);
 const mockedCreatePersonFact = vi.mocked(prisma.personFact.create);
+const mockedFindFirstPersonFact = vi.mocked(prisma.personFact.findFirst);
 const mockedFindManyPersonFacts = vi.mocked(prisma.personFact.findMany);
 const mockedUpdatePersonFact = vi.mocked(prisma.personFact.update);
 const mockedCreateSearchableDocument = vi.mocked(
@@ -205,6 +208,31 @@ describe("listPersonFactsForTarget", () => {
         expect(mockedFindManyPersonFacts).toHaveBeenCalledWith({
             where: { targetPersonId: "person-1" },
             orderBy: { createdAt: "desc" },
+        });
+    });
+});
+
+describe("getAccessiblePersonFact", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockedFindFirstPersonFact.mockResolvedValue(null);
+    });
+
+    it("loads a fact only through an active owned friend relationship", async () => {
+        await getAccessiblePersonFact("fact-1", "user-1");
+
+        expect(mockedFindFirstPersonFact).toHaveBeenCalledWith({
+            where: {
+                id: "fact-1",
+                targetPerson: {
+                    trackedBy: {
+                        some: {
+                            ownerUserId: "user-1",
+                            deletedAt: null,
+                        },
+                    },
+                },
+            },
         });
     });
 });

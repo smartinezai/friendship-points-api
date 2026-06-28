@@ -7,16 +7,20 @@ vi.mock("../services/friends.service.js", () => ({
 
 vi.mock("../services/personFacts.service.js", () => ({
     createPersonFact: vi.fn(),
+    getAccessiblePersonFact: vi.fn(),
     getPersonIdForUser: vi.fn(),
     listPersonFactsForTarget: vi.fn(),
+    updatePersonFactVerificationStatus: vi.fn(),
 }));
 
 import { DEFAULT_DEV_USER_ID } from "../services/currentUser.service.js";
 import { getFriendById } from "../services/friends.service.js";
 import {
     createPersonFact,
+    getAccessiblePersonFact,
     getPersonIdForUser,
     listPersonFactsForTarget,
+    updatePersonFactVerificationStatus,
 } from "../services/personFacts.service.js";
 import { personFactsRoutes } from "../routes/personFacts.routes.js";
 
@@ -50,7 +54,11 @@ const createdFact: Awaited<ReturnType<typeof createPersonFact>> = {
 const mockedGetFriendById = vi.mocked(getFriendById);
 const mockedGetPersonIdForUser = vi.mocked(getPersonIdForUser);
 const mockedCreatePersonFact = vi.mocked(createPersonFact);
+const mockedGetAccessiblePersonFact = vi.mocked(getAccessiblePersonFact);
 const mockedListPersonFactsForTarget = vi.mocked(listPersonFactsForTarget);
+const mockedUpdatePersonFactVerificationStatus = vi.mocked(
+    updatePersonFactVerificationStatus,
+);
 
 describe("personFactsRoutes", () => {
     let app: FastifyInstance;
@@ -63,7 +71,12 @@ describe("personFactsRoutes", () => {
         mockedGetFriendById.mockResolvedValue(existingFriend);
         mockedGetPersonIdForUser.mockResolvedValue(authorPersonId);
         mockedCreatePersonFact.mockResolvedValue(createdFact);
+        mockedGetAccessiblePersonFact.mockResolvedValue(createdFact);
         mockedListPersonFactsForTarget.mockResolvedValue([createdFact]);
+        mockedUpdatePersonFactVerificationStatus.mockResolvedValue({
+            ...createdFact,
+            verificationStatus: "verified_by_target",
+        });
     });
 
     afterEach(async () => {
@@ -173,5 +186,62 @@ describe("personFactsRoutes", () => {
             error: "Current user is not linked to a person.",
         });
         expect(mockedCreatePersonFact).not.toHaveBeenCalled();
+    });
+
+    it("updates a fact verification status", async () => {
+        const response = await app.inject({
+            method: "PATCH",
+            url: `/person-facts/${createdFact.id}/verification-status`,
+            payload: {
+                verificationStatus: "verified_by_target",
+            },
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.json()).toEqual({
+            fact: {
+                ...createdFact,
+                verificationStatus: "verified_by_target",
+                createdAt: createdFact.createdAt.toISOString(),
+                updatedAt: createdFact.updatedAt.toISOString(),
+            },
+        });
+        expect(mockedGetAccessiblePersonFact).toHaveBeenCalledWith(
+            createdFact.id,
+            DEFAULT_DEV_USER_ID,
+        );
+        expect(mockedUpdatePersonFactVerificationStatus).toHaveBeenCalledWith({
+            factId: createdFact.id,
+            verificationStatus: "verified_by_target",
+        });
+    });
+
+    it("returns 400 when the verification status is invalid", async () => {
+        const response = await app.inject({
+            method: "PATCH",
+            url: `/person-facts/${createdFact.id}/verification-status`,
+            payload: {
+                verificationStatus: "rumor",
+            },
+        });
+
+        expect(response.statusCode).toBe(400);
+        expect(mockedUpdatePersonFactVerificationStatus).not.toHaveBeenCalled();
+    });
+
+    it("returns 404 when the fact is not accessible to the user", async () => {
+        mockedGetAccessiblePersonFact.mockResolvedValue(null);
+
+        const response = await app.inject({
+            method: "PATCH",
+            url: `/person-facts/${createdFact.id}/verification-status`,
+            payload: {
+                verificationStatus: "rejected_by_target",
+            },
+        });
+
+        expect(response.statusCode).toBe(404);
+        expect(response.json()).toEqual({ error: "Person fact not found" });
+        expect(mockedUpdatePersonFactVerificationStatus).not.toHaveBeenCalled();
     });
 });

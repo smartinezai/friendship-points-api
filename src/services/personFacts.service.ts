@@ -91,6 +91,28 @@ export async function listPersonFactsForTarget(targetPersonId: string) {
 }
 
 /**
+ * Loads a fact only when the user has a relationship to its target person.
+ */
+export async function getAccessiblePersonFact(
+    factId: string,
+    ownerUserId: string,
+) {
+    return prisma.personFact.findFirst({
+        where: {
+            id: factId,
+            targetPerson: {
+                trackedBy: {
+                    some: {
+                        ownerUserId,
+                        deletedAt: null,
+                    },
+                },
+            },
+        },
+    });
+}
+
+/**
  * Updates a fact's verification status and refreshes its searchable text.
  */
 export async function updatePersonFactVerificationStatus(
