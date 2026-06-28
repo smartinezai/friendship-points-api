@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../db/prisma.js", () => ({
     prisma: {
+        user: {
+            findUnique: vi.fn(),
+        },
         personFact: {
             create: vi.fn(),
         },
@@ -12,8 +15,10 @@ import { prisma } from "../db/prisma.js";
 import {
     createPersonFact,
     getDefaultPersonFactVerificationStatus,
+    getPersonIdForUser,
 } from "../services/personFacts.service.js";
 
+const mockedFindUniqueUser = vi.mocked(prisma.user.findUnique);
 const mockedCreatePersonFact = vi.mocked(prisma.personFact.create);
 
 describe("getDefaultPersonFactVerificationStatus", () => {
@@ -90,5 +95,36 @@ describe("createPersonFact", () => {
                 sourceId: "form-response-1",
             },
         });
+    });
+});
+
+describe("getPersonIdForUser", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it("returns the person id linked to a user", async () => {
+        mockedFindUniqueUser.mockResolvedValue({
+            id: "user-1",
+            email: "user@example.com",
+            displayName: "Test User",
+            personId: "person-1",
+            createdAt: new Date("2026-06-28T00:00:00.000Z"),
+            updatedAt: new Date("2026-06-28T00:00:00.000Z"),
+        });
+
+        const personId = await getPersonIdForUser("user-1");
+
+        expect(personId).toBe("person-1");
+        expect(mockedFindUniqueUser).toHaveBeenCalledWith({
+            where: { id: "user-1" },
+            select: { personId: true },
+        });
+    });
+
+    it("returns null when the user is missing or has no person", async () => {
+        mockedFindUniqueUser.mockResolvedValue(null);
+
+        await expect(getPersonIdForUser("missing-user")).resolves.toBe(null);
     });
 });

@@ -9,6 +9,16 @@ type CreatePersonFactInput = {
     sourceId?: string;
 };
 
+/** Returns the Person id linked to the current app user account. */
+export async function getPersonIdForUser(userId: string): Promise<string | null> {
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { personId: true },
+    });
+
+    return user?.personId ?? null;
+}
+
 export function getDefaultPersonFactVerificationStatus(
     targetPersonId: string,
     authorPersonId: string,
