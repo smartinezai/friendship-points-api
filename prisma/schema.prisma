@@ -7,14 +7,28 @@ datasource db {
   provider = "postgresql"
 }
 
+/// Real-world person represented in the relationship graph.
+model Person {
+  id          String   @id @default(uuid())
+  displayName String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+  trackedBy   Friend[]
+}
+
 /// Application user who owns friendship data.
 model User {
   id          String   @id @default(uuid())
+  personId    String?
+  person      Person?  @relation(fields: [personId], references: [id])
   email       String   @unique
   displayName String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   friends     Friend[]
+
+  @@index([personId])
 }
 
 /// Person whose friendship state is tracked by the API.
@@ -22,6 +36,8 @@ model Friend {
   id                  String               @id @default(uuid())
   ownerUserId         String
   ownerUser           User                 @relation(fields: [ownerUserId], references: [id])
+  targetPersonId      String
+  targetPerson        Person               @relation(fields: [targetPersonId], references: [id])
   displayName         String
   notes               String?
   createdAt           DateTime             @default(now())
@@ -32,6 +48,7 @@ model Friend {
   searchableDocuments SearchableDocument[]
 
   @@index([ownerUserId])
+  @@index([targetPersonId])
 }
 
 /// Preference or boundary that affects friendship scoring.

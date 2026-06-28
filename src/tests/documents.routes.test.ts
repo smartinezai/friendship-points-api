@@ -15,12 +15,14 @@ import { DEFAULT_DEV_USER_ID } from "../services/currentUser.service.js";
 import { ingestFriendDocument } from "../services/documentIngestion/ingestFriendDocument.service.js";
 
 const friendId = "5da77ede-2290-4ede-9839-d83a29a310e6";
+const targetPersonId = "11111111-1111-4111-8111-111111111111";
 
 const existingFriend: NonNullable<
     Awaited<ReturnType<typeof getFriendById>>
 > = {
     id: friendId,
     ownerUserId: DEFAULT_DEV_USER_ID,
+    targetPersonId,
     displayName: "Cole",
     notes: null,
     createdAt: new Date("2026-06-01T00:00:00.000Z"),

@@ -196,9 +196,14 @@ export async function friendRoutes(app: FastifyInstance) {
 
         }
 
+        const targetPerson = await prisma.person.create({
+            data: { displayName },
+        });
+
         const friend = await prisma.friend.create({
             data: {
                 ownerUserId,
+                targetPersonId: targetPerson.id,
                 displayName,
                 notes: notes ?? null,
             },
