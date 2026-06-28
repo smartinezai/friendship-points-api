@@ -76,3 +76,11 @@ export async function createPersonFact(input: CreatePersonFactInput) {
 
     return fact;
 }
+
+/** Lists facts about a target person, newest first. */
+export async function listPersonFactsForTarget(targetPersonId: string) {
+    return prisma.personFact.findMany({
+        where: { targetPersonId },
+        orderBy: { createdAt: "desc" },
+    });
+}

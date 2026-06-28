@@ -7,6 +7,7 @@ vi.mock("../db/prisma.js", () => ({
         },
         personFact: {
             create: vi.fn(),
+            findMany: vi.fn(),
         },
         searchableDocument: {
             create: vi.fn(),
@@ -20,10 +21,12 @@ import {
     createPersonFact,
     getDefaultPersonFactVerificationStatus,
     getPersonIdForUser,
+    listPersonFactsForTarget,
 } from "../services/personFacts.service.js";
 
 const mockedFindUniqueUser = vi.mocked(prisma.user.findUnique);
 const mockedCreatePersonFact = vi.mocked(prisma.personFact.create);
+const mockedFindManyPersonFacts = vi.mocked(prisma.personFact.findMany);
 const mockedCreateSearchableDocument = vi.mocked(
     prisma.searchableDocument.create,
 );
@@ -180,5 +183,21 @@ describe("getPersonIdForUser", () => {
         mockedFindUniqueUser.mockResolvedValue(null);
 
         await expect(getPersonIdForUser("missing-user")).resolves.toBe(null);
+    });
+});
+
+describe("listPersonFactsForTarget", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockedFindManyPersonFacts.mockResolvedValue([]);
+    });
+
+    it("lists facts for a target person newest first", async () => {
+        await listPersonFactsForTarget("person-1");
+
+        expect(mockedFindManyPersonFacts).toHaveBeenCalledWith({
+            where: { targetPersonId: "person-1" },
+            orderBy: { createdAt: "desc" },
+        });
     });
 });

@@ -6,6 +6,7 @@ import { getFriendById } from "../services/friends.service.js";
 import {
     createPersonFact,
     getPersonIdForUser,
+    listPersonFactsForTarget,
 } from "../services/personFacts.service.js";
 import {
     sendBadRequestError,
@@ -21,6 +22,29 @@ const createPersonFactParamsSchema = z.object({
 export async function personFactsRoutes(
     app: FastifyInstance,
 ): Promise<void> {
+    app.get("/friends/:friendId/facts", async (request, reply) => {
+        const paramsResult = createPersonFactParamsSchema.safeParse(
+            request.params,
+        );
+        if (!paramsResult.success) {
+            return sendValidationError(reply, paramsResult.error.issues);
+        }
+
+        const ownerUserId = getCurrentUserId(request);
+        const friend = await getFriendById(
+            paramsResult.data.friendId,
+            ownerUserId,
+        );
+
+        if (!friend) {
+            return sendNotFoundError(reply, "Friend not found");
+        }
+
+        const facts = await listPersonFactsForTarget(friend.targetPersonId);
+
+        return reply.send({ facts });
+    });
+
     app.post("/friends/:friendId/facts", async (request, reply) => {
         const paramsResult = createPersonFactParamsSchema.safeParse(
             request.params,

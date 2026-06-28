@@ -8,6 +8,7 @@ vi.mock("../services/friends.service.js", () => ({
 vi.mock("../services/personFacts.service.js", () => ({
     createPersonFact: vi.fn(),
     getPersonIdForUser: vi.fn(),
+    listPersonFactsForTarget: vi.fn(),
 }));
 
 import { DEFAULT_DEV_USER_ID } from "../services/currentUser.service.js";
@@ -15,6 +16,7 @@ import { getFriendById } from "../services/friends.service.js";
 import {
     createPersonFact,
     getPersonIdForUser,
+    listPersonFactsForTarget,
 } from "../services/personFacts.service.js";
 import { personFactsRoutes } from "../routes/personFacts.routes.js";
 
@@ -48,6 +50,7 @@ const createdFact: Awaited<ReturnType<typeof createPersonFact>> = {
 const mockedGetFriendById = vi.mocked(getFriendById);
 const mockedGetPersonIdForUser = vi.mocked(getPersonIdForUser);
 const mockedCreatePersonFact = vi.mocked(createPersonFact);
+const mockedListPersonFactsForTarget = vi.mocked(listPersonFactsForTarget);
 
 describe("personFactsRoutes", () => {
     let app: FastifyInstance;
@@ -60,10 +63,36 @@ describe("personFactsRoutes", () => {
         mockedGetFriendById.mockResolvedValue(existingFriend);
         mockedGetPersonIdForUser.mockResolvedValue(authorPersonId);
         mockedCreatePersonFact.mockResolvedValue(createdFact);
+        mockedListPersonFactsForTarget.mockResolvedValue([createdFact]);
     });
 
     afterEach(async () => {
         await app.close();
+    });
+
+    it("lists facts for the tracked friend's target person", async () => {
+        const response = await app.inject({
+            method: "GET",
+            url: `/friends/${friendId}/facts`,
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.json()).toEqual({
+            facts: [
+                {
+                    ...createdFact,
+                    createdAt: createdFact.createdAt.toISOString(),
+                    updatedAt: createdFact.updatedAt.toISOString(),
+                },
+            ],
+        });
+        expect(mockedGetFriendById).toHaveBeenCalledWith(
+            friendId,
+            DEFAULT_DEV_USER_ID,
+        );
+        expect(mockedListPersonFactsForTarget).toHaveBeenCalledWith(
+            targetPersonId,
+        );
     });
 
     it("creates a fact for the tracked friend's target person", async () => {
