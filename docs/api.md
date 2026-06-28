@@ -125,6 +125,58 @@ DELETE already deleted friend → 404
 
 ---
 
+## Person Facts
+
+### `GET /friends/:friendId/facts`
+
+Returns facts about the person tracked by a non-deleted friend.
+
+Returns `404` if the friend does not exist or is not owned by the current user.
+
+### `POST /friends/:friendId/facts`
+
+Creates a fact about the person tracked by a non-deleted friend.
+
+```json
+{
+  "content": "Cole prefers planned calls.",
+  "sourceType": "manual",
+  "sourceId": "optional-source-id"
+}
+```
+
+Behaviour:
+
+- defaults `sourceType` to `manual`
+- stores the current user's linked person as the author
+- marks self-authored facts about the current user as `verified_self_declared`
+- marks facts about another person as `unverified_third_party`
+- indexes the fact as searchable `person_fact` context
+
+### `PATCH /person-facts/:factId/verification-status`
+
+Updates a fact's verification status and refreshes its searchable context.
+
+```json
+{
+  "verificationStatus": "verified_by_target"
+}
+```
+
+Allowed statuses:
+
+```txt
+verified_self_declared
+unverified_third_party
+verified_by_target
+rejected_by_target
+corrected
+```
+
+Returns `404` if the fact is not accessible through a friend owned by the current user.
+
+---
+
 ## Rules
 
 ### `GET /friends/:friendId/rules`

@@ -20,13 +20,13 @@ The main project README is in [`README.md`](./README.md).
 Completed:
 
 ```txt
-Day 1–35: Backend foundation, validation, CI, soft delete, RAG, embeddings, semantic retrieval, reranking, tool calling, agentic retrieval, source grounding, agentic RAG evaluation, tracing, prompt analytics, document ingestion, and user ownership foundation
+Day 1–36: Backend foundation, validation, CI, soft delete, RAG, embeddings, semantic retrieval, reranking, tool calling, agentic retrieval, source grounding, agentic RAG evaluation, tracing, prompt analytics, document ingestion, user ownership foundation, and person facts
 ```
 
 Next:
 
 ```txt
-Day 36: Person Facts and Verification Status
+Day 37: Person Knowledge Intake Forms
 ```
 
 ---
@@ -1191,7 +1191,37 @@ Learning focus:
 
 ### Day 36: Person Facts and Verification Status
 
-Status: Planned.
+Status: Complete.
+
+Completed:
+
+- Added a `Person` foundation for real-world person identity
+- Added `PersonFact` linked to target and author people
+- Added allowed verification statuses
+- Added validation for creating person facts
+- Added `POST /friends/:friendId/facts`
+- Added `GET /friends/:friendId/facts`
+- Added `PATCH /person-facts/:factId/verification-status`
+- Marked self-authored facts about the current user as `verified_self_declared`
+- Marked facts about another person as `unverified_third_party`
+- Stored source metadata, author, target person, verification status, and timestamps
+- Indexed created facts into searchable/RAG context as `person_fact`
+- Refreshed searchable fact context after verification status updates
+- Added unit and route tests for validation, creation, listing, access checks, status updates, and indexing
+
+Current behaviour:
+
+- Friend records point to a `targetPersonId`
+- The current user has an optional linked `personId`
+- Facts are listed through friend-owned relationship records
+- Verification updates require access through an active friend record owned by the current user
+- Fact retrieval includes verification/source metadata in searchable text
+
+Known limitations:
+
+- Verified facts are represented in searchable text but do not yet receive a numeric reranking boost
+- Facts are indexed into the specific friend relationship used to create them, not fanned out to every relationship pointing at the same person
+- Full correction history/audit trails remain deferred
 
 Goals:
 
