@@ -4,6 +4,7 @@ import { DOCUMENT_CHUNK_SOURCE_TYPE } from "./documentIngestion/documentSourceTy
 
 export type SearchableSourceType =
     | "friend_note"
+    | "person_fact"
     | "rule"
     | "event"
     | typeof DOCUMENT_CHUNK_SOURCE_TYPE;
@@ -260,6 +261,7 @@ export function isSearchableSourceType(
 ): sourceType is RetrievedContextItem["sourceType"] {
     return [
         "friend_note",
+        "person_fact",
         "rule",
         "event",
         DOCUMENT_CHUNK_SOURCE_TYPE,

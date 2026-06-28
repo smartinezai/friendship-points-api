@@ -99,6 +99,10 @@ describe("search service tests", () => {
         expect(isSearchableSourceType("document_chunk")).toBe(true);
     });
 
+    it("recognises person facts as retrievable context", () => {
+        expect(isSearchableSourceType("person_fact")).toBe(true);
+    });
+
 });
 
 
