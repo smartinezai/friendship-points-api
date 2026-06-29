@@ -17,6 +17,8 @@ model Person {
   trackedBy   Friend[]
   authoredFacts PersonFact[] @relation("AuthoredPersonFacts")
   targetFacts   PersonFact[] @relation("TargetPersonFacts")
+  submittedIntakeSubmissions KnowledgeIntakeSubmission[] @relation("SubmittedIntakeSubmissions")
+  targetIntakeSubmissions    KnowledgeIntakeSubmission[] @relation("TargetIntakeSubmissions")
 }
 
 /// Discrete claim or profile fact about a person, with provenance and trust status.
@@ -67,9 +69,44 @@ model Friend {
   events              Event[]
   deletedAt           DateTime?
   searchableDocuments SearchableDocument[]
+  knowledgeIntakeSubmissions KnowledgeIntakeSubmission[]
 
   @@index([ownerUserId])
   @@index([targetPersonId])
+}
+
+/// API-submitted structured knowledge intake for one tracked person.
+model KnowledgeIntakeSubmission {
+  id                  String                  @id @default(uuid())
+  friendId            String
+  friend              Friend                  @relation(fields: [friendId], references: [id])
+  targetPersonId      String
+  targetPerson        Person                  @relation("TargetIntakeSubmissions", fields: [targetPersonId], references: [id])
+  submittedByPersonId String?
+  submittedByPerson   Person?                 @relation("SubmittedIntakeSubmissions", fields: [submittedByPersonId], references: [id])
+  submittedByType     String
+  sourceType          String                  @default("api")
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  answers             KnowledgeIntakeAnswer[]
+
+  @@index([friendId])
+  @@index([targetPersonId])
+  @@index([submittedByPersonId])
+}
+
+/// One answer from a knowledge intake submission.
+model KnowledgeIntakeAnswer {
+  id           String                    @id @default(uuid())
+  submissionId String
+  submission   KnowledgeIntakeSubmission @relation(fields: [submissionId], references: [id])
+  questionKey  String
+  questionText String
+  answerText   String
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+
+  @@index([submissionId])
 }
 
 /// Preference or boundary that affects friendship scoring.
