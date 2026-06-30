@@ -7,6 +7,7 @@ import { predictionRoutes } from "./routes/predictions.routes.js";
 import { embeddingRoutes } from "./routes/embeddings.routes.js";
 import { documentsRoutes } from "./routes/documents.routes.js";
 import { personFactsRoutes } from "./routes/personFacts.routes.js";
+import { knowledgeIntakeRoutes } from "./routes/knowledgeIntake.routes.js";
 /** Fastify app instance with all route modules registered. */
 const app = Fastify();
 
@@ -22,4 +23,5 @@ app.register(predictionRoutes);
 app.register(embeddingRoutes);
 app.register(documentsRoutes);
 app.register(personFactsRoutes);
+app.register(knowledgeIntakeRoutes);
 export default app;
