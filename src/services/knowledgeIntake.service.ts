@@ -1,5 +1,6 @@
 import { prisma } from "../db/prisma.js";
 import type { KnowledgeIntakeSubmittedByType } from "../schemas/knowledgeIntake.schema.js";
+import { createPersonFact } from "./personFacts.service.js";
 
 type KnowledgeIntakeAnswerInput = {
     questionKey: string;
@@ -16,11 +17,17 @@ type CreateKnowledgeIntakeSubmissionInput = {
     answers: KnowledgeIntakeAnswerInput[];
 };
 
+export function buildKnowledgeIntakeAnswerFactContent(
+    answer: KnowledgeIntakeAnswerInput,
+): string {
+    return `${answer.questionText}\n${answer.answerText}`;
+}
+
 /** Stores one API-only knowledge intake submission and its answers. */
 export async function createKnowledgeIntakeSubmission(
     input: CreateKnowledgeIntakeSubmissionInput,
 ) {
-    return prisma.knowledgeIntakeSubmission.create({
+    const submission = await prisma.knowledgeIntakeSubmission.create({
         data: {
             friendId: input.friendId,
             targetPersonId: input.targetPersonId,
@@ -39,4 +46,19 @@ export async function createKnowledgeIntakeSubmission(
             answers: true,
         },
     });
+
+    if (input.submittedByPersonId) {
+        for (const answer of input.answers) {
+            await createPersonFact({
+                friendId: input.friendId,
+                targetPersonId: input.targetPersonId,
+                authorPersonId: input.submittedByPersonId,
+                content: buildKnowledgeIntakeAnswerFactContent(answer),
+                sourceType: "intake_submission",
+                sourceId: submission.id,
+            });
+        }
+    }
+
+    return submission;
 }
