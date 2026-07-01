@@ -20,13 +20,13 @@ The main project README is in [`README.md`](./README.md).
 Completed:
 
 ```txt
-Day 1–36: Backend foundation, validation, CI, soft delete, RAG, embeddings, semantic retrieval, reranking, tool calling, agentic retrieval, source grounding, agentic RAG evaluation, tracing, prompt analytics, document ingestion, user ownership foundation, and person facts
+Day 1–37: Backend foundation, validation, CI, soft delete, RAG, embeddings, semantic retrieval, reranking, tool calling, agentic retrieval, source grounding, agentic RAG evaluation, tracing, prompt analytics, document ingestion, user ownership foundation, person facts, and API-only knowledge intake
 ```
 
 Next:
 
 ```txt
-Day 37: Person Knowledge Intake Forms
+Day 38: Route and Integration Testing
 ```
 
 ---
@@ -1271,7 +1271,38 @@ Learning focus:
 
 ### Day 37: Person Knowledge Intake Forms
 
-Status: Planned.
+Status: Complete.
+
+Completed:
+
+- Chose API-only intake submissions as the first implementation path
+- Deferred hosted/browser in-app forms and Google Forms integration
+- Added `KnowledgeIntakeSubmission`
+- Added `KnowledgeIntakeAnswer`
+- Added validation for intake submission params, submitter type, and answers
+- Added `POST /friends/:friendId/intake-submissions`
+- Stored submission source metadata and question/answer provenance
+- Linked target-person submissions to the friend's target person
+- Linked owner-user submissions to the current user's person
+- Converted linked-submitter answers into searchable `PersonFact` rows
+- Marked target-person submitted answers as self-declared through the existing fact trust rules
+- Indexed generated facts into searchable/RAG context through the existing fact ingestion flow
+- Added schema, service, and route tests
+
+Current behaviour:
+
+- Intake submissions are backend/API-only
+- Each answer stores `questionKey`, `questionText`, and `answerText`
+- Generated facts use `sourceType: intake_submission`
+- Third-party submissions without a linked submitter person are stored but do not yet generate facts
+
+Known limitations:
+
+- No hosted browser form or public share link exists yet
+- No reusable form/question-template model exists yet
+- No Google Forms import exists yet
+- No correction/revocation flow exists for intake answers
+- Third-party submitter identity remains unlinked in the first API-only version
 
 Goals:
 

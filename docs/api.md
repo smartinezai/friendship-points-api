@@ -177,6 +177,48 @@ Returns `404` if the fact is not accessible through a friend owned by the curren
 
 ---
 
+## Knowledge Intake
+
+### `POST /friends/:friendId/intake-submissions`
+
+Stores an API-only knowledge intake submission for the person tracked by a friend.
+
+```json
+{
+  "submittedByType": "target_person",
+  "sourceType": "api",
+  "answers": [
+    {
+      "questionKey": "communication.calls",
+      "questionText": "How do you feel about phone calls?",
+      "answerText": "I prefer scheduled calls."
+    }
+  ]
+}
+```
+
+Allowed `submittedByType` values:
+
+```txt
+target_person
+owner_user
+third_party
+```
+
+Behaviour:
+
+- stores the submission and nested answers
+- defaults `sourceType` to `api`
+- links `target_person` submissions to the friend's target person
+- links `owner_user` submissions to the current user's person
+- leaves `third_party` submissions without a linked submitter person for now
+- converts answers with a linked submitter person into searchable `PersonFact` rows
+- uses `sourceType: intake_submission` on generated facts
+
+Returns `404` if the friend does not exist or is not owned by the current user.
+
+---
+
 ## Rules
 
 ### `GET /friends/:friendId/rules`
