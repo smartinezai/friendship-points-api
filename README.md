@@ -20,10 +20,10 @@ The project is meant to be social commentary on the social credit score imposed 
 - generate mock and Mistral predictions for hypothetical actions
 - track friendship point balances from stored assessments
 - append notes without overwriting existing context
-- build searchable relationship context from notes, rules, and events
+- build searchable relationship context from notes, rules and events
 - retrieve keyword-ranked context from ingested searchable documents
 - validate request payloads with Zod
-- run linting, tests, builds, pre-push checks, and GitHub Actions CI
+- run linting, tests, builds, pre-push checks and GitHub Actions CI
 
 Example:
 
@@ -47,8 +47,8 @@ Implemented:
 
 - Fastify API server
 - PostgreSQL persistence through Prisma
-- `Friend`, `Rule`, `Event`, `Assessment`, and `SearchableDocument` models
-- friend, rule, event, assessment, prediction, search, and ingestion endpoints
+- `Friend`, `Rule`, `Event`, `Assessment` and `SearchableDocument` models
+- friend, rule, event, assessment, prediction, search and ingestion endpoints
 - manual assessment and friendship balance calculation
 - mock LLM assessment flow
 - Mistral assessment and prediction flows through LangChain
@@ -56,7 +56,7 @@ Implemented:
 - structured LLM output validation
 - prompt version and model metadata tracking
 - friend soft delete with `deletedAt`
-- keyword search over notes, active rules, and events
+- keyword search over notes, active rules and events
 - searchable document ingestion for friend context
 - reusable retrieval/RAG service flow for assessments and predictions
 - Zod request validation
@@ -66,24 +66,21 @@ Implemented:
 - ESLint
 - Husky pre-push checks
 - GitHub Actions CI
+- isolated PostgreSQL/pgvector integration tests for API routes and retrieval
+- UUID validation for route parameters
 
 Current focus:
 
 ```txt
-Embeddings and Vector Storage
+Data Model and Type Architecture Hardening (Day 39)
 ```
 
 Near-term roadmap:
 
 ```txt
-Embeddings and Vector Storage
-Semantic Retrieval
-Reranking
-Function Calling Search Tool
-Agentic Retrieval Loop
-Retrieval Evaluation
-Golden Examples and Regression Tests
-Agentic RAG Evaluation
+Data Model and Type Architecture Hardening
+API Contract and OpenAPI Documentation
+TypeScript Refactor and Code Review
 ```
 
 ## Documentation

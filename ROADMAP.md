@@ -20,13 +20,13 @@ The main project README is in [`README.md`](./README.md).
 Completed:
 
 ```txt
-Day 1–37: Backend foundation, validation, CI, soft delete, RAG, embeddings, semantic retrieval, reranking, tool calling, agentic retrieval, source grounding, agentic RAG evaluation, tracing, prompt analytics, document ingestion, user ownership foundation, person facts, and API-only knowledge intake
+Day 1–38: Backend foundation, route integration tests, UUID validation, CI, soft delete, RAG, embeddings, semantic retrieval, reranking, tool calling, agentic retrieval, source grounding, agentic RAG evaluation, tracing, prompt analytics, document ingestion, user ownership foundation, person facts and API-only knowledge intake
 ```
 
 Next:
 
 ```txt
-Day 38: Route and Integration Testing
+Day 39: Data Model and Type Architecture Hardening
 ```
 
 ---
@@ -1351,7 +1351,24 @@ Learning focus:
 
 ### Day 38: Route and Integration Testing
 
-Status: Planned.
+Status: Done.
+
+Implemented:
+
+- Added database integration tests that send real Fastify requests to an isolated PostgreSQL database with pgvector
+- Added a runner that applies Prisma migrations and only accepts a database whose name ends in `_test`; it never resets or drops that database
+- Added unique user, person, friend, rule, event, assessment, searchable document and fact fixtures with cleanup after each test
+- Tested friend updates, note appends, search validation, soft deletion, repeat deletion and UUID route parameters
+- Tested score changes through event creation, assessment and balance routes
+- Tested keyword retrieval, semantic retrieval, reranking, search-index rebuilding and embedding storage against PostgreSQL
+- Used a local HTTP response for embedding tests so no external provider is contacted
+- Tested person facts and knowledge intake submissions through the database-backed routes
+- Tested the existing mock assessment and prediction routes with retrieved context and without an external model
+- Added a PostgreSQL/pgvector service to GitHub Actions and documented the local integration workflow
+
+Scope note:
+
+- The reusable friend-context agent does not currently have an HTTP route. Its direct tool use remains covered by the existing agent tests. Day 38 covers the existing retrieval-backed assessment and prediction routes until the agent is connected to an API workflow.
 
 Goals:
 
@@ -1363,14 +1380,14 @@ Goals:
 - Verify deleted friends return `404`
 - Verify deleted friends disappear from search results
 - Verify a second delete returns `404`
-- Add route tests for keyword, semantic, and reranked context endpoints
+- Add route tests for keyword, semantic and reranked context endpoints
 - Add service tests for retrieval and reranking
 - Add ranking/sorting tests for search results
-- Add edge-case tests for empty query, missing friend, deleted friend, and no matches
-- Add UUID validation for route parameters such as `friendId`, `eventId`, and `ruleId`
+- Add edge-case tests for empty query, missing friend, deleted friend and no matches
+- Add UUID validation for route parameters such as `friendId`, `eventId` and `ruleId`
 - Add an isolated test database setup
 - Run Prisma migrations before integration tests
-- Add factories for friends, rules, events, assessments, searchable documents, users, persons, and facts
+- Add factories for friends, rules, events, assessments, searchable documents, users, persons and facts
 - Test full request → database → response flows
 - Reset test data safely between tests
 - Distinguish route tests, service tests, and integration tests
@@ -1379,7 +1396,8 @@ Goals:
 - Test keyword search routes
 - Test semantic search routes
 - Test reranked search routes
-- Test tool-backed agent routes added during Days 28–29
+- Test retrieval-backed assessment and prediction routes with local providers
+- Defer HTTP tests for the reusable friend-context agent until an API route uses it
 - Verify malformed UUIDs return `400`
 - Verify missing friends return `404`
 - Verify deleted friends cannot be searched
