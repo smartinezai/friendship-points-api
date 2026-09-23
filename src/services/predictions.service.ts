@@ -5,6 +5,7 @@ import type {
 import type { LlmAssessmentResult } from "../ai/assessment.schema.js";
 import { prisma } from "../db/prisma.js";
 import { retrieveFriendContext } from "./search.service.js";
+import type { ImpactDirection, RuleWeight } from "../domain/friendship.js";
 
 type FriendWithActiveRules = {
   id: string;
@@ -14,10 +15,19 @@ type FriendWithActiveRules = {
     id: string;
     title: string;
     description: string;
-    impactDirection: string;
-    weight: string;
+    impactDirection: ImpactDirection;
+    weight: RuleWeight;
   }[];
 };
+
+export type PredictionFlowOutcome =
+  | { status: "not_found" }
+  | {
+      status: "predicted";
+      prediction: LlmAssessmentResult;
+      retrievedContext: LlmRetrievedContextItem[];
+      saved: false;
+    };
 
 type PredictionProvider = (
   input: LlmAssessmentInput,
@@ -89,18 +99,18 @@ export function buildPredictionInput(
  * @param friendId - Friend the hypothetical action is about.
  * @param hypotheticalAction - Action text to assess as a hypothetical event.
  * @param provider - LLM provider implementation used to score the action.
- * @returns Prediction result with retrieved context, or null if friend is missing.
+ * @returns A not-found outcome or a prediction with retrieved context.
  */
 export async function predictFriendActionWithProvider(
   friendId: string,
   ownerUserId: string,
   hypotheticalAction: string,
   provider: PredictionProvider,
-) {
+): Promise<PredictionFlowOutcome> {
   const friend = await getFriendWithActiveRules(friendId, ownerUserId);
 
   if (!friend) {
-    return null;
+    return { status: "not_found" };
   }
 
   const retrievedContext = await retrieveFriendContext(
@@ -118,6 +128,7 @@ export async function predictFriendActionWithProvider(
   const prediction = await provider(predictionInput);
 
   return {
+    status: "predicted",
     prediction,
     retrievedContext,
     saved: false,

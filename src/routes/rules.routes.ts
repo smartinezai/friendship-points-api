@@ -2,8 +2,18 @@ import type { FastifyInstance } from "fastify";
 import { prisma } from "../db/prisma.js";
 import { getFriendById } from "../services/friends.service.js";
 import { getCurrentUserId } from "../services/currentUser.service.js";
-import { createRuleBodySchema, updateRuleWeightBodySchema } from "../schemas/rules.schema.js";
+import {
+    createRuleBodySchema,
+    updateRuleWeightBodySchema,
+    type CreateRuleBody,
+    type UpdateRuleWeightBody,
+} from "../schemas/rules.schema.js";
 import { sendNotFoundError, sendValidationError } from "../utils/httpErrors.js";
+import {
+    toRuleDto,
+    type RuleResponseDto,
+    type RulesResponseDto,
+} from "../dto/friendship.dto.js";
 
 /** Registers friendship-rule routes for creation, listing, and weight updates. */
 export async function ruleRoutes(app: FastifyInstance) {
@@ -20,7 +30,7 @@ export async function ruleRoutes(app: FastifyInstance) {
         const rules = await prisma.rule.findMany({
             where: { friendId },
         });
-        return { rules };
+        return { rules: rules.map(toRuleDto) } satisfies RulesResponseDto;
     });
 
 
@@ -28,12 +38,7 @@ export async function ruleRoutes(app: FastifyInstance) {
 
     app.post<{
         Params: { friendId: string };
-        Body: {
-            title: string;
-            description: string;
-            impactDirection: string;
-            weight: string;
-        };
+        Body: CreateRuleBody;
     }>("/friends/:friendId/rules", async (request, reply) => {
         const { friendId } = request.params;
         const ownerUserId = getCurrentUserId(request);
@@ -60,13 +65,13 @@ export async function ruleRoutes(app: FastifyInstance) {
         });
 
         reply.status(201);
-        return { rule };
+        return { rule: toRuleDto(rule) } satisfies RuleResponseDto;
     });
 
 
     app.patch<{
         Params: { ruleId: string };
-        Body: { weight: string };
+        Body: UpdateRuleWeightBody;
     }>("/rules/:ruleId/weight", async (request, reply) => {
         const { ruleId } = request.params;
         const ownerUserId = getCurrentUserId(request);
@@ -89,7 +94,7 @@ export async function ruleRoutes(app: FastifyInstance) {
             data: { weight },
         });
 
-        return { rule: updatedRule };
+        return { rule: toRuleDto(updatedRule) } satisfies RuleResponseDto;
 
     });
 

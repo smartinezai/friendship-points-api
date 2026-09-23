@@ -49,7 +49,10 @@ describe("scoring routes with PostgreSQL", () => {
             },
         });
         expect(ruleResponse.statusCode).toBe(201);
-        const rule = ruleResponse.json<{ rule: { id: string } }>().rule;
+        const rule = ruleResponse.json<{
+            rule: { id: string; friendId?: string };
+        }>().rule;
+        expect(rule).not.toHaveProperty("friendId");
 
         const eventResponse = await app.inject({
             method: "POST",
@@ -58,7 +61,10 @@ describe("scoring routes with PostgreSQL", () => {
             payload: { eventText: "I called without asking first." },
         });
         expect(eventResponse.statusCode).toBe(201);
-        const event = eventResponse.json<{ event: { id: string } }>().event;
+        const event = eventResponse.json<{
+            event: { id: string; friendId?: string };
+        }>().event;
+        expect(event).not.toHaveProperty("friendId");
 
         const assessmentResponse = await app.inject({
             method: "POST",
@@ -67,6 +73,11 @@ describe("scoring routes with PostgreSQL", () => {
             payload: { scoreDelta: -2.5, reason: "The call was unexpected." },
         });
         expect(assessmentResponse.statusCode).toBe(201);
+        expect(
+            assessmentResponse.json<{
+                assessment: Record<string, unknown>;
+            }>().assessment,
+        ).not.toHaveProperty("eventId");
 
         const balanceResponse = await app.inject({
             method: "GET",

@@ -4,6 +4,11 @@ import { getFriendById } from "../services/friends.service.js";
 import { getCurrentUserId } from "../services/currentUser.service.js";
 import { createEventBodySchema } from "../schemas/events.schema.js";
 import { sendNotFoundError, sendValidationError } from "../utils/httpErrors.js";
+import {
+    toEventDto,
+    type EventResponseDto,
+    type EventsResponseDto,
+} from "../dto/friendship.dto.js";
 
 /** Registers event creation and lookup routes. */
 export async function eventRoutes(app: FastifyInstance) {
@@ -20,7 +25,7 @@ export async function eventRoutes(app: FastifyInstance) {
         const events = await prisma.event.findMany({
             where: { friendId },
         });
-        return { events };
+        return { events: events.map(toEventDto) } satisfies EventsResponseDto;
     });
 
     app.get<{ Params: { eventId: string } }>("/events/:eventId", async (request, reply) => {
@@ -38,7 +43,7 @@ export async function eventRoutes(app: FastifyInstance) {
             return sendNotFoundError(reply, "Event not found");
         }
 
-        return { event };
+        return { event: toEventDto(event) } satisfies EventResponseDto;
     });
 
 
@@ -75,7 +80,7 @@ export async function eventRoutes(app: FastifyInstance) {
         });
 
         reply.status(201);
-        return { event };
+        return { event: toEventDto(event) } satisfies EventResponseDto;
     });
 
 

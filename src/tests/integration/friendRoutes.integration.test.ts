@@ -28,7 +28,15 @@ async function createFriend(input: {
     });
 
     expect(response.statusCode).toBe(201);
-    return response.json<{ friend: FriendResponse }>().friend;
+    const friend = response.json<{
+        friend: FriendResponse & {
+            ownerUserId?: string;
+            targetPersonId?: string;
+        };
+    }>().friend;
+    expect(friend).not.toHaveProperty("ownerUserId");
+    expect(friend).not.toHaveProperty("targetPersonId");
+    return friend;
 }
 
 describe("friend routes with PostgreSQL", () => {

@@ -16,7 +16,7 @@ describe("buildPredictionInput", () => {
           weight: "high",
         },
       ],
-    };
+    } satisfies Parameters<typeof buildPredictionInput>[0];
 
     const result = buildPredictionInput(
       friend,

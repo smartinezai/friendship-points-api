@@ -1,4 +1,5 @@
 import type { SearchableSourceType } from "../services/search.service.js";
+import type { ImpactDirection, RuleWeight } from "../domain/friendship.js";
 
 /** Context item retrieved from the search index for RAG prompts. */
 export type LlmRetrievedContextItem = {
@@ -24,8 +25,8 @@ export type LlmAssessmentInput = {
     id: string;
     title: string;
     description: string;
-    impactDirection: string;
-    weight: string;
+    impactDirection: ImpactDirection;
+    weight: RuleWeight;
   }[];
   retrievedContext?: LlmRetrievedContextItem[];
 };

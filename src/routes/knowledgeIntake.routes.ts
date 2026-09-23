@@ -12,6 +12,10 @@ import {
     sendNotFoundError,
     sendValidationError,
 } from "../utils/httpErrors.js";
+import {
+    toKnowledgeIntakeSubmissionDto,
+    type KnowledgeIntakeSubmissionResponseDto,
+} from "../dto/friendship.dto.js";
 
 /** Registers API-only knowledge intake submission routes. */
 export async function knowledgeIntakeRoutes(
@@ -69,6 +73,8 @@ export async function knowledgeIntakeRoutes(
                 : {}),
         });
 
-        return reply.code(201).send({ submission });
+        return reply.code(201).send({
+            submission: toKnowledgeIntakeSubmissionDto(submission),
+        } satisfies KnowledgeIntakeSubmissionResponseDto);
     });
 }

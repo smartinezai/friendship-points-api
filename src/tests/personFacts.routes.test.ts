@@ -93,7 +93,11 @@ describe("personFactsRoutes", () => {
         expect(response.json()).toEqual({
             facts: [
                 {
-                    ...createdFact,
+                    id: createdFact.id,
+                    content: createdFact.content,
+                    verificationStatus: createdFact.verificationStatus,
+                    sourceType: createdFact.sourceType,
+                    sourceId: createdFact.sourceId,
                     createdAt: createdFact.createdAt.toISOString(),
                     updatedAt: createdFact.updatedAt.toISOString(),
                 },
@@ -120,7 +124,11 @@ describe("personFactsRoutes", () => {
         expect(response.statusCode).toBe(201);
         expect(response.json()).toEqual({
             fact: {
-                ...createdFact,
+                id: createdFact.id,
+                content: createdFact.content,
+                verificationStatus: createdFact.verificationStatus,
+                sourceType: createdFact.sourceType,
+                sourceId: createdFact.sourceId,
                 createdAt: createdFact.createdAt.toISOString(),
                 updatedAt: createdFact.updatedAt.toISOString(),
             },
@@ -200,8 +208,11 @@ describe("personFactsRoutes", () => {
         expect(response.statusCode).toBe(200);
         expect(response.json()).toEqual({
             fact: {
-                ...createdFact,
+                id: createdFact.id,
+                content: createdFact.content,
                 verificationStatus: "verified_by_target",
+                sourceType: createdFact.sourceType,
+                sourceId: createdFact.sourceId,
                 createdAt: createdFact.createdAt.toISOString(),
                 updatedAt: createdFact.updatedAt.toISOString(),
             },

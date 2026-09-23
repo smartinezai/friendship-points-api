@@ -10,6 +10,12 @@ import { assessEventWithProvider } from '../services/assessments.service.js';
 import { manualAssessmentBodySchema } from '../schemas/assessments.schema.js';
 import { sendNotFoundError, sendValidationError, sendInternalServerError } from '../utils/httpErrors.js';
 import { logError } from '../utils/logging.js';
+import {
+    toAssessmentDto,
+    type AssessmentResponseDto,
+    type AssessmentWithContextResponseDto,
+    type FriendshipBalanceResponseDto,
+} from "../dto/friendship.dto.js";
 
 /** Registers manual, balance, and LLM-assisted assessment routes. */
 export async function assessmentRoutes(app: FastifyInstance) {
@@ -49,7 +55,9 @@ export async function assessmentRoutes(app: FastifyInstance) {
                 source: "manual",
             },
         });
-        return reply.status(201).send({ assessment });
+        return reply.status(201).send({
+            assessment: toAssessmentDto(assessment),
+        } satisfies AssessmentResponseDto);
     });
 
 
@@ -76,8 +84,8 @@ export async function assessmentRoutes(app: FastifyInstance) {
         });
         return reply.status(200).send({
             friendId,
-            balance: result._sum.scoreDelta ?? 0
-        });
+            balance: result._sum.scoreDelta ?? 0,
+        } satisfies FriendshipBalanceResponseDto);
     });
 
     app.post<{
@@ -98,11 +106,15 @@ export async function assessmentRoutes(app: FastifyInstance) {
                 },
             );
 
-            if (!result) {
+            if (result.status === "not_found") {
                 return sendNotFoundError(reply, "Event not found");
             }
 
-            return reply.status(201).send(result);
+            return reply.status(201).send({
+                assessment: toAssessmentDto(result.assessment),
+                llmResult: result.llmResult,
+                retrievedContext: result.retrievedContext,
+            } satisfies AssessmentWithContextResponseDto);
         } catch (error) {
             logError("Error during mock assessment", error);
 
@@ -128,11 +140,15 @@ export async function assessmentRoutes(app: FastifyInstance) {
                 },
             );
 
-            if (!result) {
+            if (result.status === "not_found") {
                 return sendNotFoundError(reply, "Event not found");
             }
 
-            return reply.status(201).send(result);
+            return reply.status(201).send({
+                assessment: toAssessmentDto(result.assessment),
+                llmResult: result.llmResult,
+                retrievedContext: result.retrievedContext,
+            } satisfies AssessmentWithContextResponseDto);
         } catch (error) {
             logError("Error during Mistral assessment", error);
 
@@ -159,11 +175,15 @@ export async function assessmentRoutes(app: FastifyInstance) {
                 },
             );
 
-            if (!result) {
+            if (result.status === "not_found") {
                 return sendNotFoundError(reply, "Event not found");
             }
 
-            return reply.status(201).send(result);
+            return reply.status(201).send({
+                assessment: toAssessmentDto(result.assessment),
+                llmResult: result.llmResult,
+                retrievedContext: result.retrievedContext,
+            } satisfies AssessmentWithContextResponseDto);
         } catch (error) {
             logError("Error during OpenAI assessment", error);
 

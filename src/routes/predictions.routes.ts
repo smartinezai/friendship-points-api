@@ -5,6 +5,10 @@ import { predictFriendActionWithProvider } from "../services/predictions.service
 import { getCurrentUserId } from "../services/currentUser.service.js";
 import { mistralAssessEvent } from "../ai/mistralAssessment.service.js";
 import { sendNotFoundError, sendValidationError } from "../utils/httpErrors.js";
+import {
+    type MistralPredictionResponseDto,
+    type PredictionResponseDto,
+} from "../dto/friendship.dto.js";
 
 /** Registers prediction routes for hypothetical, unsaved actions. */
 export async function predictionRoutes(app: FastifyInstance) {
@@ -27,11 +31,15 @@ export async function predictionRoutes(app: FastifyInstance) {
             mockLlmAssessment,
         );
 
-        if (!predictionResult) {
+        if (predictionResult.status === "not_found") {
             return sendNotFoundError(reply, "Friend not found");
         }
 
-        return reply.send(predictionResult);
+        return reply.send({
+            prediction: predictionResult.prediction,
+            retrievedContext: predictionResult.retrievedContext,
+            saved: predictionResult.saved,
+        } satisfies PredictionResponseDto);
     });
 
     app.post<{
@@ -53,13 +61,15 @@ export async function predictionRoutes(app: FastifyInstance) {
             mistralAssessEvent,
         );
 
-        if (!predictionResult) {
+        if (predictionResult.status === "not_found") {
             return sendNotFoundError(reply, "Friend not found");
         }
 
         return reply.send({
-            ...predictionResult,
+            prediction: predictionResult.prediction,
+            retrievedContext: predictionResult.retrievedContext,
+            saved: predictionResult.saved,
             source: "mistral",
-        });
+        } satisfies MistralPredictionResponseDto);
     });
 }

@@ -18,6 +18,11 @@ import {
     sendNotFoundError,
     sendValidationError,
 } from "../utils/httpErrors.js";
+import {
+    toPersonFactDto,
+    type PersonFactResponseDto,
+    type PersonFactsResponseDto,
+} from "../dto/friendship.dto.js";
 
 const createPersonFactParamsSchema = z.object({
     friendId: z.uuid(),
@@ -55,7 +60,7 @@ export async function personFactsRoutes(
 
         const facts = await listPersonFactsForTarget(friend.targetPersonId);
 
-        return reply.send({ facts });
+        return reply.send({ facts: facts.map(toPersonFactDto) } satisfies PersonFactsResponseDto);
     });
 
     app.post("/friends/:friendId/facts", async (request, reply) => {
@@ -101,7 +106,7 @@ export async function personFactsRoutes(
                 : { sourceId: bodyResult.data.sourceId }),
         });
 
-        return reply.code(201).send({ fact });
+        return reply.code(201).send({ fact: toPersonFactDto(fact) } satisfies PersonFactResponseDto);
     });
 
     app.patch("/person-facts/:factId/verification-status", async (request, reply) => {
@@ -136,6 +141,6 @@ export async function personFactsRoutes(
             verificationStatus: bodyResult.data.verificationStatus,
         });
 
-        return reply.send({ fact });
+        return reply.send({ fact: toPersonFactDto(fact) } satisfies PersonFactResponseDto);
     });
 }

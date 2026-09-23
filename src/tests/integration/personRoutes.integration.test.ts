@@ -77,7 +77,7 @@ describe("person and intake routes with PostgreSQL", () => {
             submission: {
                 id: string;
                 answers: Array<{ questionKey: string; answerText: string }>;
-            };
+            } & Record<string, unknown>;
         }>().submission;
         expect(submission.answers).toEqual([
             expect.objectContaining({
@@ -85,6 +85,10 @@ describe("person and intake routes with PostgreSQL", () => {
                 answerText: "I prefer scheduled calls.",
             }),
         ]);
+        expect(submission).not.toHaveProperty("friendId");
+        expect(submission).not.toHaveProperty("targetPersonId");
+        expect(submission).not.toHaveProperty("submittedByPersonId");
+        expect(submission.answers[0]).not.toHaveProperty("submissionId");
 
         const storedSubmission = await prisma.knowledgeIntakeSubmission.findUnique({
             where: { id: submission.id },

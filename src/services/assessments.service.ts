@@ -2,6 +2,17 @@ import { prisma } from "../db/prisma.js";
 import type { LlmAssessmentInput } from "../ai/assessment.types.js";
 import type { LlmAssessmentResult } from "../ai/assessment.schema.js";
 import { retrieveFriendContext } from "./search.service.js";
+import type { Assessment } from "../generated/prisma/client.js";
+import type { LlmRetrievedContextItem } from "../ai/assessment.types.js";
+
+export type AssessmentFlowOutcome =
+  | { status: "not_found" }
+  | {
+      status: "assessed";
+      assessment: Assessment;
+      llmResult: LlmAssessmentResult;
+      retrievedContext: LlmRetrievedContextItem[];
+    };
 
 
 /**
@@ -112,7 +123,7 @@ export async function saveLlmAssessment(
  * @param source - Source label stored on the Assessment row.
  * @param assessFn - Provider function that accepts LlmAssessmentInput.
  * @param metadata - Optional model and prompt metadata stored with the result.
- * @returns Assessment, raw LLM result, and retrieved context, or null if missing.
+ * @returns A not-found outcome or the saved assessment with its LLM result and context.
  */
 export async function assessEventWithProvider(
   eventId: string,
@@ -123,11 +134,11 @@ export async function assessEventWithProvider(
     modelName?: string;
     promptVersion?: string;
   }
-) {
+): Promise<AssessmentFlowOutcome> {
   const event = await getEventWithFriendAndActiveRules(eventId, ownerUserId);
 
   if (!event) {
-    return null;
+    return { status: "not_found" };
   }
   const retrievedContext = await retrieveFriendContext(
     event.friendId,
@@ -149,6 +160,7 @@ export async function assessEventWithProvider(
   );
 
   return {
+    status: "assessed",
     assessment,
     llmResult,
     retrievedContext,

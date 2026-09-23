@@ -30,6 +30,27 @@ describe("retrieval-backed assessment and prediction routes", () => {
         await prisma.$disconnect();
     });
 
+    it("returns not found for missing assessment events and prediction friends", async () => {
+        const missingId = "00000000-0000-4000-8000-000000000000";
+
+        const assessmentResponse = await app.inject({
+            method: "POST",
+            url: `/events/${missingId}/mock-assessment`,
+            headers: requestHeaders(),
+        });
+        expect(assessmentResponse.statusCode).toBe(404);
+        expect(assessmentResponse.json()).toEqual({ error: "Event not found" });
+
+        const predictionResponse = await app.inject({
+            method: "POST",
+            url: `/friends/${missingId}/predict`,
+            headers: requestHeaders(),
+            payload: { hypotheticalAction: "Make a kind phone call." },
+        });
+        expect(predictionResponse.statusCode).toBe(404);
+        expect(predictionResponse.json()).toEqual({ error: "Friend not found" });
+    });
+
     it("uses stored context and keeps hypothetical predictions out of history", async () => {
         const friend = await createTestFriend({ ownerUserId, displayName: "Cole" });
         const event = await createTestEvent({
@@ -55,6 +76,8 @@ describe("retrieval-backed assessment and prediction routes", () => {
             source: "mock",
             scoreDelta: 10,
         });
+        expect(assessmentResult.assessment).not.toHaveProperty("eventId");
+        expect(assessmentResult).not.toHaveProperty("status");
         expect(assessmentResult.retrievedContext.map(({ sourceId }) => sourceId)).toEqual([
             context.sourceId,
         ]);
@@ -71,6 +94,7 @@ describe("retrieval-backed assessment and prediction routes", () => {
             retrievedContext: Array<{ sourceId: string }>;
         }>();
         expect(prediction.saved).toBe(false);
+        expect(prediction).not.toHaveProperty("status");
         expect(prediction.retrievedContext.map(({ sourceId }) => sourceId)).toEqual([
             context.sourceId,
         ]);

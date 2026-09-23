@@ -18,6 +18,13 @@ import {
     rerankContextItems,
 } from "../services/search.service.js";
 import { rebuildSearchableDocumentsForFriend } from "../services/searchIngestion.service.js";
+import {
+    toFriendDto,
+    type DuplicateFriendResponseDto,
+    type FriendResponseDto,
+    type FriendsResponseDto,
+    type RebuildSearchIndexResponseDto,
+} from "../dto/friendship.dto.js";
 
 /** Registers friend CRUD, notes, search, and search-index maintenance routes. */
 export async function friendRoutes(app: FastifyInstance) {
@@ -39,7 +46,7 @@ export async function friendRoutes(app: FastifyInstance) {
                 },
             },
         });
-        return { friends };
+        return { friends: friends.map(toFriendDto) } satisfies FriendsResponseDto;
 
     });
 
@@ -138,7 +145,7 @@ export async function friendRoutes(app: FastifyInstance) {
         return reply.send({
             message: "Search index rebuilt successfully",
             createdDocCount: result.createdDocCount,
-        });
+        } satisfies RebuildSearchIndexResponseDto);
     });
 
     app.get<{ Params: { id: string } }>("/friends/:id", async (request, reply) => {
@@ -151,7 +158,7 @@ export async function friendRoutes(app: FastifyInstance) {
             return sendNotFoundError(reply, "Friend not found");
         }
 
-        return { friend };
+        return { friend: toFriendDto(friend) } satisfies FriendResponseDto;
     });
 
 
@@ -164,7 +171,7 @@ export async function friendRoutes(app: FastifyInstance) {
             },
         });
 
-        return { friends };
+        return { friends: friends.map(toFriendDto) } satisfies FriendsResponseDto;
     });
 
     app.post<{
@@ -191,8 +198,8 @@ export async function friendRoutes(app: FastifyInstance) {
             reply.status(409);
             return {
                 error: "Friend with this display name already exists",
-                existingFriend,
-            };
+                existingFriend: toFriendDto(existingFriend),
+            } satisfies DuplicateFriendResponseDto;
 
         }
 
@@ -210,7 +217,7 @@ export async function friendRoutes(app: FastifyInstance) {
         });
 
         reply.status(201);
-        return { friend };
+        return { friend: toFriendDto(friend) } satisfies FriendResponseDto;
     });
 
     app.patch<{
@@ -249,7 +256,7 @@ export async function friendRoutes(app: FastifyInstance) {
             data: updateData,
         });
 
-        return reply.send({ friend: updatedFriend });
+        return reply.send({ friend: toFriendDto(updatedFriend) } satisfies FriendResponseDto);
     });
 
     app.post<{
@@ -282,7 +289,7 @@ export async function friendRoutes(app: FastifyInstance) {
             data: { notes: updatedNotes },
         });
 
-        return reply.send({ friend: updatedFriend });
+        return reply.send({ friend: toFriendDto(updatedFriend) } satisfies FriendResponseDto);
     });
 
     app.delete<{

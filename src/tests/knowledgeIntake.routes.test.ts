@@ -102,11 +102,16 @@ describe("knowledgeIntakeRoutes", () => {
         expect(response.statusCode).toBe(201);
         expect(response.json()).toEqual({
             submission: {
-                ...createdSubmission,
+                id: createdSubmission.id,
+                submittedByType: createdSubmission.submittedByType,
+                sourceType: createdSubmission.sourceType,
                 createdAt: createdSubmission.createdAt.toISOString(),
                 updatedAt: createdSubmission.updatedAt.toISOString(),
                 answers: createdSubmission.answers.map((answer) => ({
-                    ...answer,
+                    id: answer.id,
+                    questionKey: answer.questionKey,
+                    questionText: answer.questionText,
+                    answerText: answer.answerText,
                     createdAt: answer.createdAt.toISOString(),
                     updatedAt: answer.updatedAt.toISOString(),
                 })),
