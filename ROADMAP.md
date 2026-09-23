@@ -1424,7 +1424,21 @@ Learning focus:
 
 ### Day 39: Data Model and Type Architecture Hardening
 
-Status: Planned.
+Status: In Progress.
+
+Implemented:
+
+- Converted rule direction and weight to PostgreSQL enums with forward migrations
+- Added optional person pronouns without changing UUID primary keys
+- Shared domain enum types across Prisma, Zod, route validation and LLM inputs
+- Added response DTOs that leave ownership and relation keys inside persistence
+- Added tagged outcomes for missing and successful assessment and prediction flows
+- Added coverage for every enum value, optional pronouns, DTO boundaries and missing resources
+
+Scope note:
+
+- UUIDs remain the only identifiers. Slugs are deferred until there is a product need and a uniqueness decision.
+- Providers return one validated assessment shape or throw. Tagged outcomes cover missing and successful domain flows.
 
 Goals:
 
