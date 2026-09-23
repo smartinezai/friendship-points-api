@@ -51,6 +51,36 @@ Open Prisma Studio:
 npx prisma studio
 ```
 
+## Database integration tests
+
+Integration tests use a separate PostgreSQL database with pgvector. The test
+runner applies pending Prisma migrations and refuses database names that do not
+end in `_test`. It does not reset or drop the database.
+
+Start a disposable database locally:
+
+```bash
+docker run --rm --detach --name friendship-points-test-db \
+  --publish 127.0.0.1:54329:5432 \
+  --env POSTGRES_DB=friendship_points_test \
+  --env POSTGRES_USER=friendship_test \
+  --env POSTGRES_PASSWORD=friendship_test \
+  pgvector/pgvector:pg17
+```
+
+Run the integration suite:
+
+```bash
+TEST_DATABASE_URL=postgresql://friendship_test:friendship_test@127.0.0.1:54329/friendship_points_test npm run test:integration
+```
+
+The suite creates unique users and removes their data after each test. Stop the
+container when finished:
+
+```bash
+docker stop friendship-points-test-db
+```
+
 ## Run the app
 
 Development server:
@@ -143,6 +173,7 @@ checkout repository
 → npx prisma generate
 → npm run lint
 → npm test
+→ npm run test:integration
 → npm run build
 ```
 
@@ -176,8 +207,7 @@ git commit -m "Test prediction input builder"
 ## Current near-term work
 
 ```txt
-Day 21: Data Model Hardening
-Day 22: Friend Management Route Tests
-Day 23: Documentation and Portfolio Polish
-Day 24: Keyword Search over Rules, Notes, and Events
+Day 39: Data Model and Type Architecture Hardening
+Day 40: API Contract and OpenAPI Documentation
+Day 41: TypeScript Refactor and Code Review
 ```

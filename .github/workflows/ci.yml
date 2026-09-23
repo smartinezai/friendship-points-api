@@ -7,6 +7,20 @@ on:
 jobs:
   test: #create a job called test and run it on a linux machine 
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: friendship_points_test
+          POSTGRES_USER: friendship_test
+          POSTGRES_PASSWORD: friendship_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U friendship_test -d friendship_points_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout repository #download repository code into github runner
         uses: actions/checkout@v5
@@ -26,6 +40,11 @@ jobs:
         run: npm run lint # execute the shell command "npm run lint" to run the linter inside the github runner  
       - name: Run tests #run tests
         run: npm test # execute the shell command "npm test" to run tests inside the
+
+      - name: Run database integration tests
+        run: npm run test:integration
+        env:
+          TEST_DATABASE_URL: postgresql://friendship_test:friendship_test@localhost:5432/friendship_points_test
       
       - name: Run build #run build
         run: npm run build # execute the shell command "npm run build" to build the project inside the github runner
