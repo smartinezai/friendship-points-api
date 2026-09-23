@@ -8,8 +8,11 @@ import { embeddingRoutes } from "./routes/embeddings.routes.js";
 import { documentsRoutes } from "./routes/documents.routes.js";
 import { personFactsRoutes } from "./routes/personFacts.routes.js";
 import { knowledgeIntakeRoutes } from "./routes/knowledgeIntake.routes.js";
+import { validateUuidRouteParams } from "./utils/validateUuidRouteParams.js";
 /** Fastify app instance with all route modules registered. */
 const app = Fastify();
+
+app.addHook("preValidation", validateUuidRouteParams);
 
 app.get("/health", async () => {
     return { status: "ok" };
