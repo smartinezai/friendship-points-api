@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { prisma } from "../../db/prisma.js";
+import type { ImpactDirection, RuleWeight } from "../../domain/friendship.js";
 
 /** Creates a person with a unique display name for one integration test. */
 export async function createTestPerson(displayName = `Test person ${randomUUID()}`) {
@@ -44,8 +45,8 @@ export async function createTestRule(input: {
     friendId: string;
     title?: string;
     description?: string;
-    impactDirection?: string;
-    weight?: string;
+    impactDirection?: ImpactDirection;
+    weight?: RuleWeight;
 }) {
     return prisma.rule.create({
         data: {

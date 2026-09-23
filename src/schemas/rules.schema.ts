@@ -1,22 +1,11 @@
 import { z } from "zod";
+import { IMPACT_DIRECTIONS, RULE_WEIGHTS } from "../domain/friendship.js";
 
 /** Allowed rule weights from least to greatest impact. */
-export const ruleWeightSchema = z.enum([
-  "minimal", 
-  "low", 
-  "medium", 
-  "high", 
-  "critical", 
-  "extreme"
-]);
+export const ruleWeightSchema = z.enum(RULE_WEIGHTS);
 
 /** Direction a rule says an event should move the friendship score. */
-export const impactDirectionSchema = z.enum([
-  "positive", 
-  "negative", 
-  "neutral", 
-  "mixed"
-]);
+export const impactDirectionSchema = z.enum(IMPACT_DIRECTIONS);
 
 /** Validates POST /friends/:friendId/rules request bodies. */
 export const createRuleBodySchema = z.object({

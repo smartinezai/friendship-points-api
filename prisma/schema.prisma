@@ -7,10 +7,27 @@ datasource db {
   provider = "postgresql"
 }
 
+enum ImpactDirection {
+  positive
+  negative
+  neutral
+  mixed
+}
+
+enum RuleWeight {
+  minimal
+  low
+  medium
+  high
+  critical
+  extreme
+}
+
 /// Real-world person represented in the relationship graph.
 model Person {
   id          String   @id @default(uuid())
   displayName String
+  pronouns    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   users       User[]
@@ -116,8 +133,8 @@ model Rule {
   friend          Friend   @relation(fields: [friendId], references: [id])
   title           String
   description     String
-  impactDirection String
-  weight          String
+  impactDirection ImpactDirection
+  weight          RuleWeight
   active          Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
