@@ -6,6 +6,20 @@ Base URL for local development:
 http://localhost:3000
 ```
 
+The [OpenAPI 3.1 contract](./openapi.json) lists every route with its request
+and response schemas, status codes and examples.
+
+## Development identity and access
+
+Owner-scoped routes accept an optional `x-user-id` UUID header. It selects the
+development user whose friend data the route reads or changes. When omitted,
+the API uses its seeded development user. This header does not authenticate a
+caller or protect data in a deployed environment.
+
+`GET /health` does not use a user ID. `POST /search-documents/embed-missing`
+also has no user check and can process indexed documents across users. Protect
+that maintenance route at the network or deployment boundary.
+
 ## Health
 
 ### `GET /health`
@@ -376,6 +390,36 @@ Does not save an `Event` or `Assessment`.
 
 ---
 
+## Search and index maintenance
+
+### `GET /friends/:id/search-context?query=planned%20calls`
+
+Returns up to five indexed context items ranked by keyword match. Each item
+contains its source type, source ID, friend ID, content and score.
+
+### `GET /friends/:id/search-context/semantic?query=planned%20calls`
+
+Returns up to five indexed context items ranked by embedding distance. Each
+item also includes `distance`.
+
+### `GET /friends/:id/search-context/reranked?query=planned%20calls`
+
+Returns `semanticResults` plus up to five `rerankedResults`. Reranked items
+include their distance, rerank score and a short explanation of the score.
+
+### `POST /friends/:id/rebuild-search-index`
+
+Rebuilds searchable entries from the friend's notes, rules and events. It
+returns a message and the number of entries created.
+
+### `POST /search-documents/embed-missing`
+
+Generates embeddings for indexed documents that do not have one and returns
+`{ "embeddedCount": 12 }`. This route has no user check. Restrict it to a
+trusted network or deployment boundary.
+
+---
+
 ## Document ingestion
 
 ### `POST /friends/:friendId/documents/ingest`
@@ -401,7 +445,7 @@ Validation:
 - `friendId` must be a UUID for an active friend.
 - `title` and `content` must contain non-whitespace text.
 - `documentType` must be `txt` or `markdown`.
-- `sourceDate` is optional and should be an ISO 8601 date or datetime.
+- `sourceDate` is optional and must be an ISO date or datetime.
 
 Successful response: `201 Created`.
 
@@ -439,3 +483,8 @@ sendBadRequestError      → 400 general bad request
 sendNotFoundError        → 404 missing resource
 sendInternalServerError  → 500 unexpected server/provider failure
 ```
+
+Validation errors include an `error` string and a `details` array. Bad path or
+query values return an `error` string. Missing resources return `404` with an
+`error` string. Uncaught server errors use Fastify's default body with
+`statusCode`, `error` and `message` fields.

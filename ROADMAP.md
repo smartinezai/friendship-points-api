@@ -21,6 +21,7 @@ Completed:
 
 ```txt
 Day 1–38: Backend foundation, route integration tests, UUID validation, CI, soft delete, RAG, embeddings, semantic retrieval, reranking, tool calling, agentic retrieval, source grounding, agentic RAG evaluation, tracing, prompt analytics, document ingestion, user ownership foundation, person facts and API-only knowledge intake
+Day 40: API Contract and OpenAPI Documentation (completed while Day 39 remains in progress)
 ```
 
 Next:
@@ -1495,7 +1496,7 @@ Learning focus:
 
 ### Day 40: API Contract and OpenAPI Documentation
 
-Status: Planned.
+Status: Done.
 
 Goals:
 
@@ -1512,6 +1513,22 @@ Learning focus:
 - typed request/response design
 - documentation as part of backend quality
 - external API contracts vs internal implementation types
+
+Implementation:
+
+- Added `docs/openapi.json` for all 31 route operations.
+- Generate request and response schemas from shared Zod schemas. Maintain route paths, statuses and examples beside the generator because routes currently validate inside their handlers.
+- Infer public response DTO types from those schemas and serialize response dates as ISO strings.
+- Document the optional `x-user-id` development identity selector and the embedding maintenance route that has no user check.
+- Keep `docs/api.md` as the human-readable guide and link the OpenAPI contract from the README.
+- Added a test that compares the checked-in contract with generated output and checks route coverage and schema rules.
+
+Verification:
+
+- `npm run openapi:generate`
+- `npm run lint`
+- `npm test -- --run`
+- `npm run build`
 
 ---
 

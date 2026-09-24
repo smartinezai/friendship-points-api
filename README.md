@@ -23,6 +23,7 @@ The project is meant to be social commentary on the social credit score imposed 
 - build searchable relationship context from notes, rules and events
 - retrieve keyword-ranked context from ingested searchable documents
 - validate request payloads with Zod
+- OpenAPI 3.1 contract for public route requests and responses
 - run linting, tests, builds, pre-push checks and GitHub Actions CI
 
 Example:
@@ -72,7 +73,8 @@ Implemented:
 Current focus:
 
 ```txt
-Data Model and Type Architecture Hardening (Day 39)
+Day 39: Data Model and Type Architecture Hardening (In Progress)
+Day 40: API Contract and OpenAPI Documentation (Done)
 ```
 
 Near-term roadmap:
@@ -86,6 +88,7 @@ TypeScript Refactor and Code Review
 ## Documentation
 
 - [API reference](./docs/api.md)
+- [OpenAPI contract](./docs/openapi.json)
 - [Architecture](./docs/architecture.md)
 - [Development guide](./docs/development.md)
 - [Roadmap](./ROADMAP.md)
@@ -110,13 +113,11 @@ Current:
 
 Planned/future:
 
-- embeddings and semantic retrieval
-- agentic RAG
-- vector database / pgvector / Supabase Vector
-- reranking
-- Supabase
+- Supabase migration and runtime configuration validation
+- background jobs for ingestion and embeddings
 - Docker
 - deployment
+- production authentication and API security
 - observability
-- GDPR/DSGVO planning
+- privacy and data-retention planning
 - responsive frontend as the final roadmap task
