@@ -30,6 +30,20 @@ describe("ingestDocumentBodySchema group tests", () => {
         expect(result.success).toBe(true);
     });
 
+    it("accepts an ISO datetime source date", () => {
+        const result = ingestDocumentBodySchema.safeParse({
+            title: "Cole notes",
+            documentType: "txt",
+            content: "Cole prefers planned calls.",
+            sourceDate: "2026-06-24T12:00:00.000Z",
+        });
+
+        expect(result.success).toBe(true);
+        if (result.success) {
+            expect(result.data.sourceDate?.toISOString()).toBe("2026-06-24T12:00:00.000Z");
+        }
+    });
+
     it("rejects an unsupported document type", () => {
         const result = ingestDocumentBodySchema.safeParse({
             title: "PDF upload",
@@ -45,6 +59,17 @@ describe("ingestDocumentBodySchema group tests", () => {
             title: "   ",
             documentType: "txt",
             content: "   ",
+        });
+
+        expect(result.success).toBe(false);
+    });
+
+    it("rejects a source date that is not an ISO date or datetime", () => {
+        const result = ingestDocumentBodySchema.safeParse({
+            title: "Cole notes",
+            documentType: "txt",
+            content: "Cole prefers planned calls.",
+            sourceDate: "not-a-date",
         });
 
         expect(result.success).toBe(false);

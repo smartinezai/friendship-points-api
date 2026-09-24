@@ -20,7 +20,10 @@ export const ingestDocumentBodySchema = z.object({
     title: z.string().trim().min(1),
     documentType: supportedDocumentTypeSchema,
     content: z.string().trim().min(1),
-    sourceDate: z.coerce.date().optional(),
+    sourceDate: z
+        .union([z.iso.date(), z.iso.datetime()])
+        .transform((value) => new Date(value))
+        .optional(),
 });
 
 /**
