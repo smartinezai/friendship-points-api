@@ -9,6 +9,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "openapi:generate": "node --import tsx scripts/generateOpenApi.ts",
     "prepare": "husky",
     "lint": "eslint src/"
   },

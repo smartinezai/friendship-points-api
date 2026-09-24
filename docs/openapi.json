@@ -1,0 +1,4943 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Friendship Points API",
+    "version": "1.0.0",
+    "description": "The optional `x-user-id` header selects a development user for owner-scoped routes. It is not authentication. When omitted the API uses a seeded development user. The embedding maintenance route has no user check."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health"
+    },
+    {
+      "name": "Friends"
+    },
+    {
+      "name": "Rules"
+    },
+    {
+      "name": "Events"
+    },
+    {
+      "name": "Assessments"
+    },
+    {
+      "name": "Person facts"
+    },
+    {
+      "name": "Knowledge intake"
+    },
+    {
+      "name": "Search"
+    },
+    {
+      "name": "Search and RAG"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Check API health",
+        "description": "Returns a simple health status.",
+        "responses": {
+          "200": {
+            "description": "The API is responding.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "example": {
+                  "status": "ok"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends": {
+      "get": {
+        "tags": [
+          "Friends"
+        ],
+        "summary": "List friends",
+        "description": "Returns active friends belonging to the selected development user.",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Active friends.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendsResponse"
+                },
+                "example": {
+                  "friends": []
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Friends"
+        ],
+        "summary": "Create a friend",
+        "description": "Creates a friend record. Duplicate active display names require `allowDuplicate: true`.",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFriendBody"
+              },
+              "example": {
+                "displayName": "Cole Bailey",
+                "notes": "Prefers planned calls."
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The friend was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendResponse"
+                },
+                "example": {
+                  "friend": {
+                    "id": "5da77ede-2290-4ede-9839-d83a29a310e6",
+                    "displayName": "Cole Bailey",
+                    "notes": "Prefers planned calls.",
+                    "createdAt": "2026-06-24T12:00:00.000Z",
+                    "updatedAt": "2026-06-24T12:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "An active friend already uses this display name.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DuplicateFriendResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/search": {
+      "get": {
+        "tags": [
+          "Friends"
+        ],
+        "summary": "Search friends by name",
+        "description": "Searches active friends by a case-insensitive display-name match.",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "description": "Text to find in display names.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "example": "Cole"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching friends.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendsResponse"
+                },
+                "example": {
+                  "friends": []
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/{id}": {
+      "get": {
+        "tags": [
+          "Friends"
+        ],
+        "summary": "Get a friend",
+        "description": "Returns an active friend owned by the selected development user.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The friend.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Friends"
+        ],
+        "summary": "Update a friend",
+        "description": "Updates the display name or notes. At least one field is required.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFriendBody"
+              },
+              "example": {
+                "notes": "Prefers scheduled calls."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated friend.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Friends"
+        ],
+        "summary": "Soft-delete a friend",
+        "description": "Marks a friend as deleted. Related history remains stored.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The friend was marked deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteFriendResponse"
+                },
+                "example": {
+                  "message": "Friend deleted successfully"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/{id}/notes/append": {
+      "post": {
+        "tags": [
+          "Friends"
+        ],
+        "summary": "Append a friend note",
+        "description": "Adds a note after the existing notes without replacing them.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppendFriendNoteBody"
+              },
+              "example": {
+                "note": "Cole prefers planned calls."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The friend with updated notes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/{id}/search-context": {
+      "get": {
+        "tags": [
+          "Search"
+        ],
+        "summary": "Search friend context by keywords",
+        "description": "Returns up to five matching indexed context items for manual inspection.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "description": "Text used to find relevant context.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "example": "planned calls"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Keyword matches.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KeywordSearchResponse"
+                },
+                "example": {
+                  "results": []
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/{id}/search-context/semantic": {
+      "get": {
+        "tags": [
+          "Search"
+        ],
+        "summary": "Search friend context by meaning",
+        "description": "Returns up to five context items ranked by embedding distance.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "description": "Text embedded for semantic retrieval.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "example": "planned calls"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Semantic matches.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SemanticSearchResponse"
+                },
+                "example": {
+                  "results": []
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/{id}/search-context/reranked": {
+      "get": {
+        "tags": [
+          "Search"
+        ],
+        "summary": "Search and rerank friend context",
+        "description": "Returns semantic matches and their final keyword and semantic reranking.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "description": "Text used for retrieval and reranking.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "example": "planned calls"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Semantic matches and reranked matches.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RerankedSearchResponse"
+                },
+                "example": {
+                  "semanticResults": [],
+                  "rerankedResults": []
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/{id}/rebuild-search-index": {
+      "post": {
+        "tags": [
+          "Search"
+        ],
+        "summary": "Rebuild a friend's search index",
+        "description": "Recreates searchable entries from the friend's notes, rules and events.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The index was rebuilt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RebuildSearchIndexResponse"
+                },
+                "example": {
+                  "message": "Search index rebuilt successfully",
+                  "createdDocCount": 4
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/{friendId}/rules": {
+      "get": {
+        "tags": [
+          "Rules"
+        ],
+        "summary": "List a friend's rules",
+        "description": "Returns rules for an active friend owned by the selected development user.",
+        "parameters": [
+          {
+            "name": "friendId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The friend's rules.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulesResponse"
+                },
+                "example": {
+                  "rules": []
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Rules"
+        ],
+        "summary": "Create a rule",
+        "description": "Creates a rule that describes how an event affects the friendship score.",
+        "parameters": [
+          {
+            "name": "friendId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRuleBody"
+              },
+              "example": {
+                "title": "Unexpected calls",
+                "description": "Cole dislikes calls without prior warning.",
+                "impactDirection": "negative",
+                "weight": "high"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The rule was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rules/{ruleId}/weight": {
+      "patch": {
+        "tags": [
+          "Rules"
+        ],
+        "summary": "Update a rule weight",
+        "description": "Changes the impact weight of a rule owned by the selected development user.",
+        "parameters": [
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRuleWeightBody"
+              },
+              "example": {
+                "weight": "critical"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated rule.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/{friendId}/events": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "List a friend's events",
+        "description": "Returns events belonging to an active friend.",
+        "parameters": [
+          {
+            "name": "friendId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The friend's events.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventsResponse"
+                },
+                "example": {
+                  "events": []
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "Record an event",
+        "description": "Records an event for an active friend.",
+        "parameters": [
+          {
+            "name": "friendId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventBody"
+              },
+              "example": {
+                "eventText": "I called Cole without prior warning.",
+                "happenedAt": "2026-06-24T12:00:00.000Z"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The event was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/{eventId}": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "Get an event",
+        "description": "Returns an event owned by the selected development user.",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The event.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/{eventId}/manual-assessment": {
+      "post": {
+        "tags": [
+          "Assessments"
+        ],
+        "summary": "Create a manual assessment",
+        "description": "Stores a human-written score change for an event.",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualAssessmentBody"
+              },
+              "example": {
+                "scoreDelta": -3.5,
+                "reason": "The call was unexpected."
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The assessment was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/{friendId}/balance": {
+      "get": {
+        "tags": [
+          "Assessments"
+        ],
+        "summary": "Get a friendship balance",
+        "description": "Sums the assessment score changes for the friend's events.",
+        "parameters": [
+          {
+            "name": "friendId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The current balance.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendshipBalanceResponse"
+                },
+                "example": {
+                  "friendId": "5da77ede-2290-4ede-9839-d83a29a310e6",
+                  "balance": 9.5
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/{eventId}/mock-assessment": {
+      "post": {
+        "tags": [
+          "Assessments"
+        ],
+        "summary": "Create a mock assessment",
+        "description": "Creates and stores an assessment without an external model call.",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The assessment was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentWithContextResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/{eventId}/mistral-assessment": {
+      "post": {
+        "tags": [
+          "Assessments"
+        ],
+        "summary": "Create a Mistral assessment",
+        "description": "Creates and stores an assessment using Mistral.",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The assessment was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentWithContextResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/{eventId}/openai-assessment": {
+      "post": {
+        "tags": [
+          "Assessments"
+        ],
+        "summary": "Create an OpenAI assessment",
+        "description": "Creates and stores an assessment using OpenAI.",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The assessment was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentWithContextResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/{friendId}/predict": {
+      "post": {
+        "tags": [
+          "Assessments"
+        ],
+        "summary": "Create a mock prediction",
+        "description": "Evaluates a hypothetical action without saving an event or assessment.",
+        "parameters": [
+          {
+            "name": "friendId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictFriendActionBody"
+              },
+              "example": {
+                "hypotheticalAction": "I call Cole without warning tomorrow."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The prediction and retrieved context.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/{friendId}/predict/mistral": {
+      "post": {
+        "tags": [
+          "Assessments"
+        ],
+        "summary": "Create a Mistral prediction",
+        "description": "Evaluates a hypothetical action with Mistral without saving an event or assessment.",
+        "parameters": [
+          {
+            "name": "friendId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictFriendActionBody"
+              },
+              "example": {
+                "hypotheticalAction": "I call Cole without warning tomorrow."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The prediction and retrieved context.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MistralPredictionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/{friendId}/facts": {
+      "get": {
+        "tags": [
+          "Person facts"
+        ],
+        "summary": "List facts about a friend",
+        "description": "Returns facts about the person linked to an active friend.",
+        "parameters": [
+          {
+            "name": "friendId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The person's facts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonFactsResponse"
+                },
+                "example": {
+                  "facts": []
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Person facts"
+        ],
+        "summary": "Add a fact about a friend",
+        "description": "Adds a fact about the person linked to an active friend.",
+        "parameters": [
+          {
+            "name": "friendId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePersonFactBody"
+              },
+              "example": {
+                "content": "Cole prefers planned calls.",
+                "sourceType": "manual"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The fact was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonFactResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/person-facts/{factId}/verification-status": {
+      "patch": {
+        "tags": [
+          "Person facts"
+        ],
+        "summary": "Update a fact's verification status",
+        "description": "Changes the verification status of an accessible person fact.",
+        "parameters": [
+          {
+            "name": "factId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePersonFactVerificationStatusBody"
+              },
+              "example": {
+                "verificationStatus": "verified_by_target"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated fact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonFactResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/{friendId}/intake-submissions": {
+      "post": {
+        "tags": [
+          "Knowledge intake"
+        ],
+        "summary": "Submit knowledge intake answers",
+        "description": "Stores answers about the person linked to an active friend.",
+        "parameters": [
+          {
+            "name": "friendId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateKnowledgeIntakeSubmissionBody"
+              },
+              "example": {
+                "submittedByType": "target_person",
+                "sourceType": "api",
+                "answers": [
+                  {
+                    "questionKey": "communication.calls",
+                    "questionText": "How do you feel about phone calls?",
+                    "answerText": "I prefer scheduled calls."
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The submission and answers were stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeIntakeSubmissionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/{friendId}/documents/ingest": {
+      "post": {
+        "tags": [
+          "Search and RAG"
+        ],
+        "summary": "Ingest a text document",
+        "description": "Stores TXT or Markdown content as searchable chunks for an active friend.",
+        "parameters": [
+          {
+            "name": "friendId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the resource.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "5da77ede-2290-4ede-9839-d83a29a310e6"
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": false,
+            "description": "Development user ID selector. This is not authentication. If omitted the seeded development user is used.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestDocumentBody"
+              },
+              "example": {
+                "title": "Relationship notes",
+                "documentType": "markdown",
+                "content": "Cole prefers planned calls.",
+                "sourceDate": "2026-06-24"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The document was ingested.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentIngestionResponse"
+                },
+                "example": {
+                  "friendId": "5da77ede-2290-4ede-9839-d83a29a310e6",
+                  "documentId": "a3b2c1d0-1d2c-4b3a-8f6e-7d8c9b0a1e2f",
+                  "title": "Relationship notes",
+                  "documentType": "markdown",
+                  "createdChunkCount": 1,
+                  "sourceIds": [
+                    "b4c3d2e1-2e3d-4c4b-9a7f-8e9d0c1b2a3f"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body, path ID or query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Invalid request body",
+                  "details": []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource does not exist or is not available to this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "error": "Friend not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search-documents/embed-missing": {
+      "post": {
+        "tags": [
+          "Search and RAG"
+        ],
+        "summary": "Embed documents without embeddings",
+        "description": "Generates embeddings for indexed documents that do not have one. This route does not check the caller's identity and should be protected by the deployment boundary.",
+        "responses": {
+          "200": {
+            "description": "The number of documents embedded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmbedMissingResponse"
+                },
+                "example": {
+                  "embeddedCount": 12
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A provider, database or unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                },
+                "example": {
+                  "error": "An internal server error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "details": {
+            "type": "array",
+            "items": {}
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "ServerError": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "string"
+              },
+              "details": {
+                "type": "array",
+                "items": {}
+              }
+            },
+            "required": [
+              "error"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "statusCode": {
+                "type": "number"
+              },
+              "error": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "statusCode",
+              "error",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "Friend": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "notes",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "Rule": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "impactDirection": {
+            "type": "string",
+            "enum": [
+              "positive",
+              "negative",
+              "neutral",
+              "mixed"
+            ]
+          },
+          "weight": {
+            "type": "string",
+            "enum": [
+              "minimal",
+              "low",
+              "medium",
+              "high",
+              "critical",
+              "extreme"
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "impactDirection",
+          "weight",
+          "active",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "Event": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "eventText": {
+            "type": "string"
+          },
+          "happenedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "eventText",
+          "happenedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "Assessment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "scoreDelta": {
+            "type": "number"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "impactDirection": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "biasNotes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "matchedRuleIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "modelName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "promptVersion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "scoreDelta",
+          "reason",
+          "source",
+          "impactDirection",
+          "biasNotes",
+          "confidence",
+          "matchedRuleIds",
+          "createdAt",
+          "updatedAt",
+          "modelName",
+          "promptVersion"
+        ],
+        "additionalProperties": false
+      },
+      "PersonFact": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "content": {
+            "type": "string"
+          },
+          "verificationStatus": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "sourceId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "content",
+          "verificationStatus",
+          "sourceType",
+          "sourceId",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "KnowledgeIntakeSubmissionResponse": {
+        "type": "object",
+        "properties": {
+          "submission": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "submittedByType": {
+                "type": "string"
+              },
+              "sourceType": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "answers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "questionKey": {
+                      "type": "string"
+                    },
+                    "questionText": {
+                      "type": "string"
+                    },
+                    "answerText": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "questionKey",
+                    "questionText",
+                    "answerText",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "id",
+              "submittedByType",
+              "sourceType",
+              "createdAt",
+              "updatedAt",
+              "answers"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "submission"
+        ],
+        "additionalProperties": false
+      },
+      "FriendResponse": {
+        "type": "object",
+        "properties": {
+          "friend": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "displayName": {
+                "type": "string"
+              },
+              "notes": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              }
+            },
+            "required": [
+              "id",
+              "displayName",
+              "notes",
+              "createdAt",
+              "updatedAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "friend"
+        ],
+        "additionalProperties": false
+      },
+      "FriendsResponse": {
+        "type": "object",
+        "properties": {
+          "friends": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "displayName": {
+                  "type": "string"
+                },
+                "notes": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                }
+              },
+              "required": [
+                "id",
+                "displayName",
+                "notes",
+                "createdAt",
+                "updatedAt"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "friends"
+        ],
+        "additionalProperties": false
+      },
+      "DuplicateFriendResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "existingFriend": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "displayName": {
+                "type": "string"
+              },
+              "notes": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              }
+            },
+            "required": [
+              "id",
+              "displayName",
+              "notes",
+              "createdAt",
+              "updatedAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error",
+          "existingFriend"
+        ],
+        "additionalProperties": false
+      },
+      "RuleResponse": {
+        "type": "object",
+        "properties": {
+          "rule": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "title": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "impactDirection": {
+                "type": "string",
+                "enum": [
+                  "positive",
+                  "negative",
+                  "neutral",
+                  "mixed"
+                ]
+              },
+              "weight": {
+                "type": "string",
+                "enum": [
+                  "minimal",
+                  "low",
+                  "medium",
+                  "high",
+                  "critical",
+                  "extreme"
+                ]
+              },
+              "active": {
+                "type": "boolean"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "description",
+              "impactDirection",
+              "weight",
+              "active",
+              "createdAt",
+              "updatedAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "rule"
+        ],
+        "additionalProperties": false
+      },
+      "RulesResponse": {
+        "type": "object",
+        "properties": {
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "impactDirection": {
+                  "type": "string",
+                  "enum": [
+                    "positive",
+                    "negative",
+                    "neutral",
+                    "mixed"
+                  ]
+                },
+                "weight": {
+                  "type": "string",
+                  "enum": [
+                    "minimal",
+                    "low",
+                    "medium",
+                    "high",
+                    "critical",
+                    "extreme"
+                  ]
+                },
+                "active": {
+                  "type": "boolean"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "description",
+                "impactDirection",
+                "weight",
+                "active",
+                "createdAt",
+                "updatedAt"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "rules"
+        ],
+        "additionalProperties": false
+      },
+      "EventResponse": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "eventText": {
+                "type": "string"
+              },
+              "happenedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              }
+            },
+            "required": [
+              "id",
+              "eventText",
+              "happenedAt",
+              "createdAt",
+              "updatedAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "event"
+        ],
+        "additionalProperties": false
+      },
+      "EventsResponse": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "eventText": {
+                  "type": "string"
+                },
+                "happenedAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                }
+              },
+              "required": [
+                "id",
+                "eventText",
+                "happenedAt",
+                "createdAt",
+                "updatedAt"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "events"
+        ],
+        "additionalProperties": false
+      },
+      "AssessmentResponse": {
+        "type": "object",
+        "properties": {
+          "assessment": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "scoreDelta": {
+                "type": "number"
+              },
+              "reason": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "source": {
+                "type": "string"
+              },
+              "impactDirection": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "biasNotes": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "confidence": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "matchedRuleIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "modelName": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "promptVersion": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "scoreDelta",
+              "reason",
+              "source",
+              "impactDirection",
+              "biasNotes",
+              "confidence",
+              "matchedRuleIds",
+              "createdAt",
+              "updatedAt",
+              "modelName",
+              "promptVersion"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "assessment"
+        ],
+        "additionalProperties": false
+      },
+      "AssessmentWithContextResponse": {
+        "type": "object",
+        "properties": {
+          "assessment": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "scoreDelta": {
+                "type": "number"
+              },
+              "reason": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "source": {
+                "type": "string"
+              },
+              "impactDirection": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "biasNotes": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "confidence": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "matchedRuleIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "modelName": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "promptVersion": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "scoreDelta",
+              "reason",
+              "source",
+              "impactDirection",
+              "biasNotes",
+              "confidence",
+              "matchedRuleIds",
+              "createdAt",
+              "updatedAt",
+              "modelName",
+              "promptVersion"
+            ],
+            "additionalProperties": false
+          },
+          "llmResult": {
+            "type": "object",
+            "properties": {
+              "scoreDelta": {
+                "type": "number",
+                "minimum": -10,
+                "maximum": 10
+              },
+              "impactDirection": {
+                "type": "string",
+                "enum": [
+                  "positive",
+                  "negative",
+                  "neutral",
+                  "mixed"
+                ]
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "reasoningSummary": {
+                "type": "string",
+                "minLength": 10,
+                "maxLength": 500
+              },
+              "matchedRuleIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "biasNotes": {
+                "type": "string",
+                "minLength": 10,
+                "maxLength": 500
+              }
+            },
+            "required": [
+              "scoreDelta",
+              "impactDirection",
+              "confidence",
+              "reasoningSummary",
+              "matchedRuleIds"
+            ],
+            "additionalProperties": false
+          },
+          "retrievedContext": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sourceType": {
+                  "type": "string",
+                  "enum": [
+                    "friend_note",
+                    "person_fact",
+                    "rule",
+                    "event",
+                    "document_chunk"
+                  ]
+                },
+                "sourceId": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "score": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "sourceType",
+                "sourceId",
+                "content",
+                "score"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "assessment",
+          "llmResult",
+          "retrievedContext"
+        ],
+        "additionalProperties": false
+      },
+      "FriendshipBalanceResponse": {
+        "type": "object",
+        "properties": {
+          "friendId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "balance": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "friendId",
+          "balance"
+        ],
+        "additionalProperties": false
+      },
+      "PersonFactResponse": {
+        "type": "object",
+        "properties": {
+          "fact": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "content": {
+                "type": "string"
+              },
+              "verificationStatus": {
+                "type": "string"
+              },
+              "sourceType": {
+                "type": "string"
+              },
+              "sourceId": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              }
+            },
+            "required": [
+              "id",
+              "content",
+              "verificationStatus",
+              "sourceType",
+              "sourceId",
+              "createdAt",
+              "updatedAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "fact"
+        ],
+        "additionalProperties": false
+      },
+      "PersonFactsResponse": {
+        "type": "object",
+        "properties": {
+          "facts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "verificationStatus": {
+                  "type": "string"
+                },
+                "sourceType": {
+                  "type": "string"
+                },
+                "sourceId": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                }
+              },
+              "required": [
+                "id",
+                "content",
+                "verificationStatus",
+                "sourceType",
+                "sourceId",
+                "createdAt",
+                "updatedAt"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "facts"
+        ],
+        "additionalProperties": false
+      },
+      "PredictionResponse": {
+        "type": "object",
+        "properties": {
+          "prediction": {
+            "type": "object",
+            "properties": {
+              "scoreDelta": {
+                "type": "number",
+                "minimum": -10,
+                "maximum": 10
+              },
+              "impactDirection": {
+                "type": "string",
+                "enum": [
+                  "positive",
+                  "negative",
+                  "neutral",
+                  "mixed"
+                ]
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "reasoningSummary": {
+                "type": "string",
+                "minLength": 10,
+                "maxLength": 500
+              },
+              "matchedRuleIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "biasNotes": {
+                "type": "string",
+                "minLength": 10,
+                "maxLength": 500
+              }
+            },
+            "required": [
+              "scoreDelta",
+              "impactDirection",
+              "confidence",
+              "reasoningSummary",
+              "matchedRuleIds"
+            ],
+            "additionalProperties": false
+          },
+          "retrievedContext": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sourceType": {
+                  "type": "string",
+                  "enum": [
+                    "friend_note",
+                    "person_fact",
+                    "rule",
+                    "event",
+                    "document_chunk"
+                  ]
+                },
+                "sourceId": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "score": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "sourceType",
+                "sourceId",
+                "content",
+                "score"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "saved": {
+            "type": "boolean",
+            "const": false
+          }
+        },
+        "required": [
+          "prediction",
+          "retrievedContext",
+          "saved"
+        ],
+        "additionalProperties": false
+      },
+      "MistralPredictionResponse": {
+        "type": "object",
+        "properties": {
+          "prediction": {
+            "type": "object",
+            "properties": {
+              "scoreDelta": {
+                "type": "number",
+                "minimum": -10,
+                "maximum": 10
+              },
+              "impactDirection": {
+                "type": "string",
+                "enum": [
+                  "positive",
+                  "negative",
+                  "neutral",
+                  "mixed"
+                ]
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "reasoningSummary": {
+                "type": "string",
+                "minLength": 10,
+                "maxLength": 500
+              },
+              "matchedRuleIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "biasNotes": {
+                "type": "string",
+                "minLength": 10,
+                "maxLength": 500
+              }
+            },
+            "required": [
+              "scoreDelta",
+              "impactDirection",
+              "confidence",
+              "reasoningSummary",
+              "matchedRuleIds"
+            ],
+            "additionalProperties": false
+          },
+          "retrievedContext": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sourceType": {
+                  "type": "string",
+                  "enum": [
+                    "friend_note",
+                    "person_fact",
+                    "rule",
+                    "event",
+                    "document_chunk"
+                  ]
+                },
+                "sourceId": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "score": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "sourceType",
+                "sourceId",
+                "content",
+                "score"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "saved": {
+            "type": "boolean",
+            "const": false
+          },
+          "source": {
+            "type": "string",
+            "const": "mistral"
+          }
+        },
+        "required": [
+          "prediction",
+          "retrievedContext",
+          "saved",
+          "source"
+        ],
+        "additionalProperties": false
+      },
+      "RebuildSearchIndexResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "createdDocCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "message",
+          "createdDocCount"
+        ],
+        "additionalProperties": false
+      },
+      "DocumentIngestionResponse": {
+        "type": "object",
+        "properties": {
+          "friendId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "documentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "txt",
+              "markdown"
+            ]
+          },
+          "createdChunkCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "sourceIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        },
+        "required": [
+          "friendId",
+          "documentId",
+          "title",
+          "documentType",
+          "createdChunkCount",
+          "sourceIds"
+        ],
+        "additionalProperties": false
+      },
+      "EmbedMissingResponse": {
+        "type": "object",
+        "properties": {
+          "embeddedCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "embeddedCount"
+        ],
+        "additionalProperties": false
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "DeleteFriendResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "KeywordSearchResponse": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sourceType": {
+                  "type": "string",
+                  "enum": [
+                    "friend_note",
+                    "person_fact",
+                    "rule",
+                    "event",
+                    "document_chunk"
+                  ]
+                },
+                "sourceId": {
+                  "type": "string"
+                },
+                "friendId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "score": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "sourceType",
+                "sourceId",
+                "friendId",
+                "content",
+                "score"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "additionalProperties": false
+      },
+      "SemanticSearchResponse": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sourceType": {
+                  "type": "string",
+                  "enum": [
+                    "friend_note",
+                    "person_fact",
+                    "rule",
+                    "event",
+                    "document_chunk"
+                  ]
+                },
+                "sourceId": {
+                  "type": "string"
+                },
+                "friendId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "score": {
+                  "type": "number"
+                },
+                "distance": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "sourceType",
+                "sourceId",
+                "friendId",
+                "content",
+                "score",
+                "distance"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "additionalProperties": false
+      },
+      "RerankedSearchResponse": {
+        "type": "object",
+        "properties": {
+          "semanticResults": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sourceType": {
+                  "type": "string",
+                  "enum": [
+                    "friend_note",
+                    "person_fact",
+                    "rule",
+                    "event",
+                    "document_chunk"
+                  ]
+                },
+                "sourceId": {
+                  "type": "string"
+                },
+                "friendId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "score": {
+                  "type": "number"
+                },
+                "distance": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "sourceType",
+                "sourceId",
+                "friendId",
+                "content",
+                "score",
+                "distance"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "rerankedResults": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sourceType": {
+                  "type": "string",
+                  "enum": [
+                    "friend_note",
+                    "person_fact",
+                    "rule",
+                    "event",
+                    "document_chunk"
+                  ]
+                },
+                "sourceId": {
+                  "type": "string"
+                },
+                "friendId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "score": {
+                  "type": "number"
+                },
+                "distance": {
+                  "type": "number"
+                },
+                "rerankScore": {
+                  "type": "number"
+                },
+                "rerankReason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "sourceType",
+                "sourceId",
+                "friendId",
+                "content",
+                "score",
+                "distance",
+                "rerankScore",
+                "rerankReason"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "semanticResults",
+          "rerankedResults"
+        ],
+        "additionalProperties": false
+      },
+      "CreateFriendBody": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "notes": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 900
+          },
+          "allowDuplicate": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "displayName"
+        ]
+      },
+      "UpdateFriendBody": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "displayName"
+            ]
+          },
+          {
+            "required": [
+              "notes"
+            ]
+          }
+        ]
+      },
+      "AppendFriendNoteBody": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "note"
+        ]
+      },
+      "CreateRuleBody": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 1000
+          },
+          "impactDirection": {
+            "type": "string",
+            "enum": [
+              "positive",
+              "negative",
+              "neutral",
+              "mixed"
+            ]
+          },
+          "weight": {
+            "type": "string",
+            "enum": [
+              "minimal",
+              "low",
+              "medium",
+              "high",
+              "critical",
+              "extreme"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "impactDirection",
+          "weight"
+        ]
+      },
+      "UpdateRuleWeightBody": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "string",
+            "enum": [
+              "minimal",
+              "low",
+              "medium",
+              "high",
+              "critical",
+              "extreme"
+            ]
+          }
+        },
+        "required": [
+          "weight"
+        ]
+      },
+      "CreateEventBody": {
+        "type": "object",
+        "properties": {
+          "eventText": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 2000
+          },
+          "happenedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          }
+        },
+        "required": [
+          "eventText"
+        ]
+      },
+      "ManualAssessmentBody": {
+        "type": "object",
+        "properties": {
+          "scoreDelta": {
+            "type": "number",
+            "minimum": -10,
+            "maximum": 10
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "scoreDelta"
+        ]
+      },
+      "PredictFriendActionBody": {
+        "type": "object",
+        "properties": {
+          "hypotheticalAction": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "hypotheticalAction"
+        ]
+      },
+      "CreatePersonFactBody": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 1000
+          },
+          "sourceType": {
+            "default": "manual",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "sourceId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "content"
+        ]
+      },
+      "UpdatePersonFactVerificationStatusBody": {
+        "type": "object",
+        "properties": {
+          "verificationStatus": {
+            "type": "string",
+            "enum": [
+              "verified_self_declared",
+              "unverified_third_party",
+              "verified_by_target",
+              "rejected_by_target",
+              "corrected"
+            ]
+          }
+        },
+        "required": [
+          "verificationStatus"
+        ]
+      },
+      "CreateKnowledgeIntakeSubmissionBody": {
+        "type": "object",
+        "properties": {
+          "submittedByType": {
+            "type": "string",
+            "enum": [
+              "target_person",
+              "owner_user",
+              "third_party"
+            ]
+          },
+          "sourceType": {
+            "default": "api",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "answers": {
+            "minItems": 1,
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "questionKey": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120
+                },
+                "questionText": {
+                  "type": "string",
+                  "minLength": 2,
+                  "maxLength": 500
+                },
+                "answerText": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000
+                }
+              },
+              "required": [
+                "questionKey",
+                "questionText",
+                "answerText"
+              ]
+            }
+          }
+        },
+        "required": [
+          "submittedByType",
+          "answers"
+        ]
+      },
+      "IngestDocumentBody": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "txt",
+              "markdown"
+            ]
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+              },
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              }
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "documentType",
+          "content"
+        ]
+      },
+      "LlmAssessment": {
+        "type": "object",
+        "properties": {
+          "scoreDelta": {
+            "type": "number",
+            "minimum": -10,
+            "maximum": 10
+          },
+          "impactDirection": {
+            "type": "string",
+            "enum": [
+              "positive",
+              "negative",
+              "neutral",
+              "mixed"
+            ]
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "reasoningSummary": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 500
+          },
+          "matchedRuleIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "biasNotes": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "scoreDelta",
+          "impactDirection",
+          "confidence",
+          "reasoningSummary",
+          "matchedRuleIds"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}
