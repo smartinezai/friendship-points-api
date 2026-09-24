@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import {
     createPersonFactBodySchema,
-    personFactVerificationStatusSchema,
+    updatePersonFactVerificationStatusBodySchema,
 } from "../schemas/personFacts.schema.js";
 import { getCurrentUserId } from "../services/currentUser.service.js";
 import { getFriendById } from "../services/friends.service.js";
@@ -30,10 +30,6 @@ const createPersonFactParamsSchema = z.object({
 
 const updatePersonFactVerificationStatusParamsSchema = z.object({
     factId: z.uuid(),
-});
-
-const updatePersonFactVerificationStatusBodySchema = z.object({
-    verificationStatus: personFactVerificationStatusSchema,
 });
 
 /** Registers routes for adding facts about tracked people. */

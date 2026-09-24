@@ -7,124 +7,58 @@ import type {
     PersonFact,
     Rule,
 } from "../generated/prisma/client.js";
-import type { LlmAssessmentResult } from "../ai/assessment.schema.js";
-import type { ImpactDirection, RuleWeight } from "../domain/friendship.js";
-import type { LlmRetrievedContextItem } from "../ai/assessment.types.js";
+import {
+    assessmentDtoSchema,
+    assessmentResponseSchema,
+    assessmentWithContextResponseSchema,
+    duplicateFriendResponseSchema,
+    eventDtoSchema,
+    eventResponseSchema,
+    eventsResponseSchema,
+    friendDtoSchema,
+    friendResponseSchema,
+    friendsResponseSchema,
+    friendshipBalanceResponseSchema,
+    knowledgeIntakeAnswerDtoSchema,
+    knowledgeIntakeSubmissionDtoSchema,
+    knowledgeIntakeSubmissionResponseSchema,
+    mistralPredictionResponseSchema,
+    personFactDtoSchema,
+    personFactResponseSchema,
+    personFactsResponseSchema,
+    predictionResponseSchema,
+    rebuildSearchIndexResponseSchema,
+    ruleDtoSchema,
+    ruleResponseSchema,
+    rulesResponseSchema,
+} from "../schemas/apiResponses.schema.js";
+import { z } from "zod";
 
 /** Entity DTOs omit database-only ownership and parent-record keys. */
 
-/** Stable friend fields returned by the public API. */
-export type FriendDto = {
-    id: string;
-    displayName: string;
-    notes: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-};
-
-/** Stable rule fields returned by the public API. */
-export type RuleDto = {
-    id: string;
-    title: string;
-    description: string;
-    impactDirection: ImpactDirection;
-    weight: RuleWeight;
-    active: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-};
-
-/** Stable event fields returned by the public API. */
-export type EventDto = {
-    id: string;
-    eventText: string;
-    happenedAt: Date | null;
-    createdAt: Date;
-    updatedAt: Date;
-};
-
-/** Stable assessment fields returned by the public API. */
-export type AssessmentDto = {
-    id: string;
-    scoreDelta: number;
-    reason: string | null;
-    source: string;
-    impactDirection: string | null;
-    biasNotes: string | null;
-    confidence: number | null;
-    matchedRuleIds: string[];
-    createdAt: Date;
-    updatedAt: Date;
-    modelName: string | null;
-    promptVersion: string | null;
-};
-
-/** Stable person-fact fields returned by the public API. */
-export type PersonFactDto = {
-    id: string;
-    content: string;
-    verificationStatus: string;
-    sourceType: string;
-    sourceId: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-};
-
-export type KnowledgeIntakeAnswerDto = {
-    id: string;
-    questionKey: string;
-    questionText: string;
-    answerText: string;
-    createdAt: Date;
-    updatedAt: Date;
-};
-
-export type KnowledgeIntakeSubmissionDto = {
-    id: string;
-    submittedByType: string;
-    sourceType: string;
-    createdAt: Date;
-    updatedAt: Date;
-    answers: KnowledgeIntakeAnswerDto[];
-};
-
-export type FriendResponseDto = { friend: FriendDto };
-export type FriendsResponseDto = { friends: FriendDto[] };
-export type DuplicateFriendResponseDto = {
-    error: string;
-    existingFriend: FriendDto;
-};
-export type RuleResponseDto = { rule: RuleDto };
-export type RulesResponseDto = { rules: RuleDto[] };
-export type EventResponseDto = { event: EventDto };
-export type EventsResponseDto = { events: EventDto[] };
-export type AssessmentResponseDto = { assessment: AssessmentDto };
-export type FriendshipBalanceResponseDto = {
-    friendId: string;
-    balance: number;
-};
-export type RebuildSearchIndexResponseDto = {
-    message: string;
-    createdDocCount: number;
-};
-export type PersonFactResponseDto = { fact: PersonFactDto };
-export type PersonFactsResponseDto = { facts: PersonFactDto[] };
-export type KnowledgeIntakeSubmissionResponseDto = {
-    submission: KnowledgeIntakeSubmissionDto;
-};
-export type PredictionResponseDto = {
-    prediction: LlmAssessmentResult;
-    retrievedContext: LlmRetrievedContextItem[];
-    saved: false;
-};
-export type MistralPredictionResponseDto = PredictionResponseDto & {
-    source: "mistral";
-};
-export type AssessmentWithContextResponseDto = {
-    assessment: AssessmentDto;
-    llmResult: LlmAssessmentResult;
-    retrievedContext: LlmRetrievedContextItem[];
-};
+export type FriendDto = z.infer<typeof friendDtoSchema>;
+export type RuleDto = z.infer<typeof ruleDtoSchema>;
+export type EventDto = z.infer<typeof eventDtoSchema>;
+export type AssessmentDto = z.infer<typeof assessmentDtoSchema>;
+export type PersonFactDto = z.infer<typeof personFactDtoSchema>;
+export type KnowledgeIntakeAnswerDto = z.infer<typeof knowledgeIntakeAnswerDtoSchema>;
+export type KnowledgeIntakeSubmissionDto = z.infer<typeof knowledgeIntakeSubmissionDtoSchema>;
+export type FriendResponseDto = z.infer<typeof friendResponseSchema>;
+export type FriendsResponseDto = z.infer<typeof friendsResponseSchema>;
+export type DuplicateFriendResponseDto = z.infer<typeof duplicateFriendResponseSchema>;
+export type RuleResponseDto = z.infer<typeof ruleResponseSchema>;
+export type RulesResponseDto = z.infer<typeof rulesResponseSchema>;
+export type EventResponseDto = z.infer<typeof eventResponseSchema>;
+export type EventsResponseDto = z.infer<typeof eventsResponseSchema>;
+export type AssessmentResponseDto = z.infer<typeof assessmentResponseSchema>;
+export type FriendshipBalanceResponseDto = z.infer<typeof friendshipBalanceResponseSchema>;
+export type RebuildSearchIndexResponseDto = z.infer<typeof rebuildSearchIndexResponseSchema>;
+export type PersonFactResponseDto = z.infer<typeof personFactResponseSchema>;
+export type PersonFactsResponseDto = z.infer<typeof personFactsResponseSchema>;
+export type KnowledgeIntakeSubmissionResponseDto = z.infer<typeof knowledgeIntakeSubmissionResponseSchema>;
+export type PredictionResponseDto = z.infer<typeof predictionResponseSchema>;
+export type MistralPredictionResponseDto = z.infer<typeof mistralPredictionResponseSchema>;
+export type AssessmentWithContextResponseDto = z.infer<typeof assessmentWithContextResponseSchema>;
 
 /** Maps a database friend row to the fields intentionally exposed by the API. */
 export function toFriendDto(friend: Friend): FriendDto {
@@ -132,8 +66,8 @@ export function toFriendDto(friend: Friend): FriendDto {
         id: friend.id,
         displayName: friend.displayName,
         notes: friend.notes,
-        createdAt: friend.createdAt,
-        updatedAt: friend.updatedAt,
+        createdAt: friend.createdAt.toISOString(),
+        updatedAt: friend.updatedAt.toISOString(),
     } satisfies FriendDto;
 }
 
@@ -146,8 +80,8 @@ export function toRuleDto(rule: Rule): RuleDto {
         impactDirection: rule.impactDirection,
         weight: rule.weight,
         active: rule.active,
-        createdAt: rule.createdAt,
-        updatedAt: rule.updatedAt,
+        createdAt: rule.createdAt.toISOString(),
+        updatedAt: rule.updatedAt.toISOString(),
     } satisfies RuleDto;
 }
 
@@ -156,9 +90,9 @@ export function toEventDto(event: Event): EventDto {
     return {
         id: event.id,
         eventText: event.eventText,
-        happenedAt: event.happenedAt,
-        createdAt: event.createdAt,
-        updatedAt: event.updatedAt,
+        happenedAt: event.happenedAt?.toISOString() ?? null,
+        createdAt: event.createdAt.toISOString(),
+        updatedAt: event.updatedAt.toISOString(),
     } satisfies EventDto;
 }
 
@@ -173,8 +107,8 @@ export function toAssessmentDto(assessment: Assessment): AssessmentDto {
         biasNotes: assessment.biasNotes,
         confidence: assessment.confidence,
         matchedRuleIds: [...assessment.matchedRuleIds],
-        createdAt: assessment.createdAt,
-        updatedAt: assessment.updatedAt,
+        createdAt: assessment.createdAt.toISOString(),
+        updatedAt: assessment.updatedAt.toISOString(),
         modelName: assessment.modelName,
         promptVersion: assessment.promptVersion,
     } satisfies AssessmentDto;
@@ -188,8 +122,8 @@ export function toPersonFactDto(fact: PersonFact): PersonFactDto {
         verificationStatus: fact.verificationStatus,
         sourceType: fact.sourceType,
         sourceId: fact.sourceId,
-        createdAt: fact.createdAt,
-        updatedAt: fact.updatedAt,
+        createdAt: fact.createdAt.toISOString(),
+        updatedAt: fact.updatedAt.toISOString(),
     } satisfies PersonFactDto;
 }
 
@@ -201,15 +135,15 @@ export function toKnowledgeIntakeSubmissionDto(
         id: submission.id,
         submittedByType: submission.submittedByType,
         sourceType: submission.sourceType,
-        createdAt: submission.createdAt,
-        updatedAt: submission.updatedAt,
+        createdAt: submission.createdAt.toISOString(),
+        updatedAt: submission.updatedAt.toISOString(),
         answers: submission.answers.map((answer) => ({
             id: answer.id,
             questionKey: answer.questionKey,
             questionText: answer.questionText,
             answerText: answer.answerText,
-            createdAt: answer.createdAt,
-            updatedAt: answer.updatedAt,
+            createdAt: answer.createdAt.toISOString(),
+            updatedAt: answer.updatedAt.toISOString(),
         } satisfies KnowledgeIntakeAnswerDto)),
     } satisfies KnowledgeIntakeSubmissionDto;
 }

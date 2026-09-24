@@ -20,6 +20,11 @@ export const createPersonFactBodySchema = z.object({
     sourceId: z.string().trim().min(1).max(200).optional(),
 });
 
+/** Validates PATCH /person-facts/:factId/verification-status request bodies. */
+export const updatePersonFactVerificationStatusBodySchema = z.object({
+    verificationStatus: personFactVerificationStatusSchema,
+});
+
 export type PersonFactVerificationStatus = z.infer<
     typeof personFactVerificationStatusSchema
 >;
