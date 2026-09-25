@@ -1,5 +1,12 @@
 # Development Guide
 
+## Language choice
+
+The existing API uses TypeScript, but the project is not restricted to
+JavaScript or TypeScript. Choose the language that best fits the task. The
+commands below describe the current API. If work adds another language, include
+its setup and build or test steps and wire the required checks into CI.
+
 ## Install dependencies
 
 ```bash

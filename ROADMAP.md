@@ -1,6 +1,14 @@
 # Friendship Points API Roadmap
 
-This roadmap tracks the 50-day Friendship Points API learning project.
+This roadmap tracks the 50-day Friendship Points API project. Its early
+TypeScript-focused days describe how the current API was built.
+
+## Language choice
+
+The project is not restricted to JavaScript or TypeScript. Choose the
+programming language that best fits each task. Existing TypeScript phases
+describe work on the current API; they do not require future work to use the
+same language.
 
 Primary milestone:
 

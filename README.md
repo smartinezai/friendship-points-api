@@ -1,6 +1,8 @@
 # Friendship Points API
 
-Friendship Points API is a TypeScript/Fastify backend for modelling relationship events, contextual rules, notes, predictions and score-based assessments over time.
+Friendship Points API is a backend for modelling relationship events,
+contextual rules, notes, predictions and score-based assessments over time.
+The current API is implemented with TypeScript and Fastify.
 
 The system maintains a running point balance per friendship. Events can increase or decrease that balance through manual or LLM-assisted assessments. An assessment records a score delta, reasoning summary, impact direction, confidence, matched contextual rules and bias notes. The balance endpoint derives the current score by summing the deltas across a friend's event history.
 
@@ -9,6 +11,14 @@ Predictions provide a separate hypothetical workflow. They evaluate a proposed f
 The project uses structured LLM outputs, explicit validation boundaries, versioned prompts, provider metadata, shared error handling, test automation, CI and an evolving retrieval/RAG architecture. The current roadmap is split into multiple phases and prioritises a complete RAG pipeline before broader production hardening, deployment, security and frontend work.
 
 The project is meant to be social commentary on the social credit score imposed by the CCP.
+
+## Language choice
+
+The project is not restricted to JavaScript or TypeScript. Choose the
+programming language that best fits each task. The current stack describes the
+existing API and is not a requirement for future work. See the
+[contributor guidance](./AGENTS.md) and [architecture guide](./docs/architecture.md)
+for how to make and document that choice.
 
 ## What the API supports
 
@@ -87,6 +97,7 @@ TypeScript Refactor and Code Review
 
 ## Documentation
 
+- [Contributor guidance](./AGENTS.md)
 - [API reference](./docs/api.md)
 - [OpenAPI contract](./docs/openapi.json)
 - [Architecture](./docs/architecture.md)

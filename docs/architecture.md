@@ -2,7 +2,22 @@
 
 ## High-level overview
 
-The project is a Fastify API written in TypeScript. PostgreSQL stores the domain data, Prisma handles database access, Zod validates incoming requests, and LangChain-backed services generate structured LLM assessments and predictions.
+The current API is implemented with Fastify and TypeScript. PostgreSQL stores
+the domain data and Prisma handles database access. Zod validates incoming
+requests and LangChain-backed services generate structured LLM assessments
+and predictions.
+
+## Language choice
+
+JavaScript and TypeScript are not project-wide requirements. Choose the
+programming language that best suits each task. The current API stack is a
+starting point where it fits, not a reason to use TypeScript for every new
+component.
+
+Consider how well a language fits the problem, its available libraries, its
+runtime and deployment needs and how the team can maintain it. When a task
+uses another language, document its setup and update the relevant build, test
+and CI instructions so the component can be developed and shipped reliably.
 
 ```txt
 HTTP request
