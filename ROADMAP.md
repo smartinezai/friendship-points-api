@@ -1356,7 +1356,7 @@ Learning focus:
 
 ---
 
-## Phase 6: TypeScript, Testing, and API Contract Quality
+## Phase 6: API, Testing, and Contract Quality
 
 ### Day 38: Route and Integration Testing
 
@@ -1540,7 +1540,7 @@ Verification:
 
 ---
 
-### Day 41: TypeScript Refactor and Code Review
+### Day 41: Current API TypeScript Refactor and Code Review
 
 Status: Planned.
 

@@ -4,7 +4,8 @@
 
 The existing API uses TypeScript, but the project is not restricted to
 JavaScript or TypeScript. Choose the language that best fits the task. The
-commands below describe the current API. If work adds another language, include
+commands and CI flow below describe the current API. For the project-wide rule,
+see [contributor guidance](../AGENTS.md). If work adds another language, include
 its setup and build or test steps and wire the required checks into CI.
 
 ## Install dependencies
@@ -216,5 +217,5 @@ git commit -m "Test prediction input builder"
 ```txt
 Day 39: Data Model and Type Architecture Hardening
 Day 40: API Contract and OpenAPI Documentation
-Day 41: TypeScript Refactor and Code Review
+Day 41: Current API TypeScript Refactor and Code Review
 ```

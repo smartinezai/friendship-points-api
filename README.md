@@ -92,7 +92,7 @@ Near-term roadmap:
 ```txt
 Data Model and Type Architecture Hardening
 API Contract and OpenAPI Documentation
-TypeScript Refactor and Code Review
+Current API TypeScript Refactor and Code Review
 ```
 
 ## Documentation
@@ -104,9 +104,10 @@ TypeScript Refactor and Code Review
 - [Development guide](./docs/development.md)
 - [Roadmap](./ROADMAP.md)
 
-## Tech stack
+## Current API implementation
 
-Current:
+This list describes the existing API. It does not limit the languages or tools
+that future work can use.
 
 - Node.js
 - TypeScript
@@ -122,7 +123,7 @@ Current:
 - Husky
 - GitHub Actions CI
 
-Planned/future:
+Planned project work:
 
 - Supabase migration and runtime configuration validation
 - background jobs for ingestion and embeddings

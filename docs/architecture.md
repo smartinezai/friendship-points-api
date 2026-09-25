@@ -18,6 +18,7 @@ Consider how well a language fits the problem, its available libraries, its
 runtime and deployment needs and how the team can maintain it. When a task
 uses another language, document its setup and update the relevant build, test
 and CI instructions so the component can be developed and shipped reliably.
+See [contributor guidance](../AGENTS.md) for the project-wide rule.
 
 ```txt
 HTTP request
