@@ -36,6 +36,7 @@ const environment = {
 
 const commands = [
     ["node_modules/prisma/build/index.js", ["migrate", "deploy"]],
+    ["scripts/test-day39-migrations.mjs", []],
     ["node_modules/vitest/vitest.mjs", ["--config", "vitest.integration.config.ts", "--run"]],
 ];
 

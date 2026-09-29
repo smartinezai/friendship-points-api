@@ -72,6 +72,27 @@ src/
 
 ## Main models
 
+### Person
+
+People have UUID identifiers. Pronouns are optional profile data and are not
+included in the current public API responses.
+
+```prisma
+model Person {
+  id                        String                       @id @default(uuid())
+  displayName               String
+  pronouns                  String?
+  createdAt                 DateTime                     @default(now())
+  updatedAt                 DateTime                     @updatedAt
+  users                     User[]
+  trackedBy                 Friend[]
+  authoredFacts             PersonFact[]                 @relation("AuthoredPersonFacts")
+  targetFacts               PersonFact[]                 @relation("TargetPersonFacts")
+  submittedIntakeSubmissions KnowledgeIntakeSubmission[] @relation("SubmittedIntakeSubmissions")
+  targetIntakeSubmissions    KnowledgeIntakeSubmission[] @relation("TargetIntakeSubmissions")
+}
+```
+
 ### Friend
 
 ```prisma
@@ -87,13 +108,8 @@ model Friend {
 }
 ```
 
-`deletedAt` is used for soft delete. A soft-deleted friend is hidden from normal user-facing friend queries.
-
-Planned future field:
-
-```prisma
-pronouns String?
-```
+`deletedAt` is used for soft delete. A soft-deleted friend is hidden from
+normal user-facing friend queries.
 
 ### Rule
 
@@ -104,18 +120,34 @@ model Rule {
   friend          Friend   @relation(fields: [friendId], references: [id])
   title           String
   description     String
-  impactDirection String
-  weight          String
+  impactDirection ImpactDirection
+  weight          RuleWeight
   active          Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
 ```
 
-Planned hardening:
+The rule fields use PostgreSQL enums so stored values match the supported API
+choices.
 
-- convert `impactDirection` to a Prisma enum
-- convert `weight` to a Prisma enum
+```prisma
+enum ImpactDirection {
+  positive
+  negative
+  neutral
+  mixed
+}
+
+enum RuleWeight {
+  minimal
+  low
+  medium
+  high
+  critical
+  extreme
+}
+```
 
 ### Event
 

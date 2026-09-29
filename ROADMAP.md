@@ -29,13 +29,14 @@ Completed:
 
 ```txt
 Day 1–38: Backend foundation, route integration tests, UUID validation, CI, soft delete, RAG, embeddings, semantic retrieval, reranking, tool calling, agentic retrieval, source grounding, agentic RAG evaluation, tracing, prompt analytics, document ingestion, user ownership foundation, person facts and API-only knowledge intake
-Day 40: API Contract and OpenAPI Documentation (completed while Day 39 remains in progress)
+Day 39: Data Model and Type Architecture Hardening
+Day 40: API Contract and OpenAPI Documentation
 ```
 
 Next:
 
 ```txt
-Day 39: Data Model and Type Architecture Hardening
+Day 41: Current API TypeScript Refactor and Code Review
 ```
 
 ---
@@ -1433,7 +1434,7 @@ Learning focus:
 
 ### Day 39: Data Model and Type Architecture Hardening
 
-Status: In Progress.
+Status: Done.
 
 Implemented:
 
@@ -1441,52 +1442,24 @@ Implemented:
 - Added optional person pronouns without changing UUID primary keys
 - Shared domain enum types across Prisma, Zod, route validation and LLM inputs
 - Added response DTOs that leave ownership and relation keys inside persistence
-- Added tagged outcomes for missing and successful assessment and prediction flows
+- Added clear result states for missing and successful assessment and prediction flows
 - Added coverage for every enum value, optional pronouns, DTO boundaries and missing resources
+- Added PostgreSQL migration checks that preserve existing rule and person rows
+- Confirmed unsupported rule values fail without changing the database schema
+- Updated the architecture guide to match the current Prisma schema
 
 Scope note:
 
 - UUIDs remain the only identifiers. Slugs are deferred until there is a product need and a uniqueness decision.
-- Providers return one validated assessment shape or throw. Tagged outcomes cover missing and successful domain flows.
+- Providers return one validated assessment shape or throw. Clear result states cover missing and successful domain flows.
 
-Goals:
+Final decisions:
 
-- Convert `Rule.weight` to a Prisma enum
-- Convert `Rule.impactDirection` to a Prisma enum
-- Update Prisma-generated types
-- Update Zod schemas
-- Update route validation
-- Add optional `pronouns` field to `Person`
-- Consider human-readable slugs as an optional alternative to UUIDs for development and URLs
-- Decide whether slugs should be unique globally or only per user/account
-- Keep UUIDs as primary database identifiers
-- Separate database types, API request/response types, and LLM provider types
-- Avoid leaking Prisma models directly as public API contracts
-- Add explicit DTO types for route responses
-- Use `satisfies` where useful for typed config objects
-- Use discriminated unions for provider results and domain outcomes
-
-Possible Prisma additions:
-
-```prisma
-pronouns String?
-
-enum ImpactDirection {
-  positive
-  negative
-  neutral
-  mixed
-}
-
-enum RuleWeight {
-  minimal
-  low
-  medium
-  high
-  critical
-  extreme
-}
-```
+- Keep UUIDs as primary database identifiers. Slugs remain deferred until there is a product need and a uniqueness decision.
+- Keep database types, public API types and model provider types separate.
+- Do not expose Prisma models directly as public API contracts.
+- Keep explicit response DTOs and use `satisfies` where it improves checks without obscuring the shape.
+- Give expected service results clear status values. Provider errors continue to throw.
 
 Learning focus:
 
@@ -1499,6 +1472,13 @@ Learning focus:
 - discriminated unions
 - `satisfies`
 - avoiding over-coupling Prisma types to API contracts
+
+Verification:
+
+- The Day 39 migration check applies both migrations to existing rows in an
+  isolated PostgreSQL schema.
+- Unsupported rule values are rejected without changing the legacy schema.
+- Standard lint, unit, integration, OpenAPI and build checks pass.
 
 ---
 

@@ -63,7 +63,9 @@ npx prisma studio
 
 Integration tests use a separate PostgreSQL database with pgvector. The test
 runner applies pending Prisma migrations and refuses database names that do not
-end in `_test`. It does not reset or drop the database.
+end in `_test`. It does not reset or drop the database. The runner also checks
+the Day 39 migrations against isolated schemas with existing people and rules,
+then removes only those uniquely named schemas.
 
 Start a disposable database locally:
 
@@ -215,7 +217,7 @@ git commit -m "Test prediction input builder"
 ## Current near-term work
 
 ```txt
-Day 39: Data Model and Type Architecture Hardening
-Day 40: API Contract and OpenAPI Documentation
-Day 41: Current API TypeScript Refactor and Code Review
+Day 39: Data Model and Type Architecture Hardening (Done)
+Day 40: API Contract and OpenAPI Documentation (Done)
+Day 41: Current API TypeScript Refactor and Code Review (Next)
 ```

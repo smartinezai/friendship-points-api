@@ -6,6 +6,7 @@
   "scripts": {
     "test": "vitest",
     "test:integration": "node scripts/run-integration-tests.mjs",
+    "test:migrations:day39": "node scripts/test-day39-migrations.mjs",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",

@@ -83,15 +83,14 @@ Implemented:
 Current focus:
 
 ```txt
-Day 39: Data Model and Type Architecture Hardening (In Progress)
+Day 39: Data Model and Type Architecture Hardening (Done)
 Day 40: API Contract and OpenAPI Documentation (Done)
+Day 41: Current API TypeScript Refactor and Code Review (Next)
 ```
 
 Near-term roadmap:
 
 ```txt
-Data Model and Type Architecture Hardening
-API Contract and OpenAPI Documentation
 Current API TypeScript Refactor and Code Review
 ```
 
